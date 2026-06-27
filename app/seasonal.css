@@ -1,0 +1,37 @@
+/* Voeg dit toe aan app/globals.css of importeer in layout.tsx */
+
+.seasonal-page {
+  min-height: 100vh;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+/* Optionele seizoensaccenten */
+.seasonal-spring {
+  --season-accent: #ff9fc7;
+  --season-soft: rgba(255, 159, 199, 0.14);
+}
+
+.seasonal-summer {
+  --season-accent: var(--orange);
+  --season-soft: rgba(254, 160, 32, 0.14);
+}
+
+.seasonal-autumn {
+  --season-accent: #d6721d;
+  --season-soft: rgba(214, 114, 29, 0.14);
+}
+
+.seasonal-winter {
+  --season-accent: #6ba9ff;
+  --season-soft: rgba(107, 169, 255, 0.14);
+}
+
+/* Gebruik seizoensaccent subtiel in CTA-kaarten indien gewenst */
+.cta-card {
+  background:
+    linear-gradient(135deg, var(--season-soft, rgba(40,185,170,.15)), rgba(255,255,255,.62)),
+    rgba(255,255,255,.62);
+}

@@ -1,0 +1,191 @@
+/* Studio SaGo Season Engine
+   Plak dit onderaan in app/globals.css of importeer dit bestand in layout.tsx.
+*/
+
+.season-engine {
+  min-height: 100vh;
+  position: relative;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  overflow-x: hidden;
+}
+
+/* Zorgt dat je bestaande body-achtergrond niet boven de seizoensachtergrond komt */
+body {
+  background: transparent;
+}
+
+/* Seizoensaccenten voor bestaande elementen */
+.season-engine .primary-action {
+  background: linear-gradient(135deg, var(--season-accent), var(--orange));
+}
+
+.season-engine .cta-card {
+  background:
+    linear-gradient(135deg, var(--season-soft), rgba(255,255,255,.62)),
+    rgba(255,255,255,.62);
+}
+
+.season-effect {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Bloesem/lente, herfstbladeren en sneeuw */
+.season-effect span {
+  position: absolute;
+  top: -10%;
+  opacity: .32;
+  animation-name: season-fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  color: var(--season-accent);
+}
+
+.season-blossoms span:nth-child(1),
+.season-leaves span:nth-child(1),
+.season-snow span:nth-child(1) {
+  left: 8%;
+  font-size: 22px;
+  animation-duration: 16s;
+  animation-delay: 0s;
+}
+
+.season-blossoms span:nth-child(2),
+.season-leaves span:nth-child(2),
+.season-snow span:nth-child(2) {
+  left: 24%;
+  font-size: 16px;
+  animation-duration: 22s;
+  animation-delay: 4s;
+}
+
+.season-blossoms span:nth-child(3),
+.season-leaves span:nth-child(3),
+.season-snow span:nth-child(3) {
+  left: 42%;
+  font-size: 24px;
+  animation-duration: 18s;
+  animation-delay: 2s;
+}
+
+.season-blossoms span:nth-child(4),
+.season-leaves span:nth-child(4),
+.season-snow span:nth-child(4) {
+  left: 62%;
+  font-size: 18px;
+  animation-duration: 24s;
+  animation-delay: 6s;
+}
+
+.season-blossoms span:nth-child(5),
+.season-leaves span:nth-child(5),
+.season-snow span:nth-child(5) {
+  left: 78%;
+  font-size: 25px;
+  animation-duration: 20s;
+  animation-delay: 1s;
+}
+
+.season-blossoms span:nth-child(6),
+.season-leaves span:nth-child(6),
+.season-snow span:nth-child(6) {
+  left: 92%;
+  font-size: 17px;
+  animation-duration: 26s;
+  animation-delay: 8s;
+}
+
+@keyframes season-fall {
+  0% {
+    transform: translate3d(0, -10vh, 0) rotate(0deg);
+  }
+  100% {
+    transform: translate3d(-70px, 115vh, 0) rotate(240deg);
+  }
+}
+
+/* Zomerzonnestralen */
+.season-sunbeams {
+  background:
+    radial-gradient(circle at 82% 15%, rgba(254,224,32,.28), transparent 18%),
+    linear-gradient(115deg, transparent 0%, rgba(254,224,32,.12) 44%, transparent 72%);
+  opacity: .85;
+}
+
+
+/* ==========================================
+   Social buttons per seizoen
+========================================== */
+
+.season-engine .footer-socials a {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background: linear-gradient(
+    135deg,
+    var(--social-start),
+    var(--social-end)
+  );
+
+  color: #fff;
+  border-radius: 18px;
+  text-decoration: none;
+
+  box-shadow: 0 12px 24px rgba(0,0,0,.15);
+  transition: all .3s ease;
+}
+
+.season-engine .footer-socials a:hover {
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 0 18px 35px rgba(0,0,0,.22);
+}
+
+.season-engine .footer-socials svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* ==========================================
+   Kleuren per seizoen
+========================================== */
+
+/* Winter */
+.season-engine.season-winter {
+  --social-start: #033663;
+  --social-end: #28b9aa;
+}
+
+/* Lente */
+.season-engine.season-spring {
+  --social-start: #9b81b8;
+  --social-end: #ec6fb7;
+}
+
+/* Zomer */
+.season-engine.season-summer {
+  --social-start: #ffd54a;
+  --social-end: #fea020;
+}
+
+/* Herfst */
+.season-engine.season-autumn {
+  --social-start: #fea020;
+  --social-end: #d94841;
+}
+
+/* Toegankelijkheid: minder beweging respecteren */
+@media (prefers-reduced-motion: reduce) {
+  .season-effect span {
+    animation: none;
+    display: none;
+  }
+}

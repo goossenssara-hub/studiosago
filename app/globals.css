@@ -1760,3 +1760,85 @@ grid-template-columns:1fr;
     flex-direction: column;
   }
 }
+.kleuter-aanbod {
+  width: min(1400px, 92%);
+  margin: 4rem auto 6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.kleuter-card {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  min-height: 320px;
+  background: #fff;
+  border-radius: 28px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: 0 18px 45px rgba(0,0,0,.08);
+  transition: .3s;
+}
+
+.kleuter-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 24px 55px rgba(0,0,0,.12);
+}
+
+.kleuter-image {
+  position: relative;
+  min-height: 320px;
+}
+
+.kleuter-image img {
+  object-fit: cover;
+}
+
+.kleuter-content {
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.kleuter-content h2 {
+  margin: .6rem 0 1rem;
+  font-size: 2.3rem;
+}
+
+.kleuter-content p {
+  font-size: 1.05rem;
+  line-height: 1.8;
+  color: #5b6470;
+}
+
+.badge {
+  display: inline-block;
+  width: fit-content;
+  padding: .45rem .9rem;
+  background: #EAF8F6;
+  color: #28b9aa;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.button {
+  margin-top: 2rem;
+  width: fit-content;
+  padding: .9rem 1.5rem;
+  background: #fea020;
+  color: white;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+@media (max-width:900px) {
+  .kleuter-card {
+    grid-template-columns: 1fr;
+  }
+
+  .kleuter-image {
+    height: 280px;
+  }
+}

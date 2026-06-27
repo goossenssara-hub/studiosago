@@ -7,75 +7,81 @@ export default function KleutersPage() {
     <PageShell>
       <section className="subpage-hero">
         <div className="container">
-          <p className="eyebrow">Educatief aanbod</p>
-          <h1>Voor kleuters</h1>
+          <p className="eyebrow">Educatief aanbod voor kleuters</p>
+
           <p>
             Spelend leren, ontdekken en groeien. Ontdek het educatieve
-            kleuteraanbod van Studio SaGo.
+            kleuteraanbod van Studio SaGo in samenwerking met Speelweelde.
           </p>
         </div>
       </section>
 
       <section className="kleuter-aanbod">
-        <Link
-          href="#"
-          className="kleuter-card"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        <article className="kleuter-card">
           <div className="kleuter-image">
             <Image
-              src="/images/onderwaterwereld.jpg"
+              src="/assets/onderwaterwereld.jpg"
               alt="Expeditie Onderwaterwereld"
               fill
+              sizes="(max-width: 1000px) 100vw, 45vw"
             />
           </div>
 
           <div className="kleuter-content">
-            <span className="badge">Educatieve workshop</span>
-            <h2>Expeditie Onderwaterwereld</h2>
+            <span className="badge">Educatief kleuterkamp</span>
+
+            <h2>Onderwaterwereld</h2>
 
             <p>
-              Duik samen met de kinderen in een magische onderwaterwereld.
-              Ontdek kleurrijke vissen, schatten en leer spelenderwijs over de
-              oceaan met interactieve VR-opdrachten.
+              Duik samen met Pixel in een magische onderwaterwereld en ga op zoek naar de verdwenen parels. 
+              Kinderen beleven twee dagen vol bewegingsspelletjes, creatieve opdrachten, sensorisch spel, muziek, 
+              verhalen en ontdekactiviteiten rond de oceaan.
             </p>
 
-            <span className="button">
-              Meer informatie →
-            </span>
+            <Link
+              href="https://www.speelweelde.be/kampen/aanbod/Kleutereditie:_Onderwaterwereld:_1_&_2_juli_2026_-_Peer_%7C_3-6j_"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="kleuter-button"
+            >
+              Meer informatie en inschrijven →
+            </Link>
           </div>
-        </Link>
+        </article>
 
-        <Link
-          href="#"
-          className="kleuter-card"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        <article className="kleuter-card">
           <div className="kleuter-image">
             <Image
-              src="/images/eilandenavontuur.jpg"
+              src="/assets/eilandenavontuur.jpg"
               alt="Eilandenavontuur"
               fill
+              sizes="(max-width: 1000px) 100vw, 45vw"
             />
           </div>
 
           <div className="kleuter-content">
-            <span className="badge">Educatieve workshop</span>
+            <span className="badge">Educatief kleuterkamp</span>
+
             <h2>Eilandenavontuur</h2>
 
             <p>
-              Trek op ontdekkingstocht naar tropische eilanden vol uitdagingen,
-              dieren en verrassingen. Een speelse VR-beleving voor nieuwsgierige
-              kleuters.
+              Ga samen met Pixel op avontuur naar een geheim eiland
+              en help de verdwenen schat terug te vinden.
+              Kinderen beleven een dag vol bewegingsspelletjes,
+              creatieve opdrachten, sensorisch spel, muziek, verhalen en
+              spannende ontdekactiviteiten in een tropische eilandwereld.
             </p>
 
-            <span className="button">
-              Meer informatie →
-            </span>
+            <Link
+              href="https://www.speelweelde.be/kampen/aanbod/Kleutereditie_-_Eilandenavontuur:_19,_20_&_21_augustus_2026_-_Peer_%7C_3-6j"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="kleuter-button"
+            >
+              Meer informatie en inschrijven →
+            </Link>
           </div>
-        </Link>
+        </article>
       </section>
     </PageShell>
   );

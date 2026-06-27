@@ -18,7 +18,7 @@ export const fallbackServices: StudioService[] = [
     description: "Spelend leren en ontdekken met plezier en verwondering.",
     icon: "/assets/icon-bear.svg",
     color: "orange",
-    href: "/aanbod/kleuters",
+    href: "/aanbod/kleuter",
   },
   {
     name: "Educatief aanbod",

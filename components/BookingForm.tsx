@@ -1,96 +1,119 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { fallbackServices, StudioService } from "@/lib/services";
 
-type Availability = {
-  id: string;
-  service_id: string | null;
-  date: string | null;
-  start_time: string | null;
-  end_time: string | null;
-  max_places: number | null;
-  booked_places: number | null;
+const GOOGLE_BOOKING = "https://calendar.app.google/9UCRsaVW2goDPDsT6";
+
+const bookingLinks = {
+  afspraak: GOOGLE_BOOKING,
+  huiswerkbegeleiding: GOOGLE_BOOKING,
+  "10-beurtenkaart": GOOGLE_BOOKING,
+  "wekelijkse-begeleiding": GOOGLE_BOOKING,
+  secundair: GOOGLE_BOOKING,
+  hoger: GOOGLE_BOOKING,
+  zorgaanbod: GOOGLE_BOOKING,
 };
 
+const lowerSchoolOptions = [
+  { value: "huiswerkbegeleiding", label: "Huiswerkbegeleiding", amount: 35, booking: true },
+  { value: "mini-groep", label: "Mini-groep", amount: null, booking: false },
+  { value: "10-beurtenkaart", label: "10-beurtenkaart", amount: 320, booking: true },
+  { value: "wekelijkse-begeleiding", label: "Wekelijkse begeleiding", amount: null, booking: true },
+  { value: "tekstcorrectie", label: "Correctie van teksten tot 1500 woorden", amount: 15, booking: false },
+];
+
 export default function BookingForm() {
-  const [services, setServices] = useState<StudioService[]>(fallbackServices);
-  const [availability, setAvailability] = useState<Availability[]>([]);
-  const [selectedService, setSelectedService] = useState("");
-  const [selectedSlot, setSelectedSlot] = useState("");
+  const [mainService, setMainService] = useState("");
+  const [subService, setSubService] = useState("");
+  const [miniGroupSize, setMiniGroupSize] = useState("");
+  const [weeklyPlan, setWeeklyPlan] = useState("");
   const [message, setMessage] = useState("");
+  const [debugError, setDebugError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    async function loadData() {
-      const { data: serviceData } = await supabase
-        .from("services")
-        .select("id,name,category,description,duration,price,max_participants,active")
-        .eq("active", true)
-        .order("created_at", { ascending: true });
+  const selectedLower = lowerSchoolOptions.find((item) => item.value === subService);
 
-      if (serviceData && serviceData.length > 0) {
-        setServices(
-          serviceData.map((item: any, index: number) => ({
-            ...fallbackServices[index % fallbackServices.length],
-            id: item.id,
-            name: item.name,
-            category: item.category,
-            description: item.description,
-            duration: item.duration,
-            price: item.price,
-            max_participants: item.max_participants,
-            href: `/boek-nu?service=${item.id}`,
-          }))
-        );
-      }
+  const amount =
+    subService === "mini-groep"
+      ? Number(miniGroupSize || 0) * 22 || null
+      : subService === "wekelijkse-begeleiding"
+      ? weeklyPlan === "1x"
+        ? 135
+        : weeklyPlan === "2x"
+        ? 250
+        : null
+      : selectedLower?.amount ?? null;
 
-      const { data: availabilityData } = await supabase
-        .from("availability")
-        .select("id,service_id,date,start_time,end_time,max_places,booked_places,active")
-        .eq("active", true)
-        .order("date", { ascending: true });
+  function getBookingLink() {
+    if (mainService === "afspraak") return bookingLinks.afspraak;
+    if (mainService === "secundair") return bookingLinks.secundair;
+    if (mainService === "hoger") return bookingLinks.hoger;
+    if (mainService === "zorgaanbod") return bookingLinks.zorgaanbod;
 
-      if (availabilityData) setAvailability(availabilityData);
+    if (mainService === "lager" && subService) {
+      return bookingLinks[subService as keyof typeof bookingLinks] || "";
     }
 
-    loadData();
-  }, []);
+    return "";
+  }
 
-  function handleServiceChange(value: string) {
-    setSelectedService(value);
-    setSelectedSlot("");
+  function openBookingLink() {
+    const url = getBookingLink();
 
-    const selected = services.find((service) => (service.id ?? service.href) === value);
-
-    if (selected?.href?.startsWith("http")) {
-      window.open(selected.href, "_blank", "noopener,noreferrer");
+    if (url) {
+      window.open(url, "_blank", "noopener,noreferrer");
+      return true;
     }
+
+    return false;
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
     setMessage("");
+    setDebugError("");
+
+    if (
+      mainService === "afspraak" ||
+      mainService === "secundair" ||
+      mainService === "hoger" ||
+      mainService === "zorgaanbod" ||
+      (mainService === "lager" && selectedLower?.booking)
+    ) {
+      openBookingLink();
+      setLoading(false);
+      setMessage("Je wordt doorgestuurd om een afspraak in te plannen.");
+      return;
+    }
+
+    if (mainService === "photography") {
+      window.open("https://www.sagophotography.be", "_blank", "noopener,noreferrer");
+      setLoading(false);
+      return;
+    }
 
     const form = new FormData(event.currentTarget);
+
     const firstName = String(form.get("first_name") || "");
     const lastName = String(form.get("last_name") || "");
     const email = String(form.get("email") || "");
     const phone = String(form.get("phone") || "");
     const notes = String(form.get("notes") || "");
-    const serviceId = String(form.get("service_id") || "");
-    const availabilityId = String(form.get("availability_id") || "");
 
-    const selected = services.find((service) => (service.id ?? service.href) === serviceId);
-
-    if (selected?.href?.startsWith("http")) {
-      setLoading(false);
-      setMessage("Voor SaGo Photography word je doorgestuurd naar de aparte website.");
-      window.open(selected.href, "_blank", "noopener,noreferrer");
-      return;
-    }
+    const serviceText = [
+      `Hoofdaanbod: ${mainService}`,
+      subService ? `Keuze lager onderwijs: ${selectedLower?.label}` : "",
+      miniGroupSize ? `Mini-groep: ${miniGroupSize} leerlingen` : "",
+      weeklyPlan
+        ? `Wekelijkse begeleiding: ${weeklyPlan === "1x" ? "1x per week" : "2x per week"}`
+        : "",
+      amount ? `Richtprijs: €${amount}` : "",
+      notes ? `Bericht: ${notes}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
 
     const { data: contact, error: contactError } = await supabase
       .from("contacts")
@@ -99,7 +122,7 @@ export default function BookingForm() {
         last_name: lastName,
         email,
         phone,
-        notes,
+        notes: serviceText,
         active: true,
       })
       .select("id")
@@ -107,36 +130,53 @@ export default function BookingForm() {
 
     if (contactError || !contact) {
       setLoading(false);
-      setMessage("Je aanvraag kon niet worden opgeslagen. Controleer je Supabase RLS policies.");
+      setMessage("Je aanvraag kon niet worden opgeslagen.");
+      setDebugError(
+        contactError
+          ? `${contactError.message} ${contactError.details ?? ""} ${contactError.hint ?? ""}`
+          : "Geen contact teruggekregen van Supabase."
+      );
       return;
     }
 
     const { error: bookingError } = await supabase.from("bookings").insert({
       contact_id: contact.id,
-      service_id: serviceId || null,
-      availability_id: availabilityId || null,
+      service_id: null,
+      availability_id: null,
       status: "pending",
       payment_status: "unpaid",
-      amount: selected?.price ?? null,
-      notes,
+      amount,
+      notes: serviceText,
     });
 
     setLoading(false);
 
     if (bookingError) {
-      setMessage("Contact opgeslagen, maar de boeking lukte niet. Controleer de foreign keys en RLS policies.");
+      setMessage("Contact opgeslagen, maar boeking lukte niet.");
+      setDebugError(`${bookingError.message} ${bookingError.details ?? ""} ${bookingError.hint ?? ""}`);
       return;
     }
 
     setMessage("Je aanvraag werd verzonden. Je ontvangt binnenkort bevestiging.");
     event.currentTarget.reset();
-    setSelectedService("");
-    setSelectedSlot("");
+    setMainService("");
+    setSubService("");
+    setMiniGroupSize("");
+    setWeeklyPlan("");
   }
 
-  const filteredSlots = selectedService
-    ? availability.filter((slot) => slot.service_id === selectedService)
-    : availability;
+  const isBookingService =
+    mainService === "afspraak" ||
+    mainService === "secundair" ||
+    mainService === "hoger" ||
+    mainService === "zorgaanbod" ||
+    (mainService === "lager" && selectedLower?.booking);
+
+  const showForm =
+    mainService &&
+    mainService !== "photography" &&
+    mainService !== "workshop" &&
+    !isBookingService;
 
   return (
     <form className="form-card" onSubmit={handleSubmit}>
@@ -144,74 +184,153 @@ export default function BookingForm() {
         <label>
           Aanbod
           <select
-            name="service_id"
-            value={selectedService}
-            onChange={(event) => handleServiceChange(event.target.value)}
+            value={mainService}
+            onChange={(event) => {
+              setMainService(event.target.value);
+              setSubService("");
+              setMiniGroupSize("");
+              setWeeklyPlan("");
+              setMessage("");
+              setDebugError("");
+            }}
             required
           >
             <option value="">Kies een aanbod</option>
-            {services.map((service) => {
-              const value = service.id ?? service.href;
+            <option value="afspraak">Afspraak inplannen</option>
+            <option value="lager">Lager onderwijs</option>
+            <option value="workshop">Workshop / kamp</option>
+            <option value="secundair">Secundair onderwijs</option>
+            <option value="hoger">Hoger onderwijs</option>
+            <option value="zorgaanbod">Zorgaanbod</option>
+            <option value="photography">SaGo Photography</option>
+          </select>
+        </label>
 
-              return (
-                <option key={value} value={value}>
-                  {service.name} {service.category}
+        {mainService === "lager" && (
+          <label>
+            Kies binnen lager onderwijs
+            <select
+              value={subService}
+              onChange={(event) => {
+                setSubService(event.target.value);
+                setMiniGroupSize("");
+                setWeeklyPlan("");
+              }}
+              required
+            >
+              <option value="">Kies een dienst</option>
+              {lowerSchoolOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
                 </option>
-              );
-            })}
-          </select>
-        </label>
+              ))}
+            </select>
+          </label>
+        )}
 
-        <label>
-          Beschikbaar moment
-          <select
-            name="availability_id"
-            value={selectedSlot}
-            onChange={(event) => setSelectedSlot(event.target.value)}
-            disabled={
-              !!services.find((service) => (service.id ?? service.href) === selectedService)?.href?.startsWith("http")
-            }
-          >
-            <option value="">Nog geen moment gekozen</option>
-            {filteredSlots.map((slot) => (
-              <option key={slot.id} value={slot.id}>
-                {slot.date} · {slot.start_time?.slice(0, 5)} - {slot.end_time?.slice(0, 5)}
-              </option>
-            ))}
-          </select>
-        </label>
+        {subService === "mini-groep" && (
+          <label>
+            Aantal leerlingen
+            <select value={miniGroupSize} onChange={(event) => setMiniGroupSize(event.target.value)} required>
+              <option value="">Kies aantal leerlingen</option>
+              <option value="2">2 leerlingen · €44</option>
+              <option value="3">3 leerlingen · €66</option>
+              <option value="4">4 leerlingen · €88</option>
+              <option value="5">5 leerlingen · €110</option>
+            </select>
+          </label>
+        )}
 
-        <label>
-          Voornaam
-          <input name="first_name" required />
-        </label>
-
-        <label>
-          Achternaam
-          <input name="last_name" required />
-        </label>
-
-        <label>
-          E-mail
-          <input name="email" type="email" required />
-        </label>
-
-        <label>
-          Telefoon
-          <input name="phone" type="tel" />
-        </label>
+        {subService === "wekelijkse-begeleiding" && (
+          <label>
+            Formule
+            <select value={weeklyPlan} onChange={(event) => setWeeklyPlan(event.target.value)} required>
+              <option value="">Kies formule</option>
+              <option value="1x">1x per week · €135/maand</option>
+              <option value="2x">2x per week · €250/maand</option>
+            </select>
+          </label>
+        )}
       </div>
 
-      <label>
-        Bericht
-        <textarea name="notes" rows={5} placeholder="Vertel kort waar je hulp bij zoekt." />
-      </label>
+      {mainService === "workshop" && (
+        <p className="form-message">
+          Workshops en kampen verlopen via het inschrijvingssysteem. Kies de gewenste workshop op de aanbodpagina.
+        </p>
+      )}
 
-      <button className="primary-action" type="submit" disabled={loading}>
-        {loading ? "Verzenden..." : "Aanvraag verzenden"}
-      </button>
+      {mainService === "photography" && (
+        <a className="primary-action" href="https://www.sagophotography.be" target="_blank" rel="noopener noreferrer">
+          Ga naar SaGo Photography
+        </a>
+      )}
+
+      {isBookingService && (
+        <div className="booking-embed-card">
+          <div>
+            <p className="eyebrow">Online afspraak</p>
+            <h2>Plan je afspraak meteen in</h2>
+            <p>
+              Kies zelf een vrij moment in de agenda. Bezettingen uit Google Agenda worden automatisch meegenomen.
+            </p>
+          </div>
+
+          <a className="primary-action" href={getBookingLink()} target="_blank" rel="noopener noreferrer">
+            Open agenda
+          </a>
+
+          <iframe
+            src={getBookingLink()}
+            className="booking-iframe"
+            title="Afspraak inplannen Studio SaGo"
+          />
+        </div>
+      )}
+
+      {showForm && (
+        <>
+          <div className="form-grid">
+            <label>
+              Voornaam
+              <input name="first_name" required />
+            </label>
+
+            <label>
+              Achternaam
+              <input name="last_name" required />
+            </label>
+
+            <label>
+              E-mail
+              <input name="email" type="email" required />
+            </label>
+
+            <label>
+              Telefoon
+              <input name="phone" type="tel" />
+            </label>
+          </div>
+
+          {amount && <p className="form-message">Richtprijs: €{amount}</p>}
+
+          <label>
+            Bericht
+            <textarea name="notes" rows={5} placeholder="Vertel kort waar je hulp bij zoekt." />
+          </label>
+
+          <button className="primary-action" type="submit" disabled={loading}>
+            {loading ? "Verzenden..." : "Aanvraag verzenden"}
+          </button>
+        </>
+      )}
 
       {message && <p className="form-message">{message}</p>}
+
+      {debugError && (
+        <p className="form-message" style={{ color: "#fe2020" }}>
+          Technische fout: {debugError}
+        </p>
+      )}
     </form>
   );
 }

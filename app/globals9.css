@@ -27,7 +27,8 @@
 }
 
 
-:root {
+
+   :root {
 
   --social-start: #033663;
   --social-end: #28b9aa;
@@ -1915,117 +1916,70 @@ grid-template-columns:1fr;
     padding: 2rem;
   }
 }
-/* =========================
-   AANBOD DETAIL KAARTEN
-   ========================= */
 .aanbod-detail-grid {
   width: min(1400px, 92%);
   margin: 3rem auto 6rem;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 28px;
-  align-items: start;
 }
 
-.aanbod-detail-grid .aanbod-detail-card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-
-  height: 360px;
-  padding: 2rem;
-  overflow: hidden;
-
+.aanbod-detail-card {
+  padding: clamp(2rem, 4vw, 3.5rem);
   border-radius: 34px;
   background: rgba(255, 255, 255, 0.76);
   border: 1px solid rgba(255, 255, 255, 0.75);
   box-shadow: var(--shadow-card);
-
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
-
-  transition:
-    height 0.45s ease,
-    transform 0.35s ease,
-    box-shadow 0.35s ease;
 }
 
-.aanbod-detail-grid .aanbod-detail-card:hover {
-  height: 650px;
-  transform: translateY(-8px);
-  box-shadow: 0 24px 60px rgba(3, 54, 99, 0.18);
-  z-index: 20;
-}
-
-.aanbod-detail-grid .aanbod-detail-card h2 {
-  max-width: 100%;
-  margin: 0.4rem 0 0.75rem;
+.aanbod-detail-card h2 {
+  margin: 0 0 1rem;
   color: var(--navy);
-  font-size: clamp(1.9rem, 2.8vw, 2.8rem);
+  font-size: clamp(2rem, 3vw, 3.2rem);
   line-height: 1.05;
-  overflow-wrap: break-word;
-  word-break: normal;
-  hyphens: auto;
 }
 
-.aanbod-detail-grid .aanbod-detail-card p {
-  max-width: 100%;
-  margin: 0;
+.aanbod-detail-card p {
   color: var(--muted);
   line-height: 1.7;
   font-weight: 600;
-  overflow-wrap: break-word;
 }
 
-.aanbod-detail-grid .aanbod-detail-card .price {
-  margin: 0 0 1rem;
-  color: var(--orange);
-  font-size: clamp(1.3rem, 2vw, 1.7rem);
+.aanbod-detail-card .price {
+  margin: 0 0 1.4rem;
+  color: var(--social-end);
+  font-size: clamp(1.3rem, 2vw, 1.8rem);
   font-weight: 900;
 }
 
-.aanbod-detail-grid .aanbod-detail-card.highlight {
+.aanbod-detail-card.highlight {
   grid-column: 1 / -1;
-}
-
-.aanbod-detail-grid .extra-content {
-  opacity: 0;
-  max-height: 0;
-  overflow: hidden;
-
-  transition:
-    opacity 0.35s ease,
-    max-height 0.45s ease;
-}
-
-.aanbod-detail-grid .extra-content p {
-  margin-top: 1rem;
-}
-
-.aanbod-detail-grid .aanbod-detail-card:hover .extra-content {
-  opacity: 1;
-  max-height: 1200px;
-}
-
-.aanbod-detail-grid .primary-action {
-  margin-top: auto;
-  align-self: flex-start;
 }
 
 @media (max-width: 900px) {
   .aanbod-detail-grid {
     grid-template-columns: 1fr;
   }
+}
+.aanbod-detail-card {
+  min-width: 0;
+  overflow: hidden;
+}
 
-  .aanbod-detail-grid .aanbod-detail-card {
-    height: auto;
-  }
+.aanbod-detail-card h2 {
+  max-width: 100%;
+  font-size: clamp(2rem, 3.2vw, 3.8rem);
+  line-height: 1.08;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: auto;
+}
 
-  .aanbod-detail-grid .extra-content {
-    opacity: 1;
-    max-height: none;
-  }
+.aanbod-detail-card p {
+  max-width: 100%;
+  overflow-wrap: break-word;
 }
 
 .lesson-card-list {
@@ -2433,285 +2387,4 @@ grid-template-columns:1fr;
   .admin-workshop-card {
     grid-template-columns: 1fr;
   }
-}
-
-/* FIX: aanbodkaarten volledig zichtbaar bij hover */
-
-.aanbod-detail-grid .aanbod-detail-card {
-  height: auto !important;
-  min-height: 330px !important;
-  max-height: 330px !important;
-  overflow: hidden !important;
-  display: flex !important;
-  flex-direction: column !important;
-}
-
-.aanbod-detail-grid .aanbod-detail-card:hover {
-  max-height: 2000px !important;
-  overflow: visible !important;
-}
-
-.aanbod-detail-grid .extra-content {
-  opacity: 0 !important;
-  max-height: 0 !important;
-  overflow: hidden !important;
-}
-
-.aanbod-detail-grid .aanbod-detail-card:hover .extra-content {
-  opacity: 1 !important;
-  max-height: 1600px !important;
-  overflow: visible !important;
-}
-
-.aanbod-detail-grid .primary-action {
-  margin-top: 2rem !important;
-  align-self: flex-start !important;
-  position: relative !important;
-}
-/* ======================================
-   PAGINA ONDER CONSTRUCTIE
-====================================== */
-
-.construction-page{
-    min-height:70vh;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    padding:4rem 1.5rem;
-}
-
-.construction-card{
-    width:min(760px,100%);
-    background:rgba(255,255,255,.82);
-    backdrop-filter:blur(18px);
-    border-radius:40px;
-    padding:4rem;
-    text-align:center;
-    box-shadow:var(--shadow-card);
-}
-
-.construction-icon{
-    font-size:4rem;
-    margin-bottom:1rem;
-}
-
-.construction-card h1{
-    margin:1rem 0 1.5rem;
-    color:var(--navy);
-    font-size:clamp(2.2rem,5vw,3.6rem);
-}
-
-.construction-text{
-    max-width:600px;
-    margin:0 auto 1.2rem;
-    color:var(--muted);
-    font-size:1.15rem;
-    line-height:1.8;
-}
-
-.construction-buttons{
-    display:flex;
-    justify-content:center;
-    gap:1rem;
-    flex-wrap:wrap;
-    margin-top:2.5rem;
-}
-
-.secondary-action{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    padding:1rem 2rem;
-    border-radius:999px;
-    border:2px solid var(--navy);
-    color:var(--navy);
-    text-decoration:none;
-    font-weight:600;
-    transition:.25s;
-}
-
-.secondary-action:hover{
-    background:var(--navy);
-    color:#fff;
-}
-
-@media(max-width:768px){
-
-    .construction-card{
-        padding:2.5rem;
-    }
-
-    .construction-buttons{
-        flex-direction:column;
-        align-items:center;
-    }
-
-    .construction-buttons a{
-        width:100%;
-        max-width:320px;
-    }
-
-}
-/* ======================================
-   SEIZOENSKLEUREN VOOR KNOPPEN
-====================================== */
-
-.season-engine {
-  --season-button: linear-gradient(135deg, var(--orange-deep), var(--orange));
-  --season-button-border: var(--navy);
-}
-
-.season-engine.season-spring,
-.season-engine.seasonal-spring {
-  --season-button: linear-gradient(135deg, #ff9fc7, #f26aa5);
-  --season-button-border: #f26aa5;
-}
-
-.season-engine.season-summer,
-.season-engine.seasonal-summer {
-  --season-button: linear-gradient(135deg, var(--orange-deep), var(--orange));
-  --season-button-border: var(--orange);
-}
-
-.season-engine.season-autumn,
-.season-engine.seasonal-autumn {
-  --season-button: linear-gradient(135deg, #d6721d, #a94e14);
-  --season-button-border: #d6721d;
-}
-
-.season-engine.season-winter,
-.season-engine.seasonal-winter {
-  --season-button: linear-gradient(135deg, #6ba9ff, #2f73d9);
-  --season-button-border: #6ba9ff;
-}
-
-.season-engine .primary-action,
-.season-engine button.primary-action {
-  background: var(--season-button) !important;
-  color: #fff !important;
-}
-
-.season-engine .secondary-action {
-  border-color: var(--season-button-border) !important;
-  color: var(--season-button-border) !important;
-}
-
-.season-engine .secondary-action:hover {
-  background: var(--season-button) !important;
-  color: #fff !important;
-  border-color: transparent !important;
-}
-
-.season-engine .cta-card {
-  background:
-    linear-gradient(
-      135deg,
-      var(--season-soft, rgba(40,185,170,.15)),
-      rgba(255,255,255,.62)
-    ),
-    rgba(255,255,255,.62);
-}
-.booking-form-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 380px;
-  gap: 32px;
-  align-items: start;
-}
-
-.booking-fields {
-  min-width: 0;
-}
-
-.availability-panel {
-  position: sticky;
-  top: 24px;
-  padding: 28px;
-  border-radius: 28px;
-  background: rgba(255,255,255,.76);
-  border: 1px solid rgba(255,255,255,.75);
-  box-shadow: var(--shadow-card);
-}
-
-.availability-panel h2 {
-  margin: 0 0 20px;
-  color: var(--navy);
-  font-size: clamp(1.8rem, 3vw, 2.6rem);
-}
-
-.availability-list {
-  display: grid;
-  gap: 14px;
-}
-
-.availability-slot {
-  width: 100%;
-  padding: 18px;
-  border-radius: 20px;
-  border: 2px solid rgba(3,54,99,.12);
-  background: rgba(255,255,255,.82);
-  color: var(--navy);
-  text-align: left;
-  display: grid;
-  gap: 6px;
-  transition: .25s ease;
-}
-
-.availability-slot:hover,
-.availability-slot.active {
-  border-color: var(--season-accent, var(--orange));
-  background: var(--season-soft, rgba(254,160,32,.14));
-  transform: translateY(-2px);
-}
-
-.availability-slot strong {
-  font-weight: 900;
-}
-
-.availability-slot span {
-  font-weight: 800;
-}
-
-.availability-slot small {
-  color: var(--muted);
-  font-weight: 700;
-}
-
-@media (max-width: 1000px) {
-  .booking-form-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .availability-panel {
-    position: static;
-  }
-}
-.booking-embed-card {
-  margin-top: 2rem;
-  padding: 2rem;
-  border-radius: 28px;
-  background: rgba(255,255,255,.76);
-  border: 1px solid rgba(255,255,255,.75);
-  box-shadow: var(--shadow-card);
-}
-
-.booking-embed-card h2 {
-  margin: .5rem 0 1rem;
-  color: var(--navy);
-}
-
-.booking-embed-card p {
-  color: var(--muted);
-  line-height: 1.7;
-}
-
-.booking-embed-card .primary-action {
-  margin: 1rem 0 1.5rem;
-}
-
-.booking-iframe {
-  width: 100%;
-  min-height: 760px;
-  border: 0;
-  border-radius: 22px;
-  background: white;
 }

@@ -3,24 +3,18 @@
 import { FormEvent, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
-const GOOGLE_BOOKING = "https://calendar.app.google/9UCRsaVW2goDPDsT6";
+const GOOGLE_CALENDAR_EMBED =
+  "https://calendar.google.com/calendar/appointments/schedules/AcZssZ3WJPmozNx50TOG5q9aODtgqNb2zBEnVO15NK6WTbYrNm5YWLwDqmJ6edb83qz-llOLh9Jk_959?gv=true";
 
-const bookingLinks = {
-  afspraak: GOOGLE_BOOKING,
-  huiswerkbegeleiding: GOOGLE_BOOKING,
-  "10-beurtenkaart": GOOGLE_BOOKING,
-  "wekelijkse-begeleiding": GOOGLE_BOOKING,
-  secundair: GOOGLE_BOOKING,
-  hoger: GOOGLE_BOOKING,
-  zorgaanbod: GOOGLE_BOOKING,
-};
+const GOOGLE_CALENDAR_LINK =
+  "https://calendar.app.google/9UCRsaVW2goDPDsT6";
 
 const lowerSchoolOptions = [
-  { value: "huiswerkbegeleiding", label: "Huiswerkbegeleiding", amount: 35, booking: true },
-  { value: "mini-groep", label: "Mini-groep", amount: null, booking: false },
-  { value: "10-beurtenkaart", label: "10-beurtenkaart", amount: 320, booking: true },
-  { value: "wekelijkse-begeleiding", label: "Wekelijkse begeleiding", amount: null, booking: true },
-  { value: "tekstcorrectie", label: "Correctie van teksten tot 1500 woorden", amount: 15, booking: false },
+  { value: "huiswerkbegeleiding", label: "Huiswerkbegeleiding", amount: 35, calendar: true },
+  { value: "mini-groep", label: "Mini-groep", amount: null, calendar: false },
+  { value: "10-beurtenkaart", label: "10-beurtenkaart", amount: 320, calendar: true },
+  { value: "wekelijkse-begeleiding", label: "Wekelijkse begeleiding", amount: null, calendar: true },
+  { value: "tekstcorrectie", label: "Correctie van teksten tot 1500 woorden", amount: 15, calendar: false },
 ];
 
 export default function BookingForm() {
@@ -45,48 +39,27 @@ export default function BookingForm() {
         : null
       : selectedLower?.amount ?? null;
 
-  function getBookingLink() {
-    if (mainService === "afspraak") return bookingLinks.afspraak;
-    if (mainService === "secundair") return bookingLinks.secundair;
-    if (mainService === "hoger") return bookingLinks.hoger;
-    if (mainService === "zorgaanbod") return bookingLinks.zorgaanbod;
+  const showCalendar =
+    mainService === "afspraak" ||
+    mainService === "secundair" ||
+    mainService === "hoger" ||
+    mainService === "zorgaanbod" ||
+    (mainService === "lager" && selectedLower?.calendar);
 
-    if (mainService === "lager" && subService) {
-      return bookingLinks[subService as keyof typeof bookingLinks] || "";
-    }
-
-    return "";
-  }
-
-  function openBookingLink() {
-    const url = getBookingLink();
-
-    if (url) {
-      window.open(url, "_blank", "noopener,noreferrer");
-      return true;
-    }
-
-    return false;
-  }
+  const showForm =
+    mainService &&
+    mainService !== "photography" &&
+    mainService !== "workshop" &&
+    !showCalendar;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (showCalendar) return;
+
     setLoading(true);
     setMessage("");
     setDebugError("");
-
-    if (
-      mainService === "afspraak" ||
-      mainService === "secundair" ||
-      mainService === "hoger" ||
-      mainService === "zorgaanbod" ||
-      (mainService === "lager" && selectedLower?.booking)
-    ) {
-      openBookingLink();
-      setLoading(false);
-      setMessage("Je wordt doorgestuurd om een afspraak in te plannen.");
-      return;
-    }
 
     if (mainService === "photography") {
       window.open("https://www.sagophotography.be", "_blank", "noopener,noreferrer");
@@ -107,7 +80,9 @@ export default function BookingForm() {
       subService ? `Keuze lager onderwijs: ${selectedLower?.label}` : "",
       miniGroupSize ? `Mini-groep: ${miniGroupSize} leerlingen` : "",
       weeklyPlan
-        ? `Wekelijkse begeleiding: ${weeklyPlan === "1x" ? "1x per week" : "2x per week"}`
+        ? `Wekelijkse begeleiding: ${
+            weeklyPlan === "1x" ? "1x per week" : "2x per week"
+          }`
         : "",
       amount ? `Richtprijs: €${amount}` : "",
       notes ? `Bericht: ${notes}` : "",
@@ -153,7 +128,9 @@ export default function BookingForm() {
 
     if (bookingError) {
       setMessage("Contact opgeslagen, maar boeking lukte niet.");
-      setDebugError(`${bookingError.message} ${bookingError.details ?? ""} ${bookingError.hint ?? ""}`);
+      setDebugError(
+        `${bookingError.message} ${bookingError.details ?? ""} ${bookingError.hint ?? ""}`
+      );
       return;
     }
 
@@ -165,172 +142,183 @@ export default function BookingForm() {
     setWeeklyPlan("");
   }
 
-  const isBookingService =
-    mainService === "afspraak" ||
-    mainService === "secundair" ||
-    mainService === "hoger" ||
-    mainService === "zorgaanbod" ||
-    (mainService === "lager" && selectedLower?.booking);
-
-  const showForm =
-    mainService &&
-    mainService !== "photography" &&
-    mainService !== "workshop" &&
-    !isBookingService;
-
   return (
-    <form className="form-card" onSubmit={handleSubmit}>
-      <div className="form-grid">
-        <label>
-          Aanbod
-          <select
-            value={mainService}
-            onChange={(event) => {
-              setMainService(event.target.value);
-              setSubService("");
-              setMiniGroupSize("");
-              setWeeklyPlan("");
-              setMessage("");
-              setDebugError("");
-            }}
-            required
-          >
-            <option value="">Kies een aanbod</option>
-            <option value="afspraak">Afspraak inplannen</option>
-            <option value="lager">Lager onderwijs</option>
-            <option value="workshop">Workshop / kamp</option>
-            <option value="secundair">Secundair onderwijs</option>
-            <option value="hoger">Hoger onderwijs</option>
-            <option value="zorgaanbod">Zorgaanbod</option>
-            <option value="photography">SaGo Photography</option>
-          </select>
-        </label>
-
-        {mainService === "lager" && (
+    <form className="form-card booking-form-with-calendar" onSubmit={handleSubmit}>
+      <div className="booking-fields">
+        <div className="form-grid booking-choice-grid">
           <label>
-            Kies binnen lager onderwijs
+            Aanbod
             <select
-              value={subService}
+              value={mainService}
               onChange={(event) => {
-                setSubService(event.target.value);
+                setMainService(event.target.value);
+                setSubService("");
                 setMiniGroupSize("");
                 setWeeklyPlan("");
+                setMessage("");
+                setDebugError("");
               }}
               required
             >
-              <option value="">Kies een dienst</option>
-              {lowerSchoolOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
+              <option value="">Kies een aanbod</option>
+              <option value="afspraak">Afspraak inplannen</option>
+              <option value="lager">Lager onderwijs</option>
+              <option value="workshop">Workshop / kamp</option>
+              <option value="secundair">Secundair onderwijs</option>
+              <option value="hoger">Hoger onderwijs</option>
+              <option value="zorgaanbod">Zorgaanbod</option>
+              <option value="photography">SaGo Photography</option>
             </select>
           </label>
+
+          {mainService === "lager" && (
+            <label>
+              Kies binnen lager onderwijs
+              <select
+                value={subService}
+                onChange={(event) => {
+                  setSubService(event.target.value);
+                  setMiniGroupSize("");
+                  setWeeklyPlan("");
+                  setMessage("");
+                  setDebugError("");
+                }}
+                required
+              >
+                <option value="">Kies een dienst</option>
+                {lowerSchoolOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+
+          {subService === "mini-groep" && (
+            <label>
+              Aantal leerlingen
+              <select
+                value={miniGroupSize}
+                onChange={(event) => setMiniGroupSize(event.target.value)}
+                required
+              >
+                <option value="">Kies aantal leerlingen</option>
+                <option value="2">2 leerlingen · €44</option>
+                <option value="3">3 leerlingen · €66</option>
+                <option value="4">4 leerlingen · €88</option>
+                <option value="5">5 leerlingen · €110</option>
+              </select>
+            </label>
+          )}
+
+          {subService === "wekelijkse-begeleiding" && (
+            <label>
+              Formule
+              <select
+                value={weeklyPlan}
+                onChange={(event) => setWeeklyPlan(event.target.value)}
+                required
+              >
+                <option value="">Kies formule</option>
+                <option value="1x">1x per week · €135/maand</option>
+                <option value="2x">2x per week · €250/maand</option>
+              </select>
+            </label>
+          )}
+        </div>
+
+        {showCalendar && (
+          <section className="booking-calendar-panel">
+            <p className="eyebrow">Online afspraak</p>
+            <h2>Kies zelf een beschikbaar moment</h2>
+            <p>
+              Selecteer hieronder een vrij moment in mijn agenda. Na het bevestigen ontvang je
+              automatisch een bevestigingsmail.
+            </p>
+
+            <iframe
+              src={GOOGLE_CALENDAR_EMBED}
+              loading="lazy"
+              title="Afspraak inplannen Studio SaGo"
+            />
+
+            <p className="calendar-fallback">
+              Werkt de agenda niet?{" "}
+              <a href={GOOGLE_CALENDAR_LINK} target="_blank" rel="noopener noreferrer">
+                Open de agenda in een nieuw tabblad.
+              </a>
+            </p>
+          </section>
         )}
 
-        {subService === "mini-groep" && (
-          <label>
-            Aantal leerlingen
-            <select value={miniGroupSize} onChange={(event) => setMiniGroupSize(event.target.value)} required>
-              <option value="">Kies aantal leerlingen</option>
-              <option value="2">2 leerlingen · €44</option>
-              <option value="3">3 leerlingen · €66</option>
-              <option value="4">4 leerlingen · €88</option>
-              <option value="5">5 leerlingen · €110</option>
-            </select>
-          </label>
+        {mainService === "workshop" && (
+          <p className="form-message">
+            Workshops en kampen verlopen via het inschrijvingssysteem. Kies de gewenste workshop
+            op de aanbodpagina.
+          </p>
         )}
 
-        {subService === "wekelijkse-begeleiding" && (
-          <label>
-            Formule
-            <select value={weeklyPlan} onChange={(event) => setWeeklyPlan(event.target.value)} required>
-              <option value="">Kies formule</option>
-              <option value="1x">1x per week · €135/maand</option>
-              <option value="2x">2x per week · €250/maand</option>
-            </select>
-          </label>
+        {mainService === "photography" && (
+          <a
+            className="primary-action"
+            href="https://www.sagophotography.be"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Ga naar SaGo Photography
+          </a>
+        )}
+
+        {showForm && (
+          <>
+            <div className="form-grid">
+              <label>
+                Voornaam
+                <input name="first_name" required />
+              </label>
+
+              <label>
+                Achternaam
+                <input name="last_name" required />
+              </label>
+
+              <label>
+                E-mail
+                <input name="email" type="email" required />
+              </label>
+
+              <label>
+                Telefoon
+                <input name="phone" type="tel" />
+              </label>
+            </div>
+
+            {amount && <p className="form-message">Richtprijs: €{amount}</p>}
+
+            <label>
+              Bericht
+              <textarea
+                name="notes"
+                rows={5}
+                placeholder="Vertel kort waar je hulp bij zoekt."
+              />
+            </label>
+
+            <button className="primary-action" type="submit" disabled={loading}>
+              {loading ? "Verzenden..." : "Aanvraag verzenden"}
+            </button>
+          </>
+        )}
+
+        {message && <p className="form-message">{message}</p>}
+
+        {debugError && (
+          <p className="form-message" style={{ color: "#fe2020" }}>
+            Technische fout: {debugError}
+          </p>
         )}
       </div>
-
-      {mainService === "workshop" && (
-        <p className="form-message">
-          Workshops en kampen verlopen via het inschrijvingssysteem. Kies de gewenste workshop op de aanbodpagina.
-        </p>
-      )}
-
-      {mainService === "photography" && (
-        <a className="primary-action" href="https://www.sagophotography.be" target="_blank" rel="noopener noreferrer">
-          Ga naar SaGo Photography
-        </a>
-      )}
-
-      {isBookingService && (
-        <div className="booking-embed-card">
-          <div>
-            <p className="eyebrow">Online afspraak</p>
-            <h2>Plan je afspraak meteen in</h2>
-            <p>
-              Kies zelf een vrij moment in de agenda. Bezettingen uit Google Agenda worden automatisch meegenomen.
-            </p>
-          </div>
-
-          <a className="primary-action" href={getBookingLink()} target="_blank" rel="noopener noreferrer">
-            Open agenda
-          </a>
-
-          <iframe
-            src={getBookingLink()}
-            className="booking-iframe"
-            title="Afspraak inplannen Studio SaGo"
-          />
-        </div>
-      )}
-
-      {showForm && (
-        <>
-          <div className="form-grid">
-            <label>
-              Voornaam
-              <input name="first_name" required />
-            </label>
-
-            <label>
-              Achternaam
-              <input name="last_name" required />
-            </label>
-
-            <label>
-              E-mail
-              <input name="email" type="email" required />
-            </label>
-
-            <label>
-              Telefoon
-              <input name="phone" type="tel" />
-            </label>
-          </div>
-
-          {amount && <p className="form-message">Richtprijs: €{amount}</p>}
-
-          <label>
-            Bericht
-            <textarea name="notes" rows={5} placeholder="Vertel kort waar je hulp bij zoekt." />
-          </label>
-
-          <button className="primary-action" type="submit" disabled={loading}>
-            {loading ? "Verzenden..." : "Aanvraag verzenden"}
-          </button>
-        </>
-      )}
-
-      {message && <p className="form-message">{message}</p>}
-
-      {debugError && (
-        <p className="form-message" style={{ color: "#fe2020" }}>
-          Technische fout: {debugError}
-        </p>
-      )}
     </form>
   );
 }

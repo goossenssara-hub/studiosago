@@ -2715,3 +2715,258 @@ grid-template-columns:1fr;
   border-radius: 22px;
   background: white;
 }
+.booking-form-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(420px, 0.9fr);
+  gap: 32px;
+  align-items: start;
+}
+
+.booking-fields {
+  min-width: 0;
+}
+
+.booking-calendar-panel {
+  position: sticky;
+  top: 24px;
+}
+
+.booking-calendar-panel h2 {
+  margin: 0 0 1rem;
+  color: var(--navy);
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+}
+
+.booking-calendar-panel p {
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.booking-calendar-panel iframe {
+  margin-top: 1.5rem;
+  width: 100%;
+  min-height: 850px;
+  border: 0;
+  border-radius: 28px;
+  background: #fff;
+}
+
+.calendar-fallback {
+  margin-top: 1rem;
+  font-weight: 800;
+}
+
+.calendar-fallback a {
+  color: var(--navy);
+  text-decoration: underline;
+}
+
+@media (max-width: 1000px) {
+  .booking-form-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-calendar-panel {
+    position: static;
+  }
+}
+/* ==========================================
+   AFSPRAAK INPLANNEN
+========================================== */
+
+.booking-form-layout {
+  display: block;
+  width: 100%;
+}
+
+.booking-fields {
+  width: 100%;
+  max-width: 620px;
+}
+
+.booking-calendar-panel {
+  margin-top: 2rem;
+  width: 100%;
+  max-width: 1100px;
+
+  padding: 2rem;
+  border-radius: 36px;
+  background: rgba(255,255,255,.82);
+  box-shadow: var(--shadow-card);
+}
+
+.booking-calendar-panel .eyebrow{
+  margin-bottom:.5rem;
+}
+
+.booking-calendar-panel h2{
+  font-size: clamp(2.6rem,5vw,4.8rem);
+  line-height:1.05;
+  margin-bottom:1rem;
+}
+
+.booking-calendar-panel p{
+  max-width:700px;
+  margin-bottom:2rem;
+}
+
+.booking-calendar-panel iframe{
+  width:100%;
+  height:900px;
+  border:none;
+  border-radius:24px;
+  background:#fff;
+}
+.booking-form-with-calendar {
+  width: min(1500px, 94%);
+  margin-inline: auto;
+}
+
+.booking-fields {
+  width: 100%;
+}
+
+.booking-choice-grid {
+  max-width: 620px;
+}
+
+.booking-calendar-panel {
+  margin-top: 2.5rem;
+  width: min(1150px, 100%);
+  padding: clamp(2rem, 4vw, 3.5rem);
+  border-radius: 36px;
+  background: rgba(255,255,255,.82);
+  box-shadow: var(--shadow-card);
+}
+
+.booking-calendar-panel h2 {
+  margin: 0 0 1rem;
+  color: var(--navy);
+  font-size: clamp(2.4rem, 5vw, 4.6rem);
+  line-height: 1.05;
+}
+
+.booking-calendar-panel p {
+  max-width: 760px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.booking-calendar-panel iframe {
+  display: block;
+  width: 100%;
+  height: 900px;
+  margin-top: 2rem;
+  border: 0;
+  border-radius: 24px;
+  background: #fff;
+}
+
+.calendar-fallback {
+  margin-top: 1rem;
+  font-weight: 800;
+}
+
+.calendar-fallback a {
+  color: var(--navy);
+  text-decoration: underline;
+}
+
+@media (max-width: 900px) {
+  .booking-choice-grid {
+    max-width: none;
+  }
+
+  .booking-calendar-panel {
+    padding: 1.5rem;
+  }
+
+  .booking-calendar-panel iframe {
+    height: 760px;
+  }
+}
+.booking-form-with-calendar {
+  width: min(1500px, 94%);
+  margin-inline: auto;
+}
+
+.booking-fields {
+  width: 100%;
+}
+
+.booking-choice-grid {
+  max-width: 620px;
+}
+
+.booking-calendar-panel {
+  margin-top: 2.5rem;
+  width: min(1150px, 100%);
+  padding: clamp(2rem, 4vw, 3.5rem);
+  border-radius: 36px;
+  background: rgba(255,255,255,.82);
+  box-shadow: var(--shadow-card);
+}
+
+.booking-calendar-panel h2 {
+  margin: 0 0 1rem;
+  color: var(--navy);
+  font-size: clamp(2.4rem, 5vw, 4.6rem);
+  line-height: 1.05;
+}
+
+.booking-calendar-panel p {
+  max-width: 760px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.booking-calendar-panel iframe {
+  display: block;
+  width: 100%;
+  height: 900px;
+  margin-top: 2rem;
+  border: 0;
+  border-radius: 24px;
+  background: #fff;
+}
+
+.calendar-fallback {
+  margin-top: 1rem;
+  font-weight: 800;
+}
+
+.calendar-fallback a {
+  color: var(--navy);
+  text-decoration: underline;
+}
+
+@media (max-width: 900px) {
+  .booking-choice-grid {
+    max-width: none;
+  }
+
+  .booking-calendar-panel {
+    padding: 1.5rem;
+  }
+
+  .booking-calendar-panel iframe {
+    height: 760px;
+  }
+}
+.login-card {
+  width: min(760px, 92%);
+  margin: 3rem auto 6rem;
+}
+
+.login-card label {
+  display: grid;
+  gap: .8rem;
+}
+
+.login-card input {
+  width: 100%;
+}
+
+.login-card .primary-action {
+  margin-top: 2rem;
+}

@@ -5,7 +5,7 @@ import PageShell from "@/components/PageShell";
 import AdminDashboard from "@/components/admin/AdminDashboard";
 import AdminRequests from "@/components/admin/AdminRequests";
 import AdminPlaceholder from "@/components/admin/AdminPlaceholder";
-import AdminLessonCards from "@/components/AdminLessonCards";``
+import AdminLessonCards from "@/components/AdminLessonCards";
 import AdminAgenda from "@/components/admin/AdminAgenda";
 import AdminWorkshops from "@/components/admin/AdminWorkshops";
 
@@ -36,12 +36,22 @@ export default function AdminPage() {
         <main className="admin-content">
           {tab === "dashboard" && <AdminDashboard />}
           {tab === "requests" && <AdminRequests />}
-{tab === "agenda" && <AdminAgenda />}          {tab === "students" && <AdminPlaceholder title="Leerlingen" text="Hier komt je leerlingenbestand." />}
-          {tab === "parents" && <AdminPlaceholder title="Ouders" text="Hier beheer je oudergegevens." />}
+          {tab === "agenda" && <AdminAgenda />}
+          {tab === "students" && (
+            <AdminPlaceholder title="Leerlingen" text="Hier komt je leerlingenbestand." />
+          )}
+          {tab === "parents" && (
+            <AdminPlaceholder title="Ouders" text="Hier beheer je oudergegevens." />
+          )}
           {tab === "cards" && <AdminLessonCards />}
-          {tab === "invoices" && <AdminPlaceholder title="Facturen" text="Hier komen facturen en documenten." />}
-          {tab === "payments" && <AdminPlaceholder title="Betalingen" text="Hier volg je betalingen op." />}
-{tab === "workshops" && <AdminWorkshops />}        </main>
+          {tab === "invoices" && (
+            <AdminPlaceholder title="Facturen" text="Hier komen facturen en documenten." />
+          )}
+          {tab === "payments" && (
+            <AdminPlaceholder title="Betalingen" text="Hier volg je betalingen op." />
+          )}
+          {tab === "workshops" && <AdminWorkshops />}
+        </main>
       </section>
     </PageShell>
   );

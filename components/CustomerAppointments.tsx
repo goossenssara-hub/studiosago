@@ -38,6 +38,46 @@ export default function CustomerAppointments({
     loadBookings();
   }, [email]);
 
+  async function cancelBooking(booking: Booking) {
+    const confirmed = window.confirm(
+      "Ben je zeker dat je deze afspraak wilt annuleren?"
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch("/api/cancel-booking", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          bookingId: booking.id,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        alert(result.error ?? "Er is iets misgelopen.");
+        return;
+      }
+
+      alert("Je afspraak werd succesvol geannuleerd.");
+
+      setBookings((current) =>
+        current.map((item) =>
+          item.id === booking.id
+            ? { ...item, status: "cancelled" }
+            : item
+        )
+      );
+    } catch (error) {
+      console.error(error);
+      alert("Er is iets misgelopen.");
+    }
+  }
+
   function translateStatus(status: string | null) {
     switch (status) {
       case "confirmed":
@@ -88,8 +128,20 @@ export default function CustomerAppointments({
           )}
 
           <p className="appointment-status">
-            ✅ {translateStatus(booking.status)}
+            {booking.status === "confirmed" && "✅ "}
+            {booking.status === "pending" && "🕒 "}
+            {booking.status === "cancelled" && "❌ "}
+            {translateStatus(booking.status)}
           </p>
+
+          {booking.status !== "cancelled" && (
+            <button
+              className="cancel-booking"
+              onClick={() => cancelBooking(booking)}
+            >
+              Afspraak annuleren
+            </button>
+          )}
         </div>
       ))}
     </div>

@@ -52,13 +52,12 @@ export const fallbackServices: StudioService[] = [
     color: "teal",
     href: "/zorgaanbod",
   },
-
   {
-  name: "SaGo",
-  category: "Photography",
-  description:
-    "Puur, warm en spontaan. Fotografie die echte herinneringen bewaart.",
-  icon: "/assets/foto2.png",
-  color: "purple",
-href: "https://www.sagophotography.be/"},
+    name: "SaGo",
+    category: "Photography",
+    description: "Puur, warm en spontaan. Fotografie die echte herinneringen bewaart.",
+    icon: "/assets/foto2.png",
+    color: "purple",
+    href: "https://www.sagophotography.be/",
+  },
 ];

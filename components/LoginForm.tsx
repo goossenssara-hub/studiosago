@@ -2,32 +2,49 @@
 
 import { FormEvent, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 
 export default function LoginForm() {
+  const router = useRouter();
+
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function handleLogin(event: FormEvent) {
+  async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
     setMessage("");
 
-    const { error } = await supabase.auth.signInWithOtp({
+    const { error } = await supabase.auth.signInWithPassword({
       email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/klantdashboard`,
-      },
+      password,
     });
 
     setLoading(false);
 
     if (error) {
-      setMessage("De inloglink kon niet verzonden worden.");
+      setMessage("E-mailadres of wachtwoord is niet juist.");
       return;
     }
 
-    setMessage("Check je mailbox. Je inloglink is verzonden.");
+    router.replace("/klantendashboard");
+  }
+
+  async function resetPassword() {
+    setMessage("");
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/reset-password`,
+    });
+
+    if (error) {
+      setMessage("Wachtwoord resetten lukt niet.");
+      return;
+    }
+
+    setMessage("Check je mailbox om je wachtwoord opnieuw in te stellen.");
   }
 
   return (
@@ -42,9 +59,29 @@ export default function LoginForm() {
           required
         />
       </label>
+<br>
+</br>
+      <label>
+        Wachtwoord
+        <input
+          type="password"
+          placeholder="Je wachtwoord"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          required
+        />
+      </label>
 
       <button className="primary-action" type="submit" disabled={loading}>
-        {loading ? "Verzenden..." : "Stuur inloglink"}
+        {loading ? "Inloggen..." : "Inloggen"}
+      </button>
+
+      <button
+        type="button"
+        className="secondary-action"
+        onClick={resetPassword}
+      >
+        Wachtwoord vergeten?
       </button>
 
       {message && <p className="form-message">{message}</p>}

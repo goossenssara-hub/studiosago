@@ -189,3 +189,20 @@ body {
     display: none;
   }
 }
+
+.season-engine .primary-action,
+.season-engine .shop-button,
+.season-engine .booking-button {
+  background: var(--season-button) !important;
+  color: #fff !important;
+}
+
+.season-engine .secondary-action {
+  border-color: var(--season-button-border) !important;
+  color: var(--season-button-border) !important;
+}
+
+.season-engine .secondary-action:hover {
+  background: var(--season-button) !important;
+  color: #fff !important;
+}

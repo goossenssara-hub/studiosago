@@ -1,40 +1,64 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import PageShell from "@/components/PageShell";
 import { supabase } from "@/lib/supabase";
-import Link from "next/link";
+import CustomerAppointments from "@/components/CustomerAppointments";
 
 export default function KlantDashboardPage() {
+  const router = useRouter();
+
   const [email, setEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function checkUser() {
-      const { data } = await supabase.auth.getUser();
+    async function loadUser() {
+      try {
+        // Controleer of er een actieve sessie is
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
 
-      if (!data.user) {
-        window.location.href = "/login";
-        return;
+        if (!session) {
+          router.replace("/login");
+          return;
+        }
+
+        // Haal de gebruiker op
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser();
+
+        if (error || !user) {
+          router.replace("/login");
+          return;
+        }
+
+        setEmail(user.email ?? null);
+      } catch (err) {
+        console.error(err);
+        router.replace("/login");
+      } finally {
+        setLoading(false);
       }
-
-      setEmail(data.user.email ?? null);
-      setLoading(false);
     }
 
-    checkUser();
-  }, []);
+    loadUser();
+  }, [router]);
 
   async function logout() {
     await supabase.auth.signOut();
-    window.location.href = "/login";
+    router.replace("/login");
   }
 
   if (loading) {
     return (
       <PageShell>
         <section className="subpage-hero">
-          <p>Dashboard laden...</p>
+          <h1>Dashboard laden...</h1>
         </section>
       </PageShell>
     );
@@ -44,24 +68,23 @@ export default function KlantDashboardPage() {
     <PageShell>
       <section className="subpage-hero">
         <p className="eyebrow">Klantdashboard</p>
-        <h1>Welkom bij Studio SaGo.</h1>
-        <p>Ingelogd als {email}</p>
+        <h1>Welkom bij Studio SaGo</h1>
+        <p>Ingelogd als <strong>{email}</strong></p>
       </section>
 
       <section className="info-grid">
         <div className="info-card">
-          <h2>Mijn afspraken</h2>
-          <p>Hier komen later de geplande afspraken.</p>
+          <h2>📅 Mijn afspraken</h2>
+{email && <CustomerAppointments email={email} />}        </div>
+
+        <div className="info-card">
+          <h2>🎟️ Mijn beurtenkaart</h2>
+          <p>Hier zie je later het aantal resterende beurten.</p>
         </div>
 
         <div className="info-card">
-          <h2>Mijn beurtenkaart</h2>
-          <p>Hier komt later het aantal resterende beurten.</p>
-        </div>
-
-        <div className="info-card">
-          <h2>Mijn documenten</h2>
-          <p>Hier komen later facturen, afspraken en bestanden.</p>
+          <h2>📄 Mijn documenten</h2>
+          <p>Hier verschijnen later facturen, afspraken en downloads.</p>
         </div>
       </section>
 
@@ -70,16 +93,15 @@ export default function KlantDashboardPage() {
           <h2>Afmelden</h2>
           <p>Wil je uitloggen uit je klantdashboard?</p>
 
-          <button className="primary-action" onClick={logout}>
-            Uitloggen
-          </button>
+          <div className="dashboard-buttons">
+  <button className="primary-action" onClick={logout}>
+    Uitloggen
+  </button>
 
-          <br />
-          <br />
-
-          <Link href="/" className="secondary-action">
-            Terug naar home
-          </Link>
+  <Link href="/" className="secondary-action">
+    Terug naar home
+  </Link>
+</div>
         </div>
       </section>
     </PageShell>

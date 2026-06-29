@@ -1,0 +1,68 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+
+type Booking = {
+  id: string;
+  title: string | null;
+  start_time: string | null;
+  end_time: string | null;
+  location: string | null;
+  status: string | null;
+};
+
+export default function CustomerAppointments({ email }: { email: string }) {
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadBookings() {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("id,title,start_time,end_time,location,status")
+        .eq("customer_email", email)
+        .order("start_time", { ascending: true });
+
+      if (!error && data) {
+        setBookings(data);
+      }
+
+      setLoading(false);
+    }
+
+    loadBookings();
+  }, [email]);
+
+  if (loading) {
+    return <p>Afspraken laden...</p>;
+  }
+
+  if (bookings.length === 0) {
+    return <p>Er staan nog geen afspraken in je dashboard.</p>;
+  }
+
+  return (
+    <div className="agenda-list">
+      {bookings.map((booking) => (
+        <div className="agenda-item" key={booking.id}>
+          <div>
+            <strong>{booking.title || "Afspraak Studio SaGo"}</strong>
+
+            {booking.start_time && (
+              <p>
+                {new Date(booking.start_time).toLocaleString("nl-BE", {
+                  dateStyle: "long",
+                  timeStyle: "short",
+                })}
+              </p>
+            )}
+
+            {booking.location && <p>{booking.location}</p>}
+            {booking.status && <p>Status: {booking.status}</p>}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}

@@ -3,6 +3,11 @@ import "./globals.css";
 import "./season-engine.css";
 import SeasonEngine from "@/components/SeasonEngine";
 
+export const metadata: Metadata = {
+  title: "Studio SaGo",
+  description: "Educatieve begeleiding, zorgaanbod en fotografie.",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{

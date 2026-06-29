@@ -16,7 +16,6 @@ export default function KlantDashboardPage() {
   useEffect(() => {
     async function loadUser() {
       try {
-        // Controleer of er een actieve sessie is
         const {
           data: { session },
         } = await supabase.auth.getSession();
@@ -26,7 +25,6 @@ export default function KlantDashboardPage() {
           return;
         }
 
-        // Haal de gebruiker op
         const {
           data: { user },
           error,
@@ -69,13 +67,16 @@ export default function KlantDashboardPage() {
       <section className="subpage-hero">
         <p className="eyebrow">Klantdashboard</p>
         <h1>Welkom bij Studio SaGo</h1>
-        <p>Ingelogd als <strong>{email}</strong></p>
+        <p>
+          Ingelogd als <strong>{email}</strong>
+        </p>
       </section>
 
       <section className="info-grid">
         <div className="info-card">
           <h2>📅 Mijn afspraken</h2>
-{email && <CustomerAppointments email={email} />}        </div>
+          {email && <CustomerAppointments email={email} />}
+        </div>
 
         <div className="info-card">
           <h2>🎟️ Mijn beurtenkaart</h2>
@@ -94,14 +95,14 @@ export default function KlantDashboardPage() {
           <p>Wil je uitloggen uit je klantdashboard?</p>
 
           <div className="dashboard-buttons">
-  <button className="primary-action" onClick={logout}>
-    Uitloggen
-  </button>
+            <button className="primary-action" onClick={logout}>
+              Uitloggen
+            </button>
 
-  <Link href="/" className="secondary-action">
-    Terug naar home
-  </Link>
-</div>
+            <Link href="/" className="secondary-action">
+              Terug naar home
+            </Link>
+          </div>
         </div>
       </section>
     </PageShell>

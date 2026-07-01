@@ -15,6 +15,7 @@ type Booking = {
 export default function CustomerAppointments({ email }: { email: string }) {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadBookings() {
@@ -41,26 +42,33 @@ export default function CustomerAppointments({ email }: { email: string }) {
 
     if (!confirmed) return;
 
-    const response = await fetch("/api/cancel-booking", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ bookingId: booking.id }),
-    });
+    setCancellingId(booking.id);
 
-    const result = await response.json();
+    try {
+      const { error } = await supabase
+        .from("bookings")
+        .update({ status: "cancelled" })
+        .eq("id", booking.id);
 
-    if (!response.ok) {
-      alert(result.error ?? "Annuleren is mislukt.");
-      return;
+      if (error) {
+        alert("Annuleren is mislukt.");
+        console.error(error);
+        return;
+      }
+
+      setBookings((current) =>
+        current.map((item) =>
+          item.id === booking.id ? { ...item, status: "cancelled" } : item
+        )
+      );
+
+      alert("Je afspraak werd geannuleerd.");
+    } catch (error) {
+      console.error("Fout bij annuleren:", error);
+      alert("Er ging iets mis bij het annuleren.");
+    } finally {
+      setCancellingId(null);
     }
-
-    setBookings((current) =>
-      current.map((item) =>
-        item.id === booking.id ? { ...item, status: "cancelled" } : item
-      )
-    );
   }
 
   function translateStatus(status: string | null) {
@@ -114,10 +122,14 @@ export default function CustomerAppointments({ email }: { email: string }) {
 
           {booking.status !== "cancelled" && (
             <button
+              type="button"
               className="cancel-booking"
               onClick={() => cancelBooking(booking)}
+              disabled={cancellingId === booking.id}
             >
-              Afspraak annuleren
+              {cancellingId === booking.id
+                ? "Annuleren..."
+                : "Afspraak annuleren"}
             </button>
           )}
         </div>

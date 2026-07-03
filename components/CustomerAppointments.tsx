@@ -19,20 +19,28 @@ export default function CustomerAppointments({ email }: { email: string }) {
 
   useEffect(() => {
     async function loadBookings() {
+      setLoading(true);
+
       const { data, error } = await supabase
         .from("bookings")
         .select("id,title,start_time,end_time,location,status")
         .eq("customer_email", email)
+        .neq("status", "cancelled")
         .order("start_time", { ascending: true });
 
-      if (!error && data) {
-        setBookings(data);
+      if (error) {
+        console.error("Fout bij laden afspraken:", error);
+        setLoading(false);
+        return;
       }
 
+      setBookings(data ?? []);
       setLoading(false);
     }
 
-    loadBookings();
+    if (email) {
+      loadBookings();
+    }
   }, [email]);
 
   async function cancelBooking(booking: Booking) {
@@ -45,21 +53,33 @@ export default function CustomerAppointments({ email }: { email: string }) {
     setCancellingId(booking.id);
 
     try {
-      const { error } = await supabase
-        .from("bookings")
-        .update({ status: "cancelled" })
-        .eq("id", booking.id);
+      const response = await fetch("/api/cancel-bookings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ bookingId: booking.id }),
+      });
 
-      if (error) {
-        alert("Annuleren is mislukt.");
-        console.error(error);
+      const text = await response.text();
+      console.log("Cancel response:", response.status, text);
+
+      let result: { error?: string } = {};
+
+      try {
+        result = text ? JSON.parse(text) : {};
+      } catch {
+        alert("Server gaf geen geldige JSON terug. Kijk in de console.");
+        return;
+      }
+
+      if (!response.ok) {
+        alert(result.error ?? "Annuleren is mislukt.");
         return;
       }
 
       setBookings((current) =>
-        current.map((item) =>
-          item.id === booking.id ? { ...item, status: "cancelled" } : item
-        )
+        current.filter((item) => item.id !== booking.id)
       );
 
       alert("Je afspraak werd geannuleerd.");
@@ -89,7 +109,7 @@ export default function CustomerAppointments({ email }: { email: string }) {
   }
 
   if (bookings.length === 0) {
-    return <p>Er staan nog geen afspraken in je dashboard.</p>;
+    return <p>Er staan momenteel geen actieve afspraken in je dashboard.</p>;
   }
 
   return (
@@ -116,22 +136,19 @@ export default function CustomerAppointments({ email }: { email: string }) {
           <p className="appointment-status">
             {booking.status === "confirmed" && "✅ "}
             {booking.status === "pending" && "🕒 "}
-            {booking.status === "cancelled" && "❌ "}
             {translateStatus(booking.status)}
           </p>
 
-          {booking.status !== "cancelled" && (
-            <button
-              type="button"
-              className="cancel-booking"
-              onClick={() => cancelBooking(booking)}
-              disabled={cancellingId === booking.id}
-            >
-              {cancellingId === booking.id
-                ? "Annuleren..."
-                : "Afspraak annuleren"}
-            </button>
-          )}
+          <button
+            type="button"
+            className="cancel-bookings"
+            onClick={() => cancelBooking(booking)}
+            disabled={cancellingId === booking.id}
+          >
+            {cancellingId === booking.id
+              ? "Annuleren..."
+              : "Afspraak annuleren"}
+          </button>
         </div>
       ))}
     </div>

@@ -6,6 +6,7 @@ import Link from "next/link";
 import PageShell from "@/components/PageShell";
 import { supabase } from "@/lib/supabase";
 import CustomerAppointments from "@/components/CustomerAppointments";
+import SessionTimeout from "@/components/SessionTimeout";
 
 export default function KlantDashboardPage() {
   const router = useRouter();

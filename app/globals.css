@@ -1,5 +1,5 @@
 /* =========================================================
-   Studio SaGo — globals.css
+   Studio SaGo Ã¢â‚¬â€ globals.css
    Nieuwe opgeschoonde basis
    - Studio SaGo huisstijl
    - Minder dubbele regels
@@ -658,7 +658,7 @@ th {
 }
 
 /* =========================
-   9. WEBSHOP — NIEUW EN STABIEL
+   9. WEBSHOP Ã¢â‚¬â€ NIEUW EN STABIEL
    ========================= */
 .webshop-page {
   position: relative;
@@ -1367,4 +1367,473 @@ th {
   margin-top: 1rem;
   font-weight: 600;
   color: #54955c;
+}
+.account-menu {
+  position: relative;
+  display: inline-block;
+}
+
+.account-button {
+  cursor: pointer;
+  border: none;
+}
+
+.account-dropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  min-width: 220px;
+  background: white;
+  border-radius: 22px;
+  padding: 14px;
+  box-shadow: 0 18px 45px rgba(3, 54, 99, 0.18);
+  z-index: 999;
+}
+
+.account-dropdown a,
+.account-dropdown button {
+  display: block;
+  width: 100%;
+  padding: 12px 14px;
+  border: none;
+  background: transparent;
+  color: #033663;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  border-radius: 14px;
+  cursor: pointer;
+}
+
+.account-dropdown a:hover,
+.account-dropdown button:hover {
+  background: #f5f9fb;
+}
+
+.kleuters-page {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Hero op kleuteraanbod zonder extra achtergrondkaart */
+.kleuters-hero {
+  padding: 4rem 1.5rem 2rem;
+  text-align: center;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.kleuters-hero h1 {
+  color: #033663;
+  font-size: clamp(2.2rem, 5vw, 4rem);
+  margin: 0.5rem 0 1rem;
+}
+
+.kleuters-hero p {
+  max-width: 760px;
+  margin: 0 auto;
+  color: #033663;
+  font-size: 1.2rem;
+}
+
+/* Kleuteraanbod: alleen de kaart zelf is zichtbaar */
+.kleuter-aanbod {
+  max-width: 900px;
+  margin: 3rem auto;
+  padding: 0 1rem;
+  display: grid;
+  gap: 2rem;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.kleuter-card {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid rgba(255, 255, 255, 0.68);
+  border-radius: 28px;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  box-shadow: 0 18px 45px rgba(3, 54, 99, 0.12);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.kleuter-image {
+  position: relative;
+  min-height: 360px;
+}
+
+.kleuter-image img {
+  object-fit: cover;
+}
+
+.kleuter-content {
+  padding: 2.5rem;
+  color: #033663;
+}
+
+.kleuter-content h2 {
+  font-size: 2rem;
+  margin: 1rem 0;
+}
+
+.badge {
+  display: inline-block;
+  background: #28b9aa;
+  color: white;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.kleuter-button {
+  display: inline-block;
+  margin-top: 1.5rem;
+  background: #fea020;
+  color: #033663;
+  padding: 0.9rem 1.2rem;
+  border-radius: 999px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* =========================================================
+   14. FILMROL + LIGHTBOX â€” NIEUWE SCHONE VERSIE
+   ========================================================= */
+
+/* Sectie zonder extra witte/beige kaart */
+.filmrol-section {
+  width: 100%;
+  padding: 5rem 0;
+  margin: 0;
+  text-align: center;
+  overflow: hidden;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.filmrol-section h2 {
+  margin: 0 0 2rem;
+  color: var(--navy);
+  font-family: "StudioTitle", sans-serif;
+  font-size: clamp(2.4rem, 6vw, 5rem);
+  line-height: 1;
+}
+
+/* Transparante container */
+.filmrol-wrapper {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  padding: 18px 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* De volledige filmstrook */
+.filmrol-track {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  width: max-content;
+  padding: 34px 0;
+  background: #111;
+  will-change: transform;
+  animation: filmrol-scroll 38s linear infinite;
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.22);
+}
+
+/* Subtiele golfbeweging op de hele filmrol, niet op aparte foto's */
+.filmrol-wrapper {
+  animation: filmrol-soft-wave 5.5s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+/* Pauze bij hover */
+.filmrol-wrapper:hover .filmrol-track {
+  animation-play-state: paused;
+}
+
+/* Witte perforatiegaten boven en onder, vast aan de filmstrook */
+.filmrol-track::before,
+.filmrol-track::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 20px;
+  z-index: 5;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    90deg,
+    #ffffff 0 13px,
+    transparent 13px 30px
+  );
+  background-repeat: repeat-x;
+}
+
+.filmrol-track::before {
+  top: 8px;
+}
+
+.filmrol-track::after {
+  bottom: 8px;
+}
+
+/* Elk beeldvakje in de filmrol */
+.filmrol-frame {
+  position: relative;
+  flex: 0 0 auto;
+  width: 300px;
+  height: 200px;
+  padding: 10px;
+  margin: 0;
+  border: 0;
+  border-left: 10px solid #111;
+  border-right: 10px solid #111;
+  background: #111;
+  overflow: hidden;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+/* Extra zwarte scheiding tussen de foto's */
+.filmrol-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border-left: 3px solid #111;
+  border-right: 3px solid #111;
+}
+
+/* Afgeronde foto in het filmvakje */
+.filmrol-frame img {
+  position: relative;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border: 4px solid #111;
+  border-radius: 18px;
+  transition: transform 0.25s ease, filter 0.25s ease;
+}
+
+.filmrol-frame:hover img {
+  transform: scale(1.04);
+  filter: brightness(1.04);
+}
+
+/* Oneindig doorlopen: werkt met dubbele image-array in FilmrolSlider.tsx */
+@keyframes filmrol-scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Golf op de volledige strook */
+@keyframes filmrol-soft-wave {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  25% {
+    transform: translateY(-5px) rotate(-0.35deg);
+  }
+
+  50% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  75% {
+    transform: translateY(5px) rotate(0.35deg);
+  }
+}
+
+/* ---------- Lightbox met pijlen ---------- */
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: rgba(0, 0, 0, 0.9);
+  animation: lightbox-fade-in 0.22s ease;
+}
+
+.lightbox-content {
+  position: relative;
+  width: min(90vw, 1200px);
+  max-height: 88vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lightbox-content img {
+  width: 100%;
+  max-height: 88vh;
+  height: auto;
+  object-fit: contain;
+  border-radius: 24px;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.45);
+}
+
+.lightbox-close,
+.lightbox-arrow {
+  position: absolute;
+  z-index: 100000;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--navy);
+  font-weight: 950;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.lightbox-close {
+  top: 28px;
+  right: 28px;
+  width: 54px;
+  height: 54px;
+  font-size: 28px;
+}
+
+.lightbox-arrow {
+  top: 50%;
+  width: 64px;
+  height: 64px;
+  font-size: 54px;
+  line-height: 1;
+  transform: translateY(-50%);
+}
+
+.lightbox-arrow-left {
+  left: 32px;
+}
+
+.lightbox-arrow-right {
+  right: 32px;
+}
+
+.lightbox-close:hover {
+  transform: scale(1.08);
+  background: #fff7e8;
+}
+
+.lightbox-arrow:hover {
+  transform: translateY(-50%) scale(1.08);
+  background: #fff7e8;
+}
+
+@keyframes lightbox-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Responsive filmrol */
+@media (max-width: 900px) {
+  .filmrol-frame {
+    width: 260px;
+    height: 175px;
+  }
+}
+
+@media (max-width: 700px) {
+  .filmrol-section {
+    padding: 3rem 0;
+  }
+
+  .filmrol-wrapper {
+    padding: 12px 0;
+  }
+
+  .filmrol-track {
+    padding: 30px 0;
+    animation-duration: 32s;
+  }
+
+  .filmrol-frame {
+    width: 220px;
+    height: 150px;
+    padding: 8px;
+    border-left-width: 8px;
+    border-right-width: 8px;
+  }
+
+  .filmrol-track::before,
+  .filmrol-track::after {
+    height: 16px;
+    background-image: repeating-linear-gradient(
+      90deg,
+      #ffffff 0 10px,
+      transparent 10px 24px
+    );
+  }
+
+  .filmrol-track::before {
+    top: 7px;
+  }
+
+  .filmrol-track::after {
+    bottom: 7px;
+  }
+
+  .lightbox {
+    padding: 1rem;
+  }
+
+  .lightbox-close {
+    top: 16px;
+    right: 16px;
+    width: 46px;
+    height: 46px;
+    font-size: 24px;
+  }
+
+  .lightbox-arrow {
+    width: 48px;
+    height: 48px;
+    font-size: 38px;
+  }
+
+  .lightbox-arrow-left {
+    left: 12px;
+  }
+
+  .lightbox-arrow-right {
+    right: 12px;
+  }
 }

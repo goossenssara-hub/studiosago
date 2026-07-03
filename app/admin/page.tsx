@@ -8,7 +8,7 @@ import AdminPlaceholder from "@/components/admin/AdminPlaceholder";
 import AdminLessonCards from "@/components/AdminLessonCards";
 import AdminAgenda from "@/components/admin/AdminAgenda";
 import AdminWorkshops from "@/components/admin/AdminWorkshops";
-import AdminManualAdd from "@/components/AdminManualAdd";
+import AdminManualAdd from "@/components/admin/AdminManualAdd";
 
 export default function AdminPage() {
   const [tab, setTab] = useState("dashboard");

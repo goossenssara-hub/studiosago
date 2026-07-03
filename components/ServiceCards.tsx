@@ -43,8 +43,6 @@ export default function ServiceCards() {
     loadServices();
   }, []);
 
-  
-
   return (
     <section className="services-section" id="aanbod" aria-label="Educatief aanbod">
       <div className="section-heading">
@@ -64,39 +62,41 @@ export default function ServiceCards() {
 
             <div className="service-content">
               <h3 className="service-title">
-  {service.name}
+                {service.name}
 
-  {service.category && (
-    <>
-      <br />
-      <span className={`service-category ${service.color}`}>
-        {service.category}
-      </span>
-    </>
-  )}
-</h3>
+                {service.category && (
+                  <>
+                    <br />
+                    <span className={`service-category ${service.color}`}>
+                      {service.category}
+                    </span>
+                  </>
+                )}
+              </h3>
+
               <p>{service.description}</p>
             </div>
 
-{service.href.startsWith("http") ? (
-  <a
-    className="service-arrow"
-    href={service.href}
-    target="_blank"
-    rel="noopener noreferrer"
-    aria-label={`${service.name} ${service.category} bekijken`}
-  >
-    <ArrowRight size={32} strokeWidth={3} />
-  </a>
-) : (
-  <Link
-    className="service-arrow"
-    href={service.href}
-    aria-label={`${service.name} ${service.category} bekijken`}
-  >
-    <ArrowRight size={32} strokeWidth={3} />
-  </Link>
-)}           </article>
+            {service.href.startsWith("http") ? (
+              <a
+                className="service-arrow"
+                href={service.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`${service.name} ${service.category} bekijken`}
+              >
+                <ArrowRight size={32} strokeWidth={3} />
+              </a>
+            ) : (
+              <Link
+                className="service-arrow"
+                href={service.href}
+                aria-label={`${service.name} ${service.category} bekijken`}
+              >
+                <ArrowRight size={32} strokeWidth={3} />
+              </Link>
+            )}
+          </article>
         ))}
       </div>
     </section>

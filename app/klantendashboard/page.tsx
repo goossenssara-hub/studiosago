@@ -65,6 +65,7 @@ export default function KlantDashboardPage() {
 
   return (
     <PageShell>
+      <SessionTimeout />
       <section className="subpage-hero">
         <p className="eyebrow">Klantdashboard</p>
         <h1>Welkom bij Studio SaGo</h1>

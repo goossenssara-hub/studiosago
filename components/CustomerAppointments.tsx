@@ -141,7 +141,7 @@ export default function CustomerAppointments({ email }: { email: string }) {
 
           <button
             type="button"
-            className="cancel-bookings"
+            className="cancel-booking"
             onClick={() => cancelBooking(booking)}
             disabled={cancellingId === booking.id}
           >

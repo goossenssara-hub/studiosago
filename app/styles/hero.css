@@ -1,0 +1,117 @@
+/* =========================================================
+   Hero-secties
+   ========================================================= */
+
+.hero {
+  position: relative;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  align-items: center;
+  gap: 32px;
+  min-height: 640px;
+  padding: 70px 72px 40px;
+  overflow: hidden;
+}
+
+.hero-copy {
+  position: relative;
+  z-index: 5;
+  max-width: 620px;
+  padding-left: 30px;
+}
+
+.hero h1 {
+  margin: 0;
+  color: var(--navy);
+  font-size: clamp(54px, 6vw, 92px);
+  line-height: 0.92;
+  letter-spacing: -3px;
+  font-weight: 950;
+}
+
+.hero h1 .orange { color: var(--orange-deep); }
+.hero h1 .yellow { color: var(--yellow); }
+.hero h1 .teal { color: var(--teal); }
+.hero h1 .navy { color: var(--navy); }
+.hero h1 .red { color: var(--red); }
+.hero h1 .green { color: var(--green); }
+.hero h1 .purple { color: var(--purple); }
+
+.lead {
+  max-width: 520px;
+  margin: 28px 0 0;
+  color: var(--navy);
+  font-size: 26px;
+  line-height: 1.35;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 30px;
+}
+
+.hero-art {
+  position: relative;
+  z-index: 2;
+  min-height: 520px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+}
+
+.hero-illustration {
+  position: relative;
+  z-index: 2;
+  width: min(780px, 54vw);
+  height: auto;
+  transform: translateY(72px);
+}
+
+.webshop-hero {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 90px 32px 50px;
+  text-align: center;
+}
+
+.webshop-hero h1 {
+  margin: 0;
+  color: var(--navy);
+  font-size: clamp(44px, 5vw, 78px);
+  line-height: 1;
+  font-weight: 950;
+  letter-spacing: -2px;
+}
+
+.webshop-hero p:not(.eyebrow) {
+  max-width: 850px;
+  margin: 26px auto 0;
+  color: var(--navy);
+  font-size: clamp(18px, 2vw, 24px);
+  line-height: 1.45;
+  font-weight: 650;
+}
+
+.kleuters-hero {
+  padding: 4rem 1.5rem 2rem;
+  text-align: center;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.kleuters-hero h1 {
+  color: var(--navy);
+  font-size: clamp(2.2rem, 5vw, 4rem);
+  margin: 0.5rem 0 1rem;
+}
+
+.kleuters-hero p {
+  max-width: 760px;
+  margin: 0 auto;
+  color: var(--navy);
+  font-size: 1.2rem;
+}

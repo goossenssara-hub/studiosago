@@ -7,22 +7,18 @@ export default function KleutersPage() {
   return (
     <PageShell>
       <main className="kleuters-page">
-        <section className="kleuters-hero">
-          <div className="container">
-            <p className="eyebrow">Educatief aanbod voor kleuters</p>
+        <section className="subpage-hero">
+          <p className="eyebrow">Educatief aanbod voor kleuters</p>
 
-            <h1>Kleuteraanbod</h1>
+          <h1>Kleuteraanbod</h1>
 
-            <p>
-              Spelend leren, ontdekken en groeien. Ontdek het educatieve
-              kleuteraanbod van Studio SaGo in samenwerking met Speelweelde.
-            </p>
-          </div>
+          <p>
+            Spelend leren, ontdekken en groeien. Ontdek het educatieve
+            kleuteraanbod van Studio SaGo in samenwerking met Speelweelde.
+          </p>
         </section>
 
         <section className="kleuter-aanbod">
-          
-
           <article className="kleuter-card">
             <div className="kleuter-image">
               <Image
@@ -35,6 +31,7 @@ export default function KleutersPage() {
 
             <div className="kleuter-content">
               <span className="badge">Educatief kleuterkamp</span>
+
               <h2>Eilandenavontuur</h2>
 
               <p>
@@ -57,8 +54,7 @@ export default function KleutersPage() {
           </article>
         </section>
 
-<FilmrolSlider />
-
+        <FilmrolSlider />
       </main>
     </PageShell>
   );

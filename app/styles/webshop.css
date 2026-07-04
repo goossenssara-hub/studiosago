@@ -1,0 +1,145 @@
+/* =========================================================
+   Webshop
+   ========================================================= */
+
+.webshop-page {
+  position: relative;
+  z-index: 8;
+}
+
+.shop-grid {
+  width: 100%;
+  max-width: var(--content-max);
+  margin: 20px auto 100px;
+  padding: 0 54px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 28px;
+  align-items: start;
+}
+
+.shop-card {
+  position: relative;
+  min-height: 360px;
+  overflow: hidden;
+  border-radius: 32px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.68);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  transition: transform 0.28s ease, box-shadow 0.28s ease;
+}
+
+.shop-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 26px 58px rgba(3, 54, 99, 0.16);
+}
+
+.shop-card.orange { background: linear-gradient(145deg, rgba(251,103,48,.16), rgba(255,255,255,.82) 58%); }
+.shop-card.teal { background: linear-gradient(145deg, rgba(40,185,170,.16), rgba(255,255,255,.82) 58%); }
+.shop-card.purple { background: linear-gradient(145deg, rgba(155,129,184,.17), rgba(255,255,255,.82) 58%); }
+.shop-card.green { background: linear-gradient(145deg, rgba(84,149,92,.16), rgba(255,255,255,.82) 58%); }
+
+.shop-content {
+  min-height: 360px;
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.shop-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px;
+  gap: 18px;
+  align-items: start;
+}
+
+.shop-title {
+  min-width: 0;
+}
+
+.shop-category {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  line-height: 1.3;
+}
+
+.shop-card.orange .shop-category { color: var(--orange-deep); }
+.shop-card.green .shop-category { color: var(--green); }
+.shop-card.purple .shop-category { color: var(--purple); }
+.shop-card.teal .shop-category { color: var(--teal); }
+
+.shop-title h2,
+.shop-card h2 {
+  margin: 0;
+  color: var(--navy);
+  font-family: "StudioTitle", sans-serif;
+  font-size: clamp(25px, 2.3vw, 34px);
+  line-height: 1.08;
+  font-weight: 950;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
+}
+
+.shop-thumbnail {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(3, 54, 99, 0.15);
+}
+
+.shop-thumbnail-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.shop-description {
+  flex: 1;
+  min-height: 54px;
+}
+
+.shop-description p {
+  margin: 0;
+  color: var(--navy);
+  font-size: 16px;
+  line-height: 1.55;
+  font-weight: 650;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.shop-card:hover .shop-description p {
+  display: block;
+  overflow: visible;
+}
+
+.shop-bottom {
+  margin-top: auto;
+  padding-top: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border-top: 1px solid rgba(3, 54, 99, 0.08);
+}
+
+.shop-bottom strong {
+  flex-shrink: 0;
+  color: var(--navy);
+  font-size: clamp(25px, 2.2vw, 32px);
+  line-height: 1;
+  font-weight: 950;
+}

@@ -1,0 +1,247 @@
+/* =========================================================
+   Seizoenen, filmrol en lightbox
+   ========================================================= */
+
+.seasonal-page {
+  min-height: 100vh;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+.season-engine {
+  --season-button: linear-gradient(135deg, var(--orange-deep), var(--orange));
+  --season-button-border: var(--navy);
+}
+
+.season-engine.season-spring,
+.season-engine.seasonal-spring {
+  --season-button: linear-gradient(135deg, #ff9fc7, #f26aa5);
+  --season-button-border: #f26aa5;
+}
+
+.season-engine.season-summer,
+.season-engine.seasonal-summer {
+  --season-button: linear-gradient(135deg, var(--orange-deep), var(--orange));
+  --season-button-border: var(--orange);
+}
+
+.season-engine.season-autumn,
+.season-engine.seasonal-autumn {
+  --season-button: linear-gradient(135deg, #d6721d, #a94e14);
+  --season-button-border: #d6721d;
+}
+
+.season-engine.season-winter,
+.season-engine.seasonal-winter {
+  --season-button: linear-gradient(135deg, #6ba9ff, #2f73d9);
+  --season-button-border: #6ba9ff;
+}
+
+.season-engine .primary-action,
+.season-engine button.primary-action {
+  background: var(--season-button) !important;
+  color: #fff !important;
+}
+
+.filmrol-section {
+  width: 100%;
+  padding: 5rem 0;
+  margin: 0;
+  text-align: center;
+  overflow: hidden;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.filmrol-section h2 {
+  margin: 0 0 2rem;
+  color: var(--navy);
+  font-family: "StudioTitle", sans-serif;
+  font-size: clamp(2.4rem, 6vw, 5rem);
+  line-height: 1;
+}
+
+.filmrol-wrapper {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  padding: 18px 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  animation: filmrol-soft-wave 5.5s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+.filmrol-track {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  width: max-content;
+  padding: 34px 0;
+  background: #111;
+  will-change: transform;
+  animation: filmrol-scroll 38s linear infinite;
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.22);
+}
+
+.filmrol-wrapper:hover .filmrol-track {
+  animation-play-state: paused;
+}
+
+.filmrol-track::before,
+.filmrol-track::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 20px;
+  z-index: 5;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(90deg, #fff 0 13px, transparent 13px 30px);
+  background-repeat: repeat-x;
+}
+
+.filmrol-track::before { top: 8px; }
+.filmrol-track::after { bottom: 8px; }
+
+.filmrol-frame {
+  position: relative;
+  flex: 0 0 auto;
+  width: 300px;
+  height: 200px;
+  padding: 10px;
+  margin: 0;
+  border: 0;
+  border-left: 10px solid #111;
+  border-right: 10px solid #111;
+  background: #111;
+  overflow: hidden;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.filmrol-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border-left: 3px solid #111;
+  border-right: 3px solid #111;
+}
+
+.filmrol-frame img {
+  position: relative;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border: 4px solid #111;
+  border-radius: 18px;
+  transition: transform 0.25s ease, filter 0.25s ease;
+}
+
+.filmrol-frame:hover img {
+  transform: scale(1.04);
+  filter: brightness(1.04);
+}
+
+@keyframes filmrol-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes filmrol-soft-wave {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-5px) rotate(-0.35deg); }
+  50% { transform: translateY(0) rotate(0deg); }
+  75% { transform: translateY(5px) rotate(0.35deg); }
+}
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: rgba(0, 0, 0, 0.9);
+  animation: lightbox-fade-in 0.22s ease;
+}
+
+.lightbox-content {
+  position: relative;
+  width: min(90vw, 1200px);
+  max-height: 88vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lightbox-content img {
+  width: 100%;
+  max-height: 88vh;
+  height: auto;
+  object-fit: contain;
+  border-radius: 24px;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.45);
+}
+
+.lightbox-close,
+.lightbox-arrow {
+  position: absolute;
+  z-index: 100000;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: #fff;
+  color: var(--navy);
+  font-weight: 950;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.lightbox-close {
+  top: 28px;
+  right: 28px;
+  width: 54px;
+  height: 54px;
+  font-size: 28px;
+}
+
+.lightbox-arrow {
+  top: 50%;
+  width: 64px;
+  height: 64px;
+  font-size: 54px;
+  line-height: 1;
+  transform: translateY(-50%);
+}
+
+.lightbox-arrow-left { left: 32px; }
+.lightbox-arrow-right { right: 32px; }
+
+.lightbox-close:hover {
+  transform: scale(1.08);
+  background: #fff7e8;
+}
+
+.lightbox-arrow:hover {
+  transform: translateY(-50%) scale(1.08);
+  background: #fff7e8;
+}
+
+@keyframes lightbox-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

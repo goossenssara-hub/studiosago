@@ -1,0 +1,206 @@
+/* =========================================================
+   Layout, header, navigatie en algemene pagina-structuur
+   ========================================================= */
+
+.page-shell {
+  position: relative;
+  width: min(1440px, calc(100% - 44px));
+  min-height: calc(100vh - 52px);
+  margin: 26px auto;
+  padding: 24px;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  box-shadow: var(--shadow-strong);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.page-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 10% 8%, rgba(40, 185, 170, 0.08), transparent 26%),
+    radial-gradient(circle at 90% 16%, rgba(254, 160, 32, 0.08), transparent 26%),
+    radial-gradient(circle at 50% 82%, rgba(155, 129, 184, 0.06), transparent 35%);
+}
+
+.page-shell > * {
+  position: relative;
+  z-index: 1;
+}
+
+.site-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.site-header {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px 48px 12px;
+}
+
+.logo {
+  width: 245px;
+  height: auto;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  font-weight: 800;
+}
+
+.nav a {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 6px;
+  color: var(--navy);
+  transition: color 0.25s ease;
+}
+
+.nav a::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -10px;
+  width: 0;
+  height: 5px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(135deg, var(--social-start), var(--social-end));
+  transform: translateX(-50%);
+  transition: width 0.3s ease;
+}
+
+.nav a:hover::after,
+.nav a.active::after {
+  width: 75%;
+}
+
+.nav-icon {
+  width: 28px;
+  height: 28px;
+}
+
+.login-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 150px;
+  min-height: 40px;
+  padding: 12px 22px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(135deg, var(--social-start), var(--social-end));
+  color: #fff;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.login-button:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+}
+
+.login-button img {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.section-heading {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto 40px;
+  text-align: center;
+}
+
+.section-heading h2 {
+  margin: 0;
+  color: var(--navy);
+  font-size: clamp(30px, 4vw, 50px);
+  line-height: 1.02;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: var(--teal);
+  font-size: 13px;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.subpage-hero {
+  position: relative;
+  z-index: 8;
+  max-width: 960px;
+  padding: 72px 58px 38px;
+}
+
+.subpage-hero p:not(.eyebrow) {
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1.6;
+}
+
+.info-grid {
+  position: relative;
+  z-index: 8;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+  padding: 10px 54px 70px;
+}
+
+.info-grid.single {
+  grid-template-columns: 1fr;
+}
+
+.info-card,
+.form-card,
+.table-card,
+.portal-card,
+.testimonial-card,
+.booking-embed-card,
+.booking-calendar-panel {
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  box-shadow: 0 16px 34px rgba(3, 54, 99, 0.09);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.info-card,
+.form-card,
+.table-card {
+  padding: 30px;
+}
+
+.info-card.wide {
+  grid-column: span 2;
+}
+
+.info-card p,
+.form-card p,
+.table-card p {
+  color: var(--muted);
+  line-height: 1.7;
+  font-weight: 600;
+}

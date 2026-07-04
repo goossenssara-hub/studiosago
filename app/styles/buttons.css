@@ -1,0 +1,213 @@
+/* =========================================================
+   Studio SaGo Design System - Buttons
+   ========================================================= */
+
+:root {
+  --button-start: var(--orange-deep);
+  --button-end: var(--orange);
+  --button-text: #ffffff;
+}
+
+/* Seizoenskleuren */
+.season-spring,
+.seasonal-spring {
+  --button-start: #ff9fc7;
+  --button-end: #f26aa5;
+}
+
+.season-summer,
+.seasonal-summer {
+  --button-start: #fb6730;
+  --button-end: #fea020;
+}
+
+.season-autumn,
+.seasonal-autumn {
+  --button-start: #d6721d;
+  --button-end: #a94e14;
+}
+
+.season-winter,
+.seasonal-winter {
+  --button-start: #6ba9ff;
+  --button-end: #2f73d9;
+}
+
+/* Alle knoppen */
+a.primary-action,
+a.secondary-action,
+a.shop-button,
+a.kleuter-button,
+a.login-button,
+button.primary-action,
+button.secondary-action,
+button.shop-button,
+button.kleuter-button,
+button.login-button,
+.primary-action,
+.secondary-action,
+.shop-button,
+.kleuter-button,
+.login-button {
+  position: relative;
+  z-index: 1;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 68px;
+  padding: 0 42px;
+
+  border: none;
+  border-radius: 9999px;
+
+  background: linear-gradient(
+    135deg,
+    var(--button-start),
+    var(--button-end)
+  );
+
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-decoration: none !important;
+
+  overflow: visible;
+  box-shadow: none;
+
+  transition:
+    transform 0.25s ease,
+    filter 0.25s ease;
+}
+
+/* Forceer ook alle inhoud binnen de knop naar wit */
+.primary-action *,
+.secondary-action *,
+.shop-button *,
+.kleuter-button *,
+.login-button * {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  fill: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* Alle link-states wit houden */
+a.primary-action:link,
+a.primary-action:visited,
+a.primary-action:hover,
+a.primary-action:focus,
+a.primary-action:active,
+a.secondary-action:link,
+a.secondary-action:visited,
+a.secondary-action:hover,
+a.secondary-action:focus,
+a.secondary-action:active,
+a.shop-button:link,
+a.shop-button:visited,
+a.shop-button:hover,
+a.shop-button:focus,
+a.shop-button:active,
+a.kleuter-button:link,
+a.kleuter-button:visited,
+a.kleuter-button:hover,
+a.kleuter-button:focus,
+a.kleuter-button:active,
+a.login-button:link,
+a.login-button:visited,
+a.login-button:hover,
+a.login-button:focus,
+a.login-button:active {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+/* Geen schaduw */
+.primary-action::after,
+.secondary-action::after,
+.shop-button::after,
+.kleuter-button::after,
+.login-button::after {
+  display: none;
+}
+
+/* Glans */
+.primary-action::before,
+.secondary-action::before,
+.shop-button::before,
+.kleuter-button::before,
+.login-button::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.18),
+    rgba(255, 255, 255, 0)
+  );
+
+  pointer-events: none;
+}
+
+/* Hover */
+.primary-action:hover,
+.secondary-action:hover,
+.shop-button:hover,
+.kleuter-button:hover,
+.login-button:hover {
+  transform: translateY(-3px);
+  filter: brightness(1.03);
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+/* Active */
+.primary-action:active,
+.secondary-action:active,
+.shop-button:active,
+.kleuter-button:active,
+.login-button:active {
+  transform: translateY(-1px);
+  box-shadow: none;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+/* Focus */
+.primary-action:focus-visible,
+.secondary-action:focus-visible,
+.shop-button:focus-visible,
+.kleuter-button:focus-visible,
+.login-button:focus-visible {
+  outline: 4px solid rgba(40, 185, 170, 0.25);
+  outline-offset: 5px;
+}
+
+/* Variaties */
+.shop-button {
+  min-height: 60px;
+  padding-inline: 30px;
+}
+
+.kleuter-button {
+  margin-top: 1.5rem;
+}
+
+.login-button {
+  min-height: 58px;
+  padding-inline: 28px;
+}
+
+.aanbod-detail-card .primary-action {
+  width: 100%;
+}
+
+.cta-card .primary-action {
+  min-width: 280px;
+}

@@ -6,13 +6,12 @@ import { supabase } from "@/lib/supabase";
 const GOOGLE_CALENDAR_EMBED =
   "https://calendar.google.com/calendar/appointments/schedules/AcZssZ3WJPmozNx50TOG5q9aODtgqNb2zBEnVO15NK6WTbYrNm5YWLwDqmJ6edb83qz-llOLh9Jk_959?gv=true";
 
-const GOOGLE_CALENDAR_LINK =
-  "https://calendar.app.google/9UCRsaVW2goDPDsT6";
+const GOOGLE_CALENDAR_LINK = "https://calendar.app.google/9UCRsaVW2goDPDsT6";
 
 const lowerSchoolOptions = [
   { value: "huiswerkbegeleiding", label: "Huiswerkbegeleiding", amount: 35, calendar: true },
   { value: "mini-groep", label: "Mini-groep", amount: null, calendar: false },
-  { value: "10-beurtenkaart", label: "10-beurtenkaart", amount: 320, calendar: true },
+  { value: "10-beurtenkaart", label: "10-beurtenkaart", amount: 320, calendar: false },
   { value: "wekelijkse-begeleiding", label: "Wekelijkse begeleiding", amount: null, calendar: true },
   { value: "tekstcorrectie", label: "Correctie van teksten tot 1500 woorden", amount: 15, calendar: false },
 ];
@@ -27,6 +26,7 @@ export default function BookingForm() {
   const [loading, setLoading] = useState(false);
 
   const selectedLower = lowerSchoolOptions.find((item) => item.value === subService);
+  const isTenBeurtenkaart = mainService === "lager" && subService === "10-beurtenkaart";
 
   const amount =
     subService === "mini-groep"
@@ -40,17 +40,19 @@ export default function BookingForm() {
       : selectedLower?.amount ?? null;
 
   const showCalendar =
-    mainService === "afspraak" ||
-    mainService === "secundair" ||
-    mainService === "hoger" ||
-    mainService === "zorgaanbod" ||
-    (mainService === "lager" && selectedLower?.calendar);
+    !isTenBeurtenkaart &&
+    (mainService === "afspraak" ||
+      mainService === "secundair" ||
+      mainService === "hoger" ||
+      mainService === "zorgaanbod" ||
+      (mainService === "lager" && selectedLower?.calendar));
 
   const showForm =
     mainService &&
     mainService !== "photography" &&
     mainService !== "workshop" &&
-    !showCalendar;
+    !showCalendar &&
+    !isTenBeurtenkaart;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -61,13 +63,26 @@ export default function BookingForm() {
     setMessage("");
     setDebugError("");
 
-    if (mainService === "photography") {
-      window.open("https://www.sagophotography.be", "_blank", "noopener,noreferrer");
-      setLoading(false);
+    const form = new FormData(event.currentTarget);
+
+    if (isTenBeurtenkaart) {
+      const response = await fetch("/api/checkout/ten-beurtenkaart", {
+        method: "POST",
+        body: form,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.url) {
+        setLoading(false);
+        setMessage("De betaling kon niet gestart worden.");
+        setDebugError(data.error ?? "Geen checkout-url ontvangen.");
+        return;
+      }
+
+      window.location.href = data.url;
       return;
     }
-
-    const form = new FormData(event.currentTarget);
 
     const firstName = String(form.get("first_name") || "");
     const lastName = String(form.get("last_name") || "");
@@ -80,9 +95,7 @@ export default function BookingForm() {
       subService ? `Keuze lager onderwijs: ${selectedLower?.label}` : "",
       miniGroupSize ? `Mini-groep: ${miniGroupSize} leerlingen` : "",
       weeklyPlan
-        ? `Wekelijkse begeleiding: ${
-            weeklyPlan === "1x" ? "1x per week" : "2x per week"
-          }`
+        ? `Wekelijkse begeleiding: ${weeklyPlan === "1x" ? "1x per week" : "2x per week"}`
         : "",
       amount ? `Richtprijs: €${amount}` : "",
       notes ? `Bericht: ${notes}` : "",
@@ -106,11 +119,7 @@ export default function BookingForm() {
     if (contactError || !contact) {
       setLoading(false);
       setMessage("Je aanvraag kon niet worden opgeslagen.");
-      setDebugError(
-        contactError
-          ? `${contactError.message} ${contactError.details ?? ""} ${contactError.hint ?? ""}`
-          : "Geen contact teruggekregen van Supabase."
-      );
+      setDebugError(contactError?.message ?? "Geen contact teruggekregen van Supabase.");
       return;
     }
 
@@ -128,9 +137,7 @@ export default function BookingForm() {
 
     if (bookingError) {
       setMessage("Contact opgeslagen, maar boeking lukte niet.");
-      setDebugError(
-        `${bookingError.message} ${bookingError.details ?? ""} ${bookingError.hint ?? ""}`
-      );
+      setDebugError(bookingError.message);
       return;
     }
 
@@ -194,39 +201,77 @@ export default function BookingForm() {
               </select>
             </label>
           )}
-
-          {subService === "mini-groep" && (
-            <label>
-              Aantal leerlingen
-              <select
-                value={miniGroupSize}
-                onChange={(event) => setMiniGroupSize(event.target.value)}
-                required
-              >
-                <option value="">Kies aantal leerlingen</option>
-                <option value="2">2 leerlingen · €44</option>
-                <option value="3">3 leerlingen · €66</option>
-                <option value="4">4 leerlingen · €88</option>
-                <option value="5">5 leerlingen · €110</option>
-              </select>
-            </label>
-          )}
-
-          {subService === "wekelijkse-begeleiding" && (
-            <label>
-              Formule
-              <select
-                value={weeklyPlan}
-                onChange={(event) => setWeeklyPlan(event.target.value)}
-                required
-              >
-                <option value="">Kies formule</option>
-                <option value="1x">1x per week · €135/maand</option>
-                <option value="2x">2x per week · €250/maand</option>
-              </select>
-            </label>
-          )}
         </div>
+
+        {isTenBeurtenkaart && (
+          <section className="booking-calendar-panel">
+            <p className="eyebrow">10-beurtenkaart</p>
+            <h2>Gegevens leerling</h2>
+            <p>Vul de gegevens in. Daarna kun je meteen online betalen.</p>
+
+            <div className="form-grid">
+              <label>
+                Naam leerling
+                <input name="student_name" required />
+              </label>
+
+              <label>
+                Leeftijd leerling
+                <input name="student_age" type="number" min="5" max="19" required />
+              </label>
+
+              <label>
+                Studiejaar
+                <select name="school_year" required>
+                  <option value="">Kies studiejaar</option>
+                  <option value="1e leerjaar">1e leerjaar</option>
+                  <option value="2e leerjaar">2e leerjaar</option>
+                  <option value="3e leerjaar">3e leerjaar</option>
+                  <option value="4e leerjaar">4e leerjaar</option>
+                  <option value="5e leerjaar">5e leerjaar</option>
+                  <option value="6e leerjaar">6e leerjaar</option>
+                  <option value="1e middelbaar">1e middelbaar</option>
+                  <option value="2e middelbaar">2e middelbaar</option>
+                  <option value="3e middelbaar">3e middelbaar</option>
+                  <option value="4e middelbaar">4e middelbaar</option>
+                  <option value="5e middelbaar">5e middelbaar</option>
+                  <option value="6e middelbaar">6e middelbaar</option>
+                </select>
+              </label>
+
+              <label>
+                Naam ouder
+                <input name="parent_name" required />
+              </label>
+
+              <label>
+                E-mail
+                <input name="email" type="email" required />
+              </label>
+
+              <label>
+                Telefoon
+                <input name="phone" type="tel" required />
+              </label>
+            </div>
+
+            <label>
+              Opmerking
+              <textarea
+                name="notes"
+                rows={5}
+                placeholder="Zijn er zaken waarmee ik rekening mag houden?"
+              />
+            </label>
+
+            <input type="hidden" name="product" value="10-beurtenkaart" />
+            <input type="hidden" name="amount" value="320" />
+
+            <button className="primary-action" type="submit" disabled={loading}>
+              {loading ? "Betaling starten..." : "Betaal 10-beurtenkaart · €320"}
+            </button>
+          </section>
+        )}
 
         {showCalendar && (
           <section className="booking-calendar-panel">
@@ -237,11 +282,7 @@ export default function BookingForm() {
               automatisch een bevestigingsmail.
             </p>
 
-            <iframe
-              src={GOOGLE_CALENDAR_EMBED}
-              loading="lazy"
-              title="Afspraak inplannen Studio SaGo"
-            />
+            <iframe src={GOOGLE_CALENDAR_EMBED} loading="lazy" title="Afspraak inplannen Studio SaGo" />
 
             <p className="calendar-fallback">
               Werkt de agenda niet?{" "}
@@ -250,65 +291,6 @@ export default function BookingForm() {
               </a>
             </p>
           </section>
-        )}
-
-        {mainService === "workshop" && (
-          <p className="form-message">
-            Workshops en kampen verlopen via het inschrijvingssysteem. Kies de gewenste workshop
-            op de aanbodpagina.
-          </p>
-        )}
-
-        {mainService === "photography" && (
-          <a
-            className="primary-action"
-            href="https://www.sagophotography.be"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Ga naar SaGo Photography
-          </a>
-        )}
-
-        {showForm && (
-          <>
-            <div className="form-grid">
-              <label>
-                Voornaam
-                <input name="first_name" required />
-              </label>
-
-              <label>
-                Achternaam
-                <input name="last_name" required />
-              </label>
-
-              <label>
-                E-mail
-                <input name="email" type="email" required />
-              </label>
-
-              <label>
-                Telefoon
-                <input name="phone" type="tel" />
-              </label>
-            </div>
-
-            {amount && <p className="form-message">Richtprijs: €{amount}</p>}
-
-            <label>
-              Bericht
-              <textarea
-                name="notes"
-                rows={5}
-                placeholder="Vertel kort waar je hulp bij zoekt."
-              />
-            </label>
-
-            <button className="primary-action" type="submit" disabled={loading}>
-              {loading ? "Verzenden..." : "Aanvraag verzenden"}
-            </button>
-          </>
         )}
 
         {message && <p className="form-message">{message}</p>}

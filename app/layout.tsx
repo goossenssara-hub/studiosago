@@ -6,7 +6,14 @@ import SeasonEngine from "@/components/SeasonEngine";
 export const metadata: Metadata = {
   title: "Studio SaGo",
   description: "Educatieve begeleiding, zorgaanbod en fotografie.",
+
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
 };
+
 
 export default function RootLayout({
   children,

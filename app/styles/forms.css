@@ -1,0 +1,145 @@
+/* =========================================================
+   Forms, tables, dashboard buttons en account menu
+   ========================================================= */
+
+.form-card,
+.table-card {
+  position: relative;
+  z-index: 8;
+  margin: 0 54px 100px;
+}
+
+.form-card.small {
+  max-width: 560px;
+}
+
+.form-grid,
+.admin-agenda-form,
+.admin-workshop-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+label {
+  display: grid;
+  gap: 8px;
+  color: var(--navy);
+  font-weight: 900;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  border: 2px solid var(--border-blue);
+  border-radius: var(--radius-sm);
+  padding: 13px 14px;
+  color: var(--navy);
+  background: rgba(255, 255, 255, 0.84);
+}
+
+textarea {
+  resize: vertical;
+  margin-top: 18px;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 14px;
+  border-bottom: 1px solid rgba(3, 54, 99, 0.12);
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  color: var(--navy);
+}
+
+.dashboard-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 40px;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+}
+
+.dashboard-buttons .primary-action,
+.dashboard-buttons .secondary-action {
+  min-width: 280px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-card {
+  max-width: 760px;
+  margin: 0 auto 90px;
+}
+
+.login-card .primary-action,
+.login-card .secondary-action {
+  margin-top: 20px;
+}
+
+.login-card .secondary-action {
+  margin-left: 24px;
+}
+
+.appointment-status {
+  margin-top: 1rem;
+  font-weight: 600;
+  color: var(--green);
+}
+
+.account-menu {
+  position: relative;
+  display: inline-block;
+}
+
+.account-button {
+  cursor: pointer;
+  border: none;
+}
+
+.account-dropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  min-width: 220px;
+  background: white;
+  border-radius: 22px;
+  padding: 14px;
+  box-shadow: 0 18px 45px rgba(3, 54, 99, 0.18);
+  z-index: 999;
+}
+
+.account-dropdown a,
+.account-dropdown button {
+  display: block;
+  width: 100%;
+  padding: 12px 14px;
+  border: none;
+  background: transparent;
+  color: var(--navy);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  border-radius: 14px;
+  cursor: pointer;
+}
+
+.account-dropdown a:hover,
+.account-dropdown button:hover {
+  background: #f5f9fb;
+}

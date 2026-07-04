@@ -1,0 +1,285 @@
+/* =========================================================
+   Responsive
+   ========================================================= */
+
+@media (max-width: 1120px) {
+  .site-header {
+    flex-wrap: wrap;
+  }
+
+  .nav {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+
+  .hero,
+  .about-hero,
+  .speelweelde-section {
+    grid-template-columns: 1fr;
+  }
+
+  .hero {
+    padding: 42px 28px 20px;
+    min-height: auto;
+  }
+
+  .hero-copy {
+    padding-left: 0;
+    text-align: center;
+    margin: 0 auto;
+  }
+
+  .lead,
+  .hero-actions {
+    margin-left: auto;
+    margin-right: auto;
+    justify-content: center;
+  }
+
+  .hero-art {
+    min-height: auto;
+    justify-content: center;
+  }
+
+  .hero-illustration {
+    width: min(720px, 95vw);
+    transform: translateY(28px);
+  }
+
+  .services-grid,
+  .cards,
+  .info-grid,
+  .shop-grid,
+  .testimonial-grid,
+  .admin-dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .info-card.wide {
+    grid-column: span 1;
+  }
+
+  .basisschool-page .aanbod-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .filmrol-frame {
+    width: 260px;
+    height: 175px;
+  }
+}
+
+@media (max-width: 760px) {
+  .page-shell {
+    width: calc(100% - 20px);
+    margin: 10px auto;
+    padding: 12px;
+    border-radius: var(--radius-md);
+  }
+
+  .site-header {
+    padding: 20px 14px 8px;
+  }
+
+  .logo {
+    width: 190px;
+  }
+
+  .nav {
+    gap: 8px;
+    font-size: 14px;
+  }
+
+  .nav-icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .login-button {
+    padding: 11px 16px;
+  }
+
+  .hero {
+    padding: 24px 14px 8px;
+  }
+
+  .hero h1 {
+    font-size: 52px;
+  }
+
+  .lead {
+    font-size: 19px;
+  }
+
+  .cards-section,
+  .services-section,
+  .info-grid,
+  .subpage-hero,
+  .portal-grid,
+  .shop-grid,
+  .about-grid,
+  .testimonial-grid {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .services-grid,
+  .cards,
+  .info-grid,
+  .shop-grid,
+  .about-grid,
+  .testimonial-grid,
+  .form-grid,
+  .admin-agenda-form,
+  .admin-workshop-form,
+  .admin-layout,
+  .admin-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-card,
+  .table-card {
+    margin-left: 18px;
+    margin-right: 18px;
+  }
+
+  .shop-content {
+    min-height: 0;
+    padding: 24px;
+  }
+
+  .shop-header {
+    grid-template-columns: minmax(0, 1fr) 82px;
+    gap: 14px;
+  }
+
+  .shop-thumbnail {
+    width: 82px;
+    height: 82px;
+    border-radius: 18px;
+  }
+
+  .shop-title h2,
+  .shop-card h2 {
+    font-size: 25px;
+  }
+
+  .shop-description p,
+  .shop-card:hover .shop-description p {
+    display: block;
+    overflow: visible;
+  }
+
+  .shop-bottom {
+    gap: 12px;
+  }
+
+  .shop-button {
+    padding: 11px 20px;
+  }
+
+  .about-hero,
+  .speelweelde-section {
+    padding: 28px 18px;
+    gap: 32px;
+  }
+
+  .site-footer {
+    padding: 60px 18px 40px;
+  }
+
+  .dashboard-buttons {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .dashboard-buttons .primary-action,
+  .dashboard-buttons .secondary-action {
+    width: 100%;
+    max-width: 360px;
+  }
+
+  .basisschool-hero {
+    padding: 42px 18px 24px;
+    text-align: center;
+  }
+
+  .basisschool-page .aanbod-detail-grid {
+    grid-template-columns: 1fr;
+    padding: 0 18px;
+    margin-bottom: 60px;
+  }
+
+  .basisschool-page .aanbod-detail-card {
+    padding: 26px;
+    border-radius: 28px;
+  }
+
+  .basisschool-page .aanbod-detail-card .extra-content {
+    max-height: none;
+    opacity: 1;
+    overflow: visible;
+    transform: none;
+    margin-top: 22px;
+  }
+
+  .basisschool-page .aanbod-detail-card:hover {
+    transform: none;
+  }
+
+  .filmrol-section {
+    padding: 3rem 0;
+  }
+
+  .filmrol-wrapper {
+    padding: 12px 0;
+  }
+
+  .filmrol-track {
+    padding: 30px 0;
+    animation-duration: 32s;
+  }
+
+  .filmrol-frame {
+    width: 220px;
+    height: 150px;
+    padding: 8px;
+    border-left-width: 8px;
+    border-right-width: 8px;
+  }
+
+  .filmrol-track::before,
+  .filmrol-track::after {
+    height: 16px;
+    background-image: repeating-linear-gradient(90deg, #fff 0 10px, transparent 10px 24px);
+  }
+
+  .filmrol-track::before { top: 7px; }
+  .filmrol-track::after { bottom: 7px; }
+
+  .lightbox {
+    padding: 1rem;
+  }
+
+  .lightbox-close {
+    top: 16px;
+    right: 16px;
+    width: 46px;
+    height: 46px;
+    font-size: 24px;
+  }
+
+  .lightbox-arrow {
+    width: 48px;
+    height: 48px;
+    font-size: 38px;
+  }
+
+  .lightbox-arrow-left { left: 12px; }
+  .lightbox-arrow-right { right: 12px; }
+}

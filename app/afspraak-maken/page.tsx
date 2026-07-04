@@ -25,6 +25,10 @@ function AfspraakMakenContent() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  const [selectedDate, setSelectedDate] = useState("");
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+
   useEffect(() => {
     async function loadPass() {
       const {
@@ -57,6 +61,33 @@ function AfspraakMakenContent() {
 
     if (passId) loadPass();
   }, [passId, router]);
+
+  async function loadAvailableSlots(date: string) {
+    setSelectedDate(date);
+    setAvailableSlots([]);
+    setError("");
+
+    if (!date) return;
+
+    setSlotsLoading(true);
+
+    try {
+      const response = await fetch(`/api/google-availability?date=${date}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || "Beschikbare momenten konden niet geladen worden.");
+        return;
+      }
+
+      setAvailableSlots(data.slots || []);
+    } catch (error) {
+      console.error(error);
+      setError("Beschikbare momenten konden niet geladen worden.");
+    } finally {
+      setSlotsLoading(false);
+    }
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -129,20 +160,37 @@ function AfspraakMakenContent() {
               <div className="form-grid">
                 <label>
                   Datum
-                  <input name="date" type="date" required />
+                  <input
+                    name="date"
+                    type="date"
+                    required
+                    value={selectedDate}
+                    onChange={(event) => loadAvailableSlots(event.target.value)}
+                  />
                 </label>
 
                 <label>
                   Tijdstip
-                  <select name="time" required>
-                    <option value="">Kies tijdstip</option>
-                    <option value="09:00">09:00</option>
-                    <option value="10:00">10:00</option>
-                    <option value="11:00">11:00</option>
-                    <option value="13:00">13:00</option>
-                    <option value="14:00">14:00</option>
-                    <option value="15:00">15:00</option>
-                    <option value="16:00">16:00</option>
+                  <select
+                    name="time"
+                    required
+                    disabled={!selectedDate || slotsLoading || availableSlots.length === 0}
+                  >
+                    <option value="">
+                      {slotsLoading
+                        ? "Beschikbare momenten laden..."
+                        : !selectedDate
+                        ? "Kies eerst een datum"
+                        : availableSlots.length === 0
+                        ? "Geen vrije momenten"
+                        : "Kies tijdstip"}
+                    </option>
+
+                    {availableSlots.map((slot) => (
+                      <option key={slot} value={slot}>
+                        {slot}
+                      </option>
+                    ))}
                   </select>
                 </label>
 

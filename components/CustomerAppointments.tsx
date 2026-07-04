@@ -6,13 +6,22 @@ import { supabase } from "@/lib/supabase";
 type Booking = {
   id: string;
   title: string | null;
-  start_time: string | null;
+  start_time: string |null;
   end_time: string | null;
+  appointment_date: string | null;
+  appointment_time: string | null;
+  appointment_type: string | null;
+  customer_address: string | null;
+  google_event_link: string | null;
   location: string | null;
   status: string | null;
 };
 
-export default function CustomerAppointments({ email }: { email: string }) {
+export default function CustomerAppointments({
+  email,
+}: {
+  email: string;
+}) {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
@@ -23,13 +32,25 @@ export default function CustomerAppointments({ email }: { email: string }) {
 
       const { data, error } = await supabase
         .from("bookings")
-        .select("id,title,start_time,end_time,location,status")
+        .select(`
+          id,
+          title,
+          start_time,
+          end_time,
+          appointment_date,
+          appointment_time,
+          appointment_type,
+          customer_address,
+          google_event_link,
+          location,
+          status
+        `)
         .eq("customer_email", email)
         .neq("status", "cancelled")
-        .order("start_time", { ascending: true });
+        .order("appointment_date", { ascending: true });
 
       if (error) {
-        console.error("Fout bij laden afspraken:", error);
+        console.error(error);
         setLoading(false);
         return;
       }
@@ -58,23 +79,15 @@ export default function CustomerAppointments({ email }: { email: string }) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ bookingId: booking.id }),
+        body: JSON.stringify({
+          bookingId: booking.id,
+        }),
       });
 
-      const text = await response.text();
-      console.log("Cancel response:", response.status, text);
-
-      let result: { error?: string } = {};
-
-      try {
-        result = text ? JSON.parse(text) : {};
-      } catch {
-        alert("Server gaf geen geldige JSON terug. Kijk in de console.");
-        return;
-      }
+      const result = await response.json();
 
       if (!response.ok) {
-        alert(result.error ?? "Annuleren is mislukt.");
+        alert(result.error ?? "Annuleren mislukt.");
         return;
       }
 
@@ -82,10 +95,10 @@ export default function CustomerAppointments({ email }: { email: string }) {
         current.filter((item) => item.id !== booking.id)
       );
 
-      alert("Je afspraak werd geannuleerd.");
+      alert("Je afspraak werd succesvol geannuleerd.");
     } catch (error) {
-      console.error("Fout bij annuleren:", error);
-      alert("Er ging iets mis bij het annuleren.");
+      console.error(error);
+      alert("Er ging iets mis.");
     } finally {
       setCancellingId(null);
     }
@@ -95,10 +108,13 @@ export default function CustomerAppointments({ email }: { email: string }) {
     switch (status) {
       case "confirmed":
         return "Afspraak bevestigd";
+
       case "pending":
         return "Afspraak in behandeling";
+
       case "cancelled":
         return "Afspraak geannuleerd";
+
       default:
         return "Afspraak";
     }
@@ -109,29 +125,81 @@ export default function CustomerAppointments({ email }: { email: string }) {
   }
 
   if (bookings.length === 0) {
-    return <p>Er staan momenteel geen actieve afspraken in je dashboard.</p>;
+    return (
+      <p>Er staan momenteel geen actieve afspraken in je dashboard.</p>
+    );
   }
 
   return (
     <div className="agenda-list">
       {bookings.map((booking) => (
         <div className="agenda-item" key={booking.id}>
-          <strong>{booking.title || "Afspraak Studio SaGo"}</strong>
+          <strong>
+            {booking.title || "Afspraak Studio SaGo"}
+          </strong>
 
-          {booking.start_time && (
-            <p>
-              📅{" "}
-              {new Date(booking.start_time).toLocaleString("nl-BE", {
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </p>
+          <p>
+            📅{" "}
+            {booking.appointment_date
+              ? new Date(
+                  booking.appointment_date
+                ).toLocaleDateString("nl-BE", {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })
+              : booking.start_time
+              ? new Date(
+                  booking.start_time
+                ).toLocaleDateString("nl-BE", {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })
+              : "Datum onbekend"}
+          </p>
+
+          <p>
+            🕒{" "}
+            {booking.appointment_time
+              ? booking.appointment_time
+              : booking.start_time
+              ? new Date(
+                  booking.start_time
+                ).toLocaleTimeString("nl-BE", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+              : "Tijdstip onbekend"}
+          </p>
+
+          {booking.appointment_type === "home" &&
+            booking.customer_address && (
+              <p>🏠 {booking.customer_address}</p>
+            )}
+
+          {booking.appointment_type === "digital" && (
+            <div style={{ marginTop: 10 }}>
+              <p>💻 Digitale afspraak</p>
+
+              {booking.google_event_link && (
+                <a
+                  href={booking.google_event_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="primary-action"
+                  style={{
+                    display: "inline-block",
+                    marginTop: 8,
+                  }}
+                >
+                  Google Meet openen
+                </a>
+              )}
+            </div>
           )}
-
-          {booking.location && <p>📍 {booking.location}</p>}
 
           <p className="appointment-status">
             {booking.status === "confirmed" && "✅ "}

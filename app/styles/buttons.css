@@ -52,13 +52,22 @@ button.login-button,
   position: relative;
   z-index: 1;
 
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+display: inline-flex;
+align-items: center;
+justify-content: center;
+gap: .5rem;
 
-  min-height: 68px;
-  padding: 0 42px;
+height: 68px;
+min-height: 68px;
 
+padding: 0 42px;
+
+line-height: 1;
+text-align: center;
+vertical-align: middle;
+white-space: nowrap;
+
+flex-shrink: 0;
   border: none;
   border-radius: 9999px;
 
@@ -210,4 +219,21 @@ a.login-button:active {
 
 .cta-card .primary-action {
   min-width: 280px;
+}
+/* Zorg dat links zich als echte knoppen gedragen */
+a.primary-action,
+a.secondary-action,
+a.shop-button,
+a.kleuter-button,
+a.login-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Volledige breedte indien gewenst */
+.primary-action.full-width {
+  width: 100%;
+  max-width: 420px;
+  margin-inline: auto;
 }

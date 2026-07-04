@@ -8,10 +8,24 @@ import { supabase } from "@/lib/supabase";
 import CustomerAppointments from "@/components/CustomerAppointments";
 import SessionTimeout from "@/components/SessionTimeout";
 
-export default function KlantDashboardPage() {
-  const router = useRouter();
+type Pass = {
+  id: string;
+  customer_email: string;
+  title: string;
+  total_credits: number;
+  remaining_credits: number;
+  product?: string | null;
+  level?: string | null;
+  total_sessions?: number | null;
+  remaining_sessions?: number | null;
+  status?: string | null;
+  created_at?: string | null;
+};
 
+export default function KlantendashboardPage() {
+  const router = useRouter();
   const [email, setEmail] = useState<string | null>(null);
+  const [passes, setPasses] = useState<Pass[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -31,12 +45,27 @@ export default function KlantDashboardPage() {
           error,
         } = await supabase.auth.getUser();
 
-        if (error || !user) {
+        if (error || !user?.email) {
           router.replace("/login");
           return;
         }
 
-        setEmail(user.email ?? null);
+        setEmail(user.email);
+
+        const { data: userPasses, error: passesError } = await supabase
+          .from("passes")
+          .select("*")
+          .eq("customer_email", user.email)
+          .eq("status", "active")
+          .order("created_at", { ascending: false });
+
+        if (passesError) {
+          console.error("Beurtenkaarten ophalen mislukt:", passesError);
+          setPasses([]);
+          return;
+        }
+
+        setPasses(userPasses || []);
       } catch (err) {
         console.error(err);
         router.replace("/login");
@@ -66,8 +95,9 @@ export default function KlantDashboardPage() {
   return (
     <PageShell>
       <SessionTimeout />
+
       <section className="subpage-hero">
-        <p className="eyebrow">Klantdashboard</p>
+        <p className="eyebrow">Klantendashboard</p>
         <h1>Welkom bij Studio SaGo</h1>
         <p>
           Ingelogd als <strong>{email}</strong>
@@ -81,8 +111,90 @@ export default function KlantDashboardPage() {
         </div>
 
         <div className="info-card">
-          <h2>🎟️ Mijn beurtenkaart</h2>
-          <p>Hier zie je later het aantal resterende beurten.</p>
+          <h2>🎟️ Mijn beurtenkaarten</h2>
+
+          {passes.length === 0 ? (
+            <>
+              <p>Je hebt momenteel geen actieve beurtenkaart.</p>
+
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  marginTop: 24,
+                }}
+              >
+                <Link href="/webshop" className="primary-action">
+                  Beurtenkaart kopen
+                </Link>
+              </div>
+            </>
+          ) : (
+            <div style={{ display: "grid", gap: 18 }}>
+              {passes.map((pass) => {
+                const total = pass.total_sessions ?? pass.total_credits;
+                const remaining =
+                  pass.remaining_sessions ?? pass.remaining_credits;
+                const title = pass.product ?? pass.title;
+                const percentage = total > 0 ? (remaining / total) * 100 : 0;
+
+                return (
+                  <div
+                    key={pass.id}
+                    style={{
+                      padding: 20,
+                      border: "1px solid #e5e7eb",
+                      borderRadius: 16,
+                      background: "#fff",
+                    }}
+                  >
+                    <h3 style={{ color: "#033663", marginBottom: 8 }}>
+                      {title}
+                    </h3>
+
+                    <p>
+                      Nog <strong>{remaining}</strong> van de{" "}
+                      <strong>{total}</strong> beurten beschikbaar.
+                    </p>
+
+                    <div
+                      style={{
+                        height: 12,
+                        background: "#e5e7eb",
+                        borderRadius: 999,
+                        overflow: "hidden",
+                        marginTop: 14,
+                        marginBottom: 18,
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: `${percentage}%`,
+                          background: "#28b9aa",
+                          height: "100%",
+                        }}
+                      />
+                    </div>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        marginTop: 20,
+                      }}
+                    >
+                      <Link
+                        href={`/afspraak-maken?passId=${pass.id}`}
+                        className="primary-action"
+                      >
+                        Afspraak plannen
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <div className="info-card">
@@ -94,7 +206,7 @@ export default function KlantDashboardPage() {
       <section className="info-grid single">
         <div className="info-card cta-card">
           <h2>Afmelden</h2>
-          <p>Wil je uitloggen uit je klantdashboard?</p>
+          <p>Wil je uitloggen uit je klantendashboard?</p>
 
           <div className="dashboard-buttons">
             <button className="primary-action" onClick={logout}>

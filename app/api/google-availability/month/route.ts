@@ -5,11 +5,10 @@ export const runtime = "nodejs";
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const year = searchParams.get("year");
-    const month = searchParams.get("month");
+    const date = searchParams.get("date");
 
-    if (!year || !month) {
-      return NextResponse.json({ days: [] });
+    if (!date) {
+      return NextResponse.json({ slots: [] });
     }
 
     if (!process.env.GOOGLE_APPS_SCRIPT_AVAILABILITY_URL) {
@@ -20,19 +19,22 @@ export async function GET(request: Request) {
     }
 
     const response = await fetch(
-      `${process.env.GOOGLE_APPS_SCRIPT_AVAILABILITY_URL}?year=${year}&month=${month}`,
+      `${process.env.GOOGLE_APPS_SCRIPT_AVAILABILITY_URL}?date=${encodeURIComponent(
+        date
+      )}`,
       { cache: "no-store" }
     );
 
     const data = await response.json();
 
     return NextResponse.json({
-      days: data.days || [],
+      slots: data.slots || [],
     });
   } catch (error) {
     console.error(error);
+
     return NextResponse.json(
-      { error: "Beschikbare dagen konden niet geladen worden." },
+      { error: "Beschikbare momenten konden niet geladen worden." },
       { status: 500 }
     );
   }

@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
+export const runtime = "nodejs";
+
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-function isWithin15KmOfBovenmeel(address: string) {
+function isWithin15KmOfPeer(address: string) {
   const normalized = address.toLowerCase();
 
   return (
@@ -36,7 +38,9 @@ export async function POST(request: Request) {
       cancellationPolicyAccepted,
     } = await request.json();
 
-    if (!passId || !email || !date || !time) {
+    const cleanNotes = String(notes || "").trim();
+
+    if (!passId || !email || !date || !time || !cleanNotes) {
       return NextResponse.json(
         { error: "Niet alle verplichte velden zijn ingevuld." },
         { status: 400 }
@@ -65,7 +69,7 @@ export async function POST(request: Request) {
         );
       }
 
-      if (!isWithin15KmOfBovenmeel(customerAddress)) {
+      if (!isWithin15KmOfPeer(customerAddress)) {
         return NextResponse.json(
           {
             error:
@@ -74,6 +78,34 @@ export async function POST(request: Request) {
           { status: 400 }
         );
       }
+    }
+
+    const { data: availability, error: availabilityError } =
+      await supabaseAdmin
+        .from("availability")
+        .select(
+          "id, date, start_time, end_time, max_places, booked_places, active"
+        )
+        .eq("date", date)
+        .eq("start_time", time)
+        .eq("active", true)
+        .single();
+
+    if (availabilityError || !availability) {
+      return NextResponse.json(
+        { error: "Dit tijdstip is niet beschikbaar." },
+        { status: 400 }
+      );
+    }
+
+    const maxPlaces = availability.max_places ?? 1;
+    const bookedPlaces = availability.booked_places ?? 0;
+
+    if (bookedPlaces >= maxPlaces) {
+      return NextResponse.json(
+        { error: "Dit tijdstip is ondertussen volzet." },
+        { status: 400 }
+      );
     }
 
     const { data: pass, error: passError } = await supabaseAdmin
@@ -100,52 +132,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const appointmentTitle = pass.title ?? pass.product ?? "Afspraak Studio SaGo";
+    const appointmentTitle =
+      pass.title ?? pass.product ?? "Afspraak Studio SaGo";
 
-    let googleEventId: string | null = null;
-    let googleEventLink: string | null = null;
-    let googleMeetLink: string | null = null;
-
-    if (process.env.GOOGLE_APPS_SCRIPT_URL) {
-      try {
-        const calendarResponse = await fetch(process.env.GOOGLE_APPS_SCRIPT_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email,
-            date,
-            time,
-            notes,
-            title: appointmentTitle,
-            appointmentType,
-            customerAddress:
-              appointmentType === "home" ? customerAddress : null,
-          }),
-        });
-
-        if (calendarResponse.ok) {
-          const calendarData = await calendarResponse.json();
-
-          googleEventId = calendarData.eventId || null;
-          googleEventLink = calendarData.eventLink || null;
-          googleMeetLink = calendarData.meetLink || null;
-        } else {
-          console.error(
-            "Google Calendar fout:",
-            await calendarResponse.text()
-          );
-        }
-      } catch (calendarError) {
-        console.error("Google Calendar koppeling mislukt:", calendarError);
-      }
-    }
+    const newRemaining = remaining - 1;
+    const newBookedPlaces = bookedPlaces + 1;
 
     const location =
-      appointmentType === "home"
-        ? customerAddress
-        : googleMeetLink || googleEventLink || "Digitale afspraak";
+      appointmentType === "home" ? customerAddress : "Digitale afspraak";
 
     const { data: booking, error: bookingError } = await supabaseAdmin
       .from("bookings")
@@ -159,8 +153,6 @@ export async function POST(request: Request) {
         customer_address: appointmentType === "home" ? customerAddress : null,
         location,
         cancellation_policy_accepted: cancellationPolicyAccepted,
-        google_event_id: googleEventId,
-        google_event_link: googleEventLink,
         status: "confirmed",
         payment_status: "paid",
         amount: 0,
@@ -173,16 +165,10 @@ export async function POST(request: Request) {
           appointmentType === "home" && customerAddress
             ? `Adres: ${customerAddress}`
             : "",
-          appointmentType === "digital" && googleMeetLink
-            ? `Google Meet: ${googleMeetLink}`
-            : "",
-          appointmentType === "digital" && googleEventLink
-            ? `Google Agenda: ${googleEventLink}`
-            : "",
           `Datum: ${date}`,
           `Tijdstip: ${time}`,
-          notes ? `Opmerking: ${notes}` : "",
-          googleEventId ? `Google Calendar event: ${googleEventId}` : "",
+          `Inhoud bijles: ${cleanNotes}`,
+          `Resterende beurten na boeking: ${newRemaining}`,
         ]
           .filter(Boolean)
           .join("\n"),
@@ -198,9 +184,26 @@ export async function POST(request: Request) {
       );
     }
 
-    const newRemaining = remaining - 1;
+    const { error: availabilityUpdateError } = await supabaseAdmin
+      .from("availability")
+      .update({
+        booked_places: newBookedPlaces,
+        active: newBookedPlaces < maxPlaces,
+      })
+      .eq("id", availability.id);
 
-    const { error: updateError } = await supabaseAdmin
+    if (availabilityUpdateError) {
+      console.error(availabilityUpdateError);
+      return NextResponse.json(
+        {
+          error:
+            "Afspraak opgeslagen, maar beschikbaarheid kon niet aangepast worden.",
+        },
+        { status: 500 }
+      );
+    }
+
+    const { error: passUpdateError } = await supabaseAdmin
       .from("passes")
       .update({
         remaining_credits: newRemaining,
@@ -209,8 +212,8 @@ export async function POST(request: Request) {
       })
       .eq("id", pass.id);
 
-    if (updateError) {
-      console.error(updateError);
+    if (passUpdateError) {
+      console.error(passUpdateError);
       return NextResponse.json(
         { error: "Beurtenkaart kon niet aangepast worden." },
         { status: 500 }
@@ -220,9 +223,6 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       bookingId: booking.id,
-      googleEventId,
-      googleEventLink,
-      googleMeetLink,
       remaining_credits: newRemaining,
     });
   } catch (error) {

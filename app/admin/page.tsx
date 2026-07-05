@@ -9,6 +9,7 @@ import AdminLessonCards from "@/components/AdminLessonCards";
 import AdminAgenda from "@/components/admin/AdminAgenda";
 import AdminWorkshops from "@/components/admin/AdminWorkshops";
 import AdminManualAdd from "@/components/admin/AdminManualAdd";
+import AdminAvailability from "@/components/admin/AdminAvailability";
 
 export default function AdminPage() {
   const [tab, setTab] = useState("dashboard");
@@ -32,12 +33,19 @@ export default function AdminPage() {
           <button className={tab === "invoices" ? "active" : ""} onClick={() => setTab("invoices")}>📄 Facturen</button>
           <button className={tab === "payments" ? "active" : ""} onClick={() => setTab("payments")}>💶 Betalingen</button>
           <button className={tab === "workshops" ? "active" : ""} onClick={() => setTab("workshops")}>🏕️ Workshops</button>
+        <button
+  className={tab === "availability" ? "active" : ""}
+  onClick={() => setTab("availability")}
+>
+  🕒 Beschikbaarheden
+</button>
         </aside>
 
         <main className="admin-content">
           {tab === "dashboard" && <AdminDashboard />}
           {tab === "requests" && <AdminRequests />}
           {tab === "agenda" && <AdminAgenda />}
+          {tab === "availability" && <AdminAvailability />}
           {tab === "students" && (
             <AdminPlaceholder title="Leerlingen" text="Hier komt je leerlingenbestand." />
           )}

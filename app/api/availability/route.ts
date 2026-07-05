@@ -9,32 +9,49 @@ const supabaseAdmin = createClient(
 );
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
+  try {
+    const { searchParams } = new URL(request.url);
 
-  const date = searchParams.get("date");
-  const duration = searchParams.get("duration") || "60";
+    const date = searchParams.get("date");
 
-  if (!date) {
-    return NextResponse.json({ slots: [] });
-  }
+    if (!date) {
+      return NextResponse.json({ slots: [] });
+    }
 
-  const { data, error } = await supabaseAdmin
-    .from("availability")
-    .select("*")
-    .eq("date", date)
-    .eq("duration", Number(duration))
-    .eq("is_booked", false)
-    .order("time", { ascending: true });
+    const { data, error } = await supabaseAdmin
+      .from("availability")
+      .select("id, date, start_time, end_time, max_places, booked_places, active")
+      .eq("date", date)
+      .eq("active", true)
+      .order("start_time", { ascending: true });
 
-  if (error) {
+    if (error) {
+      console.error("Availability error:", error);
+      return NextResponse.json(
+        { error: "Beschikbare momenten konden niet geladen worden." },
+        { status: 500 }
+      );
+    }
+
+    const availableSlots =
+      data
+        ?.filter((slot) => {
+          const maxPlaces = slot.max_places ?? 1;
+          const bookedPlaces = slot.booked_places ?? 0;
+
+          return bookedPlaces < maxPlaces;
+        })
+        .map((slot) => String(slot.start_time).slice(0, 5)) ?? [];
+
+    return NextResponse.json({
+      slots: availableSlots,
+    });
+  } catch (error) {
     console.error(error);
+
     return NextResponse.json(
       { error: "Beschikbare momenten konden niet geladen worden." },
       { status: 500 }
     );
   }
-
-  return NextResponse.json({
-    slots: data?.map((slot) => slot.time) ?? [],
-  });
 }

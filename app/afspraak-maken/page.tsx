@@ -99,16 +99,18 @@ function AfspraakMakenContent() {
 
       try {
         const response = await fetch(
-          `/api/availability?date=${encodeURIComponent(
-            selectedDate
-          )}&duration=${selectedType.duration}`,
+          `/api/availability?date=${encodeURIComponent(selectedDate)}&duration=${
+            selectedType.duration
+          }`,
           { cache: "no-store" }
         );
 
         const data = await response.json();
 
         if (!response.ok) {
-          setError(data.error || "Beschikbare momenten konden niet geladen worden.");
+          setError(
+            data.error || "Beschikbare momenten konden niet geladen worden."
+          );
           return;
         }
 
@@ -189,6 +191,7 @@ function AfspraakMakenContent() {
       return;
     }
 
+    setSaving(false);
     router.replace("/klantendashboard");
   }
 
@@ -223,7 +226,10 @@ function AfspraakMakenContent() {
           )}
 
           {pass && (
-            <form onSubmit={handleSubmit} className="booking-form-with-calendar">
+            <form
+              onSubmit={handleSubmit}
+              className="booking-form-with-calendar"
+            >
               <div className="form-grid">
                 <label>
                   Datum
@@ -298,7 +304,9 @@ function AfspraakMakenContent() {
                     <input
                       name="customerAddress"
                       value={customerAddress}
-                      onChange={(event) => setCustomerAddress(event.target.value)}
+                      onChange={(event) =>
+                        setCustomerAddress(event.target.value)
+                      }
                       placeholder="Straat, nummer, postcode en gemeente"
                       required
                     />
@@ -311,7 +319,9 @@ function AfspraakMakenContent() {
                   <input
                     type="checkbox"
                     checked={radiusAccepted}
-                    onChange={(event) => setRadiusAccepted(event.target.checked)}
+                    onChange={(event) =>
+                      setRadiusAccepted(event.target.checked)
+                    }
                     required
                   />
                   <span>
@@ -339,7 +349,9 @@ function AfspraakMakenContent() {
                   name="cancellationPolicyAccepted"
                   type="checkbox"
                   checked={policyAccepted}
-                  onChange={(event) => setPolicyAccepted(event.target.checked)}
+                  onChange={(event) =>
+                    setPolicyAccepted(event.target.checked)
+                  }
                   required
                 />
                 <span>

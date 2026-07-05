@@ -14,8 +14,10 @@ type Pass = {
   status: string;
 };
 
-const GOOGLE_BEGELEIDING_URL =
-  "https://calendar.google.com/calendar/appointments/schedules/AcZssZ0xYs93pgXTNQ64AMHTucW58L0dHnSGWXlSqcb5VupDfDXH1z6PNJkkGog_r0kcJ--csHso-STk?gv=true";
+const appointmentTypes = [
+  { value: "digital", label: "Digitaal", duration: 60 },
+  { value: "home", label: "Fysiek aan huis", duration: 60 },
+];
 
 function AfspraakMakenContent() {
   const router = useRouter();
@@ -24,11 +26,17 @@ function AfspraakMakenContent() {
 
   const [pass, setPass] = useState<Pass | null>(null);
   const [email, setEmail] = useState("");
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [slotsLoading, setSlotsLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const [selectedDate, setSelectedDate] = useState("");
   const [appointmentType, setAppointmentType] = useState("");
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [selectedSlot, setSelectedSlot] = useState("");
+
   const [customerAddress, setCustomerAddress] = useState("");
   const [radiusAccepted, setRadiusAccepted] = useState(false);
   const [policyAccepted, setPolicyAccepted] = useState(false);
@@ -73,37 +81,99 @@ function AfspraakMakenContent() {
     loadPass();
   }, [passId, router]);
 
-  const canShowCalendar =
-    appointmentType === "digital" ||
-    (appointmentType === "home" && customerAddress.trim() && radiusAccepted);
+  useEffect(() => {
+    async function loadAvailableSlots() {
+      setAvailableSlots([]);
+      setSelectedSlot("");
+      setError("");
 
-  async function handleConfirmBooking(event: FormEvent<HTMLFormElement>) {
+      if (!selectedDate || !appointmentType) return;
+
+      const selectedType = appointmentTypes.find(
+        (type) => type.value === appointmentType
+      );
+
+      if (!selectedType) return;
+
+      setSlotsLoading(true);
+
+      try {
+        const response = await fetch(
+          `/api/availability?date=${encodeURIComponent(
+            selectedDate
+          )}&duration=${selectedType.duration}`,
+          { cache: "no-store" }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          setError(data.error || "Beschikbare momenten konden niet geladen worden.");
+          return;
+        }
+
+        setAvailableSlots(Array.isArray(data.slots) ? data.slots : []);
+      } catch (error) {
+        console.error(error);
+        setError("Beschikbare momenten konden niet geladen worden.");
+      } finally {
+        setSlotsLoading(false);
+      }
+    }
+
+    loadAvailableSlots();
+  }, [selectedDate, appointmentType]);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!pass) return;
 
-    if (!appointmentType || !policyAccepted || !notes.trim()) {
-      setError(
-        "Kies een type afspraak, vul de inhoud van de bijles in en accepteer de voorwaarden."
-      );
-      return;
-    }
-
-    if (appointmentType === "home" && (!customerAddress.trim() || !radiusAccepted)) {
-      setError("Vul je adres in en bevestig dat je binnen 15 km rond Peer woont.");
-      return;
-    }
-
     setSaving(true);
     setError("");
 
-const response = await fetch("/api/appointments/pass-google-booking", {      method: "POST",
+    if (!selectedDate || !appointmentType || !selectedSlot) {
+      setError("Kies eerst een datum, type afspraak en beschikbaar tijdstip.");
+      setSaving(false);
+      return;
+    }
+
+    if (!notes.trim()) {
+      setError("Vul in waarover de bijles gaat.");
+      setSaving(false);
+      return;
+    }
+
+    if (!policyAccepted) {
+      setError("Je moet akkoord gaan met de annuleringsvoorwaarden.");
+      setSaving(false);
+      return;
+    }
+
+    if (appointmentType === "home") {
+      if (!customerAddress.trim()) {
+        setError("Vul je adres in voor fysieke begeleiding.");
+        setSaving(false);
+        return;
+      }
+
+      if (!radiusAccepted) {
+        setError("Bevestig dat het adres binnen 15 km rond Peer ligt.");
+        setSaving(false);
+        return;
+      }
+    }
+
+    const response = await fetch("/api/appointments/pass-booking", {
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
         passId: pass.id,
         email,
+        date: selectedDate,
+        time: selectedSlot,
         appointmentType,
         customerAddress,
         notes,
@@ -115,7 +185,7 @@ const response = await fetch("/api/appointments/pass-google-booking", {      met
 
     if (!response.ok) {
       setSaving(false);
-      setError(data.error || "De beurt kon niet afgeschreven worden.");
+      setError(data.error || "Afspraak kon niet ingepland worden.");
       return;
     }
 
@@ -153,22 +223,72 @@ const response = await fetch("/api/appointments/pass-google-booking", {      met
           )}
 
           {pass && (
-            <form onSubmit={handleConfirmBooking} className="booking-form-with-calendar">
+            <form onSubmit={handleSubmit} className="booking-form-with-calendar">
               <div className="form-grid">
+                <label>
+                  Datum
+                  <input
+                    name="date"
+                    type="date"
+                    required
+                    value={selectedDate}
+                    onChange={(event) => setSelectedDate(event.target.value)}
+                  />
+                </label>
+
                 <label>
                   Type afspraak
                   <select
+                    name="appointmentType"
                     required
                     value={appointmentType}
                     onChange={(event) => {
                       setAppointmentType(event.target.value);
+                      setSelectedSlot("");
                       setCustomerAddress("");
                       setRadiusAccepted(false);
                     }}
                   >
                     <option value="">Kies type afspraak</option>
-                    <option value="digital">Digitaal</option>
-                    <option value="home">Fysiek aan huis</option>
+                    {appointmentTypes.map((type) => (
+                      <option key={type.value} value={type.value}>
+                        {type.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
+                  Tijdstip
+                  <select
+                    name="time"
+                    required
+                    value={selectedSlot}
+                    onChange={(event) => setSelectedSlot(event.target.value)}
+                    disabled={
+                      !selectedDate ||
+                      !appointmentType ||
+                      slotsLoading ||
+                      availableSlots.length === 0
+                    }
+                  >
+                    <option value="">
+                      {slotsLoading
+                        ? "Beschikbare momenten laden..."
+                        : !selectedDate
+                        ? "Kies eerst een datum"
+                        : !appointmentType
+                        ? "Kies eerst type afspraak"
+                        : availableSlots.length === 0
+                        ? "Geen vrije momenten"
+                        : "Kies tijdstip"}
+                    </option>
+
+                    {availableSlots.map((slot) => (
+                      <option key={slot} value={slot}>
+                        {slot}
+                      </option>
+                    ))}
                   </select>
                 </label>
 
@@ -176,6 +296,7 @@ const response = await fetch("/api/appointments/pass-google-booking", {      met
                   <label>
                     Adres klant
                     <input
+                      name="customerAddress"
                       value={customerAddress}
                       onChange={(event) => setCustomerAddress(event.target.value)}
                       placeholder="Straat, nummer, postcode en gemeente"
@@ -186,7 +307,7 @@ const response = await fetch("/api/appointments/pass-google-booking", {      met
               </div>
 
               {appointmentType === "home" && (
-                <label style={{ display: "flex", gap: 12, marginTop: 24 }}>
+                <label className="checkbox-row">
                   <input
                     type="checkbox"
                     checked={radiusAccepted}
@@ -201,9 +322,10 @@ const response = await fetch("/api/appointments/pass-google-booking", {      met
                 </label>
               )}
 
-              <label style={{ display: "block", marginTop: 24 }}>
+              <label style={{ display: "block", marginTop: 20 }}>
                 Waarover gaat de bijles?
                 <textarea
+                  name="notes"
                   rows={5}
                   required
                   value={notes}
@@ -212,8 +334,9 @@ const response = await fetch("/api/appointments/pass-google-booking", {      met
                 />
               </label>
 
-              <label style={{ display: "flex", gap: 12, marginTop: 24 }}>
+              <label className="checkbox-row">
                 <input
+                  name="cancellationPolicyAccepted"
                   type="checkbox"
                   checked={policyAccepted}
                   onChange={(event) => setPolicyAccepted(event.target.checked)}
@@ -226,32 +349,17 @@ const response = await fetch("/api/appointments/pass-google-booking", {      met
                 </span>
               </label>
 
-              {canShowCalendar && policyAccepted && notes.trim() && (
-                <section className="booking-calendar-panel" style={{ marginTop: 32 }}>
-                  <p className="eyebrow">Google Agenda</p>
-                  <h2>Kies je moment</h2>
-
-                  <iframe
-                    src={GOOGLE_BEGELEIDING_URL}
-                    title="huiswerk/studiebegeleiding afspraak plannen"
-                    loading="lazy"
-                    className="google-booking-frame"
-                    width="100%"
-                    height="700"
-                    style={{
-                      border: 0,
-                      borderRadius: "24px",
-                      overflow: "hidden",
-                    }}
-                  />
-
-                  <button className="primary-action" type="submit" disabled={saving}>
-                    {saving
-                      ? "Beurt afschrijven..."
-                      : "Ik heb geboekt, schrijf 1 beurt af"}
-                  </button>
-                </section>
-              )}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  marginTop: 24,
+                }}
+              >
+                <button className="primary-action" disabled={saving}>
+                  {saving ? "Afspraak opslaan..." : "Afspraak bevestigen"}
+                </button>
+              </div>
             </form>
           )}
         </div>

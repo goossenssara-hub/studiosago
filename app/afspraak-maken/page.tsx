@@ -14,6 +14,11 @@ type Pass = {
   status: string;
 };
 
+const appointmentTypes = [
+  { value: "digital", label: "Digitaal", duration: 60 },
+  { value: "home", label: "Fysiek bij mij thuis", duration: 60 },
+];
+
 function AfspraakMakenContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -26,7 +31,9 @@ function AfspraakMakenContent() {
   const [error, setError] = useState("");
 
   const [selectedDate, setSelectedDate] = useState("");
+  const [appointmentType, setAppointmentType] = useState("");
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [selectedSlot, setSelectedSlot] = useState("");
   const [slotsLoading, setSlotsLoading] = useState(false);
 
   useEffect(() => {
@@ -62,51 +69,61 @@ function AfspraakMakenContent() {
     if (passId) loadPass();
   }, [passId, router]);
 
-  async function loadAvailableSlots(date: string) {
-    setSelectedDate(date);
-    setAvailableSlots([]);
-    setError("");
+  useEffect(() => {
+    async function loadAvailableSlots() {
+      setAvailableSlots([]);
+      setSelectedSlot("");
+      setError("");
 
-    if (!date) return;
+      if (!selectedDate || !appointmentType) return;
 
-    setSlotsLoading(true);
-
-    try {
-      const response = await fetch(
-        `/api/google-availability?date=${encodeURIComponent(date)}`,
-        { cache: "no-store" }
+      const selectedType = appointmentTypes.find(
+        (type) => type.value === appointmentType
       );
 
-      const data = await response.json();
+      if (!selectedType) return;
 
-      if (!response.ok) {
-        setError(data.error || "Beschikbare momenten konden niet geladen worden.");
-        return;
+      setSlotsLoading(true);
+
+      try {
+        const response = await fetch(
+          `/api/google-availability?date=${encodeURIComponent(
+            selectedDate
+          )}&duration=${selectedType.duration}`,
+          { cache: "no-store" }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          setError(data.error || "Beschikbare momenten konden niet geladen worden.");
+          return;
+        }
+
+        setAvailableSlots(Array.isArray(data.slots) ? data.slots : []);
+      } catch (error) {
+        console.error("Availability error:", error);
+        setError("Beschikbare momenten konden niet geladen worden.");
+      } finally {
+        setSlotsLoading(false);
       }
-
-      setAvailableSlots(Array.isArray(data.slots) ? data.slots : []);
-    } catch (error) {
-      console.error("Availability error:", error);
-      setError("Beschikbare momenten konden niet geladen worden.");
-    } finally {
-      setSlotsLoading(false);
     }
-  }
+
+    loadAvailableSlots();
+  }, [selectedDate, appointmentType]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true);
     setError("");
 
-    const formData = new FormData(event.currentTarget);
-
-    const time = String(formData.get("time") || "");
-
-    if (!time) {
-      setError("Kies eerst een beschikbaar tijdstip.");
+    if (!selectedDate || !appointmentType || !selectedSlot) {
+      setError("Kies eerst een datum, type afspraak en beschikbaar tijdstip.");
       setSaving(false);
       return;
     }
+
+    const formData = new FormData(event.currentTarget);
 
     const response = await fetch("/api/appointments/pass-booking", {
       method: "POST",
@@ -117,8 +134,8 @@ function AfspraakMakenContent() {
         passId,
         email,
         date: selectedDate,
-        time,
-        appointmentType: formData.get("appointmentType"),
+        time: selectedSlot,
+        appointmentType,
         customerAddress: formData.get("customerAddress"),
         notes: formData.get("notes"),
         cancellationPolicyAccepted:
@@ -177,8 +194,25 @@ function AfspraakMakenContent() {
                     type="date"
                     required
                     value={selectedDate}
-                    onChange={(event) => loadAvailableSlots(event.target.value)}
+                    onChange={(event) => setSelectedDate(event.target.value)}
                   />
+                </label>
+
+                <label>
+                  Type afspraak
+                  <select
+                    name="appointmentType"
+                    required
+                    value={appointmentType}
+                    onChange={(event) => setAppointmentType(event.target.value)}
+                  >
+                    <option value="">Kies type afspraak</option>
+                    {appointmentTypes.map((type) => (
+                      <option key={type.value} value={type.value}>
+                        {type.label}
+                      </option>
+                    ))}
+                  </select>
                 </label>
 
                 <label>
@@ -186,8 +220,11 @@ function AfspraakMakenContent() {
                   <select
                     name="time"
                     required
+                    value={selectedSlot}
+                    onChange={(event) => setSelectedSlot(event.target.value)}
                     disabled={
                       !selectedDate ||
+                      !appointmentType ||
                       slotsLoading ||
                       availableSlots.length === 0
                     }
@@ -197,6 +234,8 @@ function AfspraakMakenContent() {
                         ? "Beschikbare momenten laden..."
                         : !selectedDate
                         ? "Kies eerst een datum"
+                        : !appointmentType
+                        ? "Kies eerst type afspraak"
                         : availableSlots.length === 0
                         ? "Geen vrije momenten"
                         : "Kies tijdstip"}
@@ -207,15 +246,6 @@ function AfspraakMakenContent() {
                         {slot}
                       </option>
                     ))}
-                  </select>
-                </label>
-
-                <label>
-                  Type afspraak
-                  <select name="appointmentType" required>
-                    <option value="">Kies type afspraak</option>
-                    <option value="digital">Digitaal</option>
-                    <option value="home">Fysiek bij mij thuis</option>
                   </select>
                 </label>
 

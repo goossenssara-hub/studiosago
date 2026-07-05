@@ -5,13 +5,17 @@ export const runtime = "nodejs";
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const date = searchParams.get("date");
 
-    if (!date) {
-      return NextResponse.json({ slots: [] });
+    const year = searchParams.get("year");
+    const month = searchParams.get("month");
+
+    if (!year || !month) {
+      return NextResponse.json({ days: [] });
     }
 
-    if (!process.env.GOOGLE_APPS_SCRIPT_AVAILABILITY_URL) {
+    const scriptUrl = process.env.GOOGLE_APPS_SCRIPT_AVAILABILITY_URL;
+
+    if (!scriptUrl) {
       return NextResponse.json(
         { error: "GOOGLE_APPS_SCRIPT_AVAILABILITY_URL ontbreekt." },
         { status: 500 }
@@ -19,22 +23,22 @@ export async function GET(request: Request) {
     }
 
     const response = await fetch(
-      `${process.env.GOOGLE_APPS_SCRIPT_AVAILABILITY_URL}?date=${encodeURIComponent(
-        date
-      )}`,
-      { cache: "no-store" }
+      `${scriptUrl}?year=${year}&month=${month}`,
+      {
+        cache: "no-store",
+      }
     );
 
     const data = await response.json();
 
     return NextResponse.json({
-      slots: data.slots || [],
+      days: data.days ?? [],
     });
-  } catch (error) {
-    console.error(error);
+  } catch (err) {
+    console.error(err);
 
     return NextResponse.json(
-      { error: "Beschikbare momenten konden niet geladen worden." },
+      { error: "Beschikbare dagen konden niet geladen worden." },
       { status: 500 }
     );
   }

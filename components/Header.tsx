@@ -90,8 +90,7 @@ export default function Header() {
 
       <nav className="nav" aria-label="Hoofdnavigatie">
         <Link href="/">Home</Link>
-        <Link href="/#over">Over Studio SaGo</Link>
-        <Link href="/over-mij">Over mij</Link>
+<Link href="/#over">Studio SaGo</Link>        <Link href="/over-mij">Over mij</Link>
         <Link href="/contact">Contact</Link>
         <Link href="/webshop">Webshop</Link>
       </nav>

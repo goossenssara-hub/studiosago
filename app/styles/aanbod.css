@@ -1,6 +1,5 @@
 /* =========================================================
    Basisschool / begeleiding
-   Let op: alle styling is gescoped op .basisschool-page
    ========================================================= */
 
 .basisschool-page {
@@ -20,29 +19,51 @@
   line-height: 1;
 }
 
+/* =========================
+   GRID
+   ========================= */
+
 .basisschool-page .aanbod-detail-grid {
   width: 100%;
   max-width: var(--content-max);
   margin: 20px auto 90px;
   padding: 0 54px;
+
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
   gap: 28px;
-  align-items: start;
 }
+
+/* =========================
+   CARD
+   ========================= */
 
 .basisschool-page .aanbod-detail-card {
   position: relative;
+
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
   min-height: 250px;
+
   padding: 32px;
   overflow: hidden;
+
   border-radius: 34px;
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid rgba(255, 255, 255, 0.72);
-  box-shadow: 0 18px 44px rgba(3, 54, 99, 0.11);
+  border: 1px solid rgba(255,255,255,.72);
+
+  background: rgba(255,255,255,.82);
+
+  box-shadow: 0 18px 44px rgba(3,54,99,.11);
+
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
-  transition: transform 0.28s ease, box-shadow 0.28s ease, background 0.28s ease;
+
+  transition:
+    transform .28s ease,
+    box-shadow .28s ease,
+    background .28s ease;
 }
 
 .basisschool-page .aanbod-detail-card::before {
@@ -50,17 +71,28 @@
   position: absolute;
   inset: 0;
   z-index: -1;
+
   background:
-    radial-gradient(circle at 18% 12%, rgba(40, 185, 170, 0.14), transparent 30%),
-    radial-gradient(circle at 90% 12%, rgba(254, 160, 32, 0.14), transparent 28%),
-    linear-gradient(160deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.68));
+    radial-gradient(circle at 18% 12%, rgba(40,185,170,.14), transparent 30%),
+    radial-gradient(circle at 90% 12%, rgba(254,160,32,.14), transparent 28%),
+    linear-gradient(
+      160deg,
+      rgba(255,255,255,.92),
+      rgba(255,255,255,.68)
+    );
 }
 
 .basisschool-page .aanbod-detail-card:hover {
   transform: translateY(-8px);
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 28px 68px rgba(3, 54, 99, 0.17);
+
+  background: rgba(255,255,255,.94);
+
+  box-shadow: 0 28px 68px rgba(3,54,99,.17);
 }
+
+/* =========================
+   TOP
+   ========================= */
 
 .aanbod-card-top {
   position: relative;
@@ -70,66 +102,104 @@
 .aanbod-badge {
   display: inline-flex;
   align-items: center;
-  width: fit-content;
+
   margin-bottom: 18px;
   padding: 9px 17px;
-  border-radius: var(--radius-pill);
-  background: rgba(40, 185, 170, 0.14);
+
+  border-radius: 999px;
+
+  background: rgba(40,185,170,.14);
+
   color: var(--navy);
+
   font-size: 14px;
-  font-weight: 950;
-  box-shadow: inset 0 0 0 1px rgba(40, 185, 170, 0.22);
+  font-weight: 900;
+
+  box-shadow: inset 0 0 0 1px rgba(40,185,170,.22);
 }
+
+/* =========================
+   TITELS
+   ========================= */
 
 .basisschool-page .aanbod-detail-card h2 {
   margin: 0 0 16px;
+
   color: var(--navy);
-  font-size: clamp(28px, 2.6vw, 42px);
-  line-height: 1.08;
-  letter-spacing: -0.8px;
+
+  font-size: clamp(1.9rem, 2vw, 2.4rem);
+
+  line-height: 1.15;
+
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: auto;
 }
 
 .basisschool-page .aanbod-detail-card .price {
   margin: 0;
+
   color: var(--navy);
-  font-size: clamp(20px, 2vw, 27px);
-  font-weight: 950;
+
+  font-size: clamp(1.4rem, 1.8vw, 1.7rem);
+
+  font-weight: 900;
 }
 
-.basisschool-page .aanbod-detail-card .extra-content {
+/* =========================
+   UITKLAPPEN
+   ========================= */
+
+.basisschool-page .extra-content {
   max-height: 0;
+
   opacity: 0;
+
   overflow: hidden;
+
   transform: translateY(14px);
+
   transition:
-    max-height 0.5s ease,
-    opacity 0.35s ease,
-    transform 0.35s ease,
-    margin-top 0.35s ease;
+    max-height .5s ease,
+    opacity .35s ease,
+    transform .35s ease,
+    margin-top .35s ease;
 }
 
 .basisschool-page .aanbod-detail-card:hover .extra-content,
 .basisschool-page .aanbod-detail-card:focus-within .extra-content {
   max-height: 520px;
-  opacity: 1;
-  transform: translateY(0);
+
   margin-top: 24px;
+
+  opacity: 1;
+
+  transform: translateY(0);
 }
 
-.basisschool-page .aanbod-detail-card .extra-content p {
+.basisschool-page .extra-content p {
   margin: 0 0 14px;
+
   color: var(--navy);
+
   font-size: 17px;
+
   line-height: 1.6;
-  font-weight: 650;
+
+  font-weight: 600;
 }
 
-.basisschool-page .aanbod-detail-card .primary-action {
+.basisschool-page .primary-action {
   width: 100%;
+
   min-height: 60px;
+
   margin-top: 12px;
-  font-size: 1rem;
 }
+
+/* =========================
+   CTA
+   ========================= */
 
 .basisschool-cta {
   padding-top: 0;
@@ -145,22 +215,23 @@
   min-width: 280px;
 }
 
-.basisschool-page .aanbod-detail-card {
-  min-width: 0;
-}
+/* =========================
+   MOBIEL
+   ========================= */
 
-.basisschool-page .aanbod-detail-card h2 {
-  max-width: 100%;
-  overflow-wrap: anywhere;
-  word-break: normal;
-  hyphens: auto;
-  font-size: clamp(30px, 2.2vw, 42px);
-}
-.basisschool-page .aanbod-detail-grid {
-  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-}
-  @media (max-width: 760px) {
-  .basisschool-page .aanbod-detail-grid {
-    grid-template-columns: 1fr;
+@media (max-width:760px){
+
+  .basisschool-page .aanbod-detail-grid{
+    padding-inline:22px;
+    grid-template-columns:1fr;
   }
+
+  .basisschool-page .aanbod-detail-card{
+    padding:26px;
+  }
+
+  .basisschool-page .aanbod-detail-card h2{
+    font-size:2rem;
+  }
+
 }

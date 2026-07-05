@@ -1,5 +1,9 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {};
+const nextConfig: NextConfig = {
+  turbopack: {
+    root: "/Users/saragoossens/Downloads/studiosago",
+  },
+};
 
 export default nextConfig;

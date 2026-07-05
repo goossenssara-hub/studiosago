@@ -23,7 +23,7 @@ export default function RootLayout({
   return (
     <html lang="nl">
       <body>
-        <SeasonEngine effects={true}>
+                <SeasonEngine effects={true}>
           {children}
         </SeasonEngine>
       </body>

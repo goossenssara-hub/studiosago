@@ -72,7 +72,11 @@ function AfspraakMakenContent() {
     setSlotsLoading(true);
 
     try {
-      const response = await fetch(`/api/google-availability?date=${date}`);
+      const response = await fetch(
+        `/api/google-availability?date=${encodeURIComponent(date)}`,
+        { cache: "no-store" }
+      );
+
       const data = await response.json();
 
       if (!response.ok) {
@@ -80,9 +84,9 @@ function AfspraakMakenContent() {
         return;
       }
 
-      setAvailableSlots(data.slots || []);
+      setAvailableSlots(Array.isArray(data.slots) ? data.slots : []);
     } catch (error) {
-      console.error(error);
+      console.error("Availability error:", error);
       setError("Beschikbare momenten konden niet geladen worden.");
     } finally {
       setSlotsLoading(false);
@@ -96,6 +100,14 @@ function AfspraakMakenContent() {
 
     const formData = new FormData(event.currentTarget);
 
+    const time = String(formData.get("time") || "");
+
+    if (!time) {
+      setError("Kies eerst een beschikbaar tijdstip.");
+      setSaving(false);
+      return;
+    }
+
     const response = await fetch("/api/appointments/pass-booking", {
       method: "POST",
       headers: {
@@ -104,8 +116,8 @@ function AfspraakMakenContent() {
       body: JSON.stringify({
         passId,
         email,
-        date: formData.get("date"),
-        time: formData.get("time"),
+        date: selectedDate,
+        time,
         appointmentType: formData.get("appointmentType"),
         customerAddress: formData.get("customerAddress"),
         notes: formData.get("notes"),
@@ -174,7 +186,11 @@ function AfspraakMakenContent() {
                   <select
                     name="time"
                     required
-                    disabled={!selectedDate || slotsLoading || availableSlots.length === 0}
+                    disabled={
+                      !selectedDate ||
+                      slotsLoading ||
+                      availableSlots.length === 0
+                    }
                   >
                     <option value="">
                       {slotsLoading

@@ -1,65 +1,287 @@
-import { NextResponse } from "next/server";
+"use client";
 
-export const runtime = "nodejs";
+import { FormEvent, Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import PageShell from "@/components/PageShell";
+import { supabase } from "@/lib/supabase";
 
-const DEFAULT_SLOTS = [
-  "09:00",
-  "10:00",
-  "11:00",
-  "13:00",
-  "14:00",
-  "15:00",
-  "16:00",
-];
+type Pass = {
+  id: string;
+  customer_email: string;
+  title: string;
+  total_credits: number;
+  remaining_credits: number;
+  status: string;
+};
 
-export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const date = searchParams.get("date");
+function AfspraakMakenContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const passId = searchParams.get("passId");
 
-    if (!date) {
-      return NextResponse.json({ slots: [] });
-    }
+  const [pass, setPass] = useState<Pass | null>(null);
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
-    if (!process.env.GOOGLE_APPS_SCRIPT_AVAILABILITY_URL) {
-      return NextResponse.json(
-        { error: "GOOGLE_APPS_SCRIPT_AVAILABILITY_URL ontbreekt." },
-        { status: 500 }
-      );
-    }
+  const [selectedDate, setSelectedDate] = useState("");
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
 
-    const response = await fetch(
-      `${process.env.GOOGLE_APPS_SCRIPT_AVAILABILITY_URL}?date=${encodeURIComponent(
-        date
-      )}`,
-      {
-        method: "GET",
-        cache: "no-store",
+  useEffect(() => {
+    async function loadPass() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user?.email) {
+        router.replace("/login");
+        return;
       }
-    );
+
+      setEmail(user.email);
+
+      const { data, error } = await supabase
+        .from("passes")
+        .select("*")
+        .eq("id", passId)
+        .eq("customer_email", user.email)
+        .eq("status", "active")
+        .single();
+
+      if (error || !data) {
+        setError("Geen geldige beurtenkaart gevonden.");
+      } else {
+        setPass(data);
+      }
+
+      setLoading(false);
+    }
+
+    if (passId) loadPass();
+  }, [passId, router]);
+
+  async function loadAvailableSlots(date: string) {
+    setSelectedDate(date);
+    setAvailableSlots([]);
+    setError("");
+
+    if (!date) return;
+
+    setSlotsLoading(true);
+
+    try {
+      const response = await fetch(
+        `/api/google-availability?date=${encodeURIComponent(date)}`,
+        { cache: "no-store" }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || "Beschikbare momenten konden niet geladen worden.");
+        return;
+      }
+
+      setAvailableSlots(Array.isArray(data.slots) ? data.slots : []);
+    } catch (error) {
+      console.error("Availability error:", error);
+      setError("Beschikbare momenten konden niet geladen worden.");
+    } finally {
+      setSlotsLoading(false);
+    }
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSaving(true);
+    setError("");
+
+    const formData = new FormData(event.currentTarget);
+
+    const time = String(formData.get("time") || "");
+
+    if (!time) {
+      setError("Kies eerst een beschikbaar tijdstip.");
+      setSaving(false);
+      return;
+    }
+
+    const response = await fetch("/api/appointments/pass-booking", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        passId,
+        email,
+        date: selectedDate,
+        time,
+        appointmentType: formData.get("appointmentType"),
+        customerAddress: formData.get("customerAddress"),
+        notes: formData.get("notes"),
+        cancellationPolicyAccepted:
+          formData.get("cancellationPolicyAccepted") === "on",
+      }),
+    });
 
     const data = await response.json();
 
-    if (!response.ok || data.success === false) {
-      return NextResponse.json(
-        {
-          error:
-            data.error ||
-            "Beschikbare momenten konden niet opgehaald worden.",
-        },
-        { status: 500 }
-      );
+    if (!response.ok) {
+      setError(data.error || "Afspraak kon niet ingepland worden.");
+      setSaving(false);
+      return;
     }
 
-    const slots = Array.isArray(data.slots) ? data.slots : [];
+    router.replace("/klantendashboard");
+  }
 
-    return NextResponse.json({ slots });
-  } catch (error) {
-    console.error("Google availability error:", error);
-
-    return NextResponse.json(
-      { error: "Beschikbare momenten konden niet geladen worden." },
-      { status: 500 }
+  if (loading) {
+    return (
+      <PageShell>
+        <section className="subpage-hero">
+          <h1>Afspraak laden...</h1>
+        </section>
+      </PageShell>
     );
   }
+
+  return (
+    <PageShell>
+      <section className="info-grid single">
+        <div className="info-card">
+          {pass && (
+            <>
+              <h2>🎟️ {pass.title}</h2>
+              <p>
+                Nog <strong>{pass.remaining_credits}</strong> van de{" "}
+                <strong>{pass.total_credits}</strong> beurten beschikbaar.
+              </p>
+            </>
+          )}
+
+          {error && (
+            <p className="form-message" style={{ color: "#fe2020" }}>
+              {error}
+            </p>
+          )}
+
+          {pass && (
+            <form onSubmit={handleSubmit} className="booking-form-with-calendar">
+              <div className="form-grid">
+                <label>
+                  Datum
+                  <input
+                    name="date"
+                    type="date"
+                    required
+                    value={selectedDate}
+                    onChange={(event) => loadAvailableSlots(event.target.value)}
+                  />
+                </label>
+
+                <label>
+                  Tijdstip
+                  <select
+                    name="time"
+                    required
+                    disabled={
+                      !selectedDate ||
+                      slotsLoading ||
+                      availableSlots.length === 0
+                    }
+                  >
+                    <option value="">
+                      {slotsLoading
+                        ? "Beschikbare momenten laden..."
+                        : !selectedDate
+                        ? "Kies eerst een datum"
+                        : availableSlots.length === 0
+                        ? "Geen vrije momenten"
+                        : "Kies tijdstip"}
+                    </option>
+
+                    {availableSlots.map((slot) => (
+                      <option key={slot} value={slot}>
+                        {slot}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
+                  Type afspraak
+                  <select name="appointmentType" required>
+                    <option value="">Kies type afspraak</option>
+                    <option value="digital">Digitaal</option>
+                    <option value="home">Fysiek bij mij thuis</option>
+                  </select>
+                </label>
+
+                <label>
+                  Adres klant
+                  <input
+                    name="customerAddress"
+                    placeholder="Straat, nummer, postcode en gemeente"
+                  />
+                </label>
+              </div>
+
+              <label style={{ display: "block", marginTop: 20 }}>
+                Opmerking
+                <textarea
+                  name="notes"
+                  rows={5}
+                  placeholder="Waarmee mag ik rekening houden?"
+                />
+              </label>
+
+              <label
+                style={{
+                  display: "flex",
+                  gap: 12,
+                  alignItems: "flex-start",
+                  marginTop: 24,
+                  lineHeight: 1.5,
+                }}
+              >
+                <input
+                  name="cancellationPolicyAccepted"
+                  type="checkbox"
+                  required
+                  style={{ marginTop: 6 }}
+                />
+                <span>
+                  Ik ga akkoord dat een beurt enkel terug toegevoegd wordt
+                  wanneer ik minstens 72 uur op voorhand annuleer. Bij
+                  laattijdige annulatie blijft de beurt aangerekend.
+                </span>
+              </label>
+
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  marginTop: 24,
+                }}
+              >
+                <button className="primary-action" disabled={saving}>
+                  {saving ? "Afspraak opslaan..." : "Afspraak bevestigen"}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </section>
+    </PageShell>
+  );
+}
+
+export default function AfspraakMakenPage() {
+  return (
+    <Suspense fallback={null}>
+      <AfspraakMakenContent />
+    </Suspense>
+  );
 }

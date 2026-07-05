@@ -6,7 +6,7 @@ const aanbod = [
     badge: "Individueel",
     label: "Begeleiding",
     title: "Huiswerkbegeleiding",
-    price: "€35 per uur",
+    price: "€40 per uur",
     service: "huiswerkbegeleiding",
     text: [
       "Ondersteuning bij huiswerk, leren leren en planning.",
@@ -18,11 +18,13 @@ const aanbod = [
     badge: "Kleine groep",
     label: "Mini-groepje",
     title: "Begeleiding in kleine groep",
-    price: "€22 per leerling per uur",
+    price: "€30 per leerling per uur",
     service: "mini-groep",
     text: [
       "Voor 2 tot 5 leerlingen met hetzelfde leerdoel.",
-      "Taal, wiskunde of W.O. kunnen aan bod komen.",
+      "Leren leren, studiecoaching, executieve functies inoefenen.",
+      "Vakinhoudelijk: Nederlands, biologie/natuurwetenschappen, geschiedenis, aardrijkskunde, mens & samenleving, PAV en MAVO. Andere vakken op aanvraag.",
+
       "Aan huis binnen 15 km rond Peer of digitaal.",
     ],
   },
@@ -30,15 +32,30 @@ const aanbod = [
     badge: "Voordeel",
     label: "Voordeelkaart",
     title: "10-beurtenkaart",
-    price: "€320",
+    price: "€380",
     service: "10-beurtenkaart",
     text: [
-      "10 individuele lessen van één uur.",
+      "10 individuele studiecoachinglessen van één uur.",
       "Flexibel in te plannen op maat van de leerling.",
       "Aan huis binnen 15 km rond Peer of digitaal.",
     ],
   },
  
+  {
+    badge: "Voor ouders",
+    label: "Ondersteuning",
+    title: "Hoe help ik mijn kind met leren?",
+    price: "€50",
+    service: "10-beurtenkaart",
+    text: [
+      "Ik help je op weg om een goede leeromgeving te creëren en je kind te ondersteunen bij het leren.",
+      "Voor deze sessie kan je vragen doorsturen zodat we gericht aan de slag kunnen. De leerling mag, maar moet hiervoor niet aanwezig zijn.",
+      "We bespreken hoe je je kind kan helpen met leren, plannen, concentreren en motiveren.",
+      "Aan huis binnen 15 km rond Peer of digitaal.",
+    ],
+  },
+
+
 ];
 
 export default function BasisschoolPage() {
@@ -46,7 +63,7 @@ export default function BasisschoolPage() {
     <PageShell>
       <main className="basisschool-page">
         <section className="subpage-hero">
-          <p className="eyebrow">Educatief aanbod voor het lager onderwijs</p>
+          <p className="eyebrow">Educatief aanbod voor het secundair onderwijs</p>
 
           <h1>Begeleiding op maat</h1>
 

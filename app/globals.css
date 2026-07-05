@@ -137,3 +137,252 @@ h3,
 .footer-brand h3 {
   font-family: "StudioTitle", sans-serif;
 }
+.main-nav a,
+.nav-link,
+.header-nav a {
+  white-space: nowrap;
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
+
+.main-nav,
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: clamp(1.5rem, 3vw, 4rem);
+  flex-wrap: nowrap;
+}
+
+.header-account-button,
+.account-button,
+.login-button {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+
+.site-header .logo {
+  flex-shrink: 0;
+}
+
+
+.site-header .nav a {
+  white-space: nowrap;
+  word-break: keep-all;
+  overflow-wrap: normal;
+  flex-shrink: 0;
+}
+
+.site-header .login-button,
+.site-header .account-button {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+@media (max-width: 1100px) {
+  .site-header .nav {
+    gap: 20px;
+  }
+
+  .site-header .nav a {
+    font-size: 0.95rem;
+  }
+
+  .site-header .login-button {
+    padding-inline: 24px;
+  }
+}
+/* =========================
+   HEADER FIX
+   Logo links, nav scrollbaar, account rechts
+   ========================= */
+
+.site-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 28px;
+  padding: 28px 48px 12px;
+  flex-wrap: nowrap;
+}
+
+.site-header > a:first-child {
+  flex-shrink: 0;
+  min-width: max-content;
+}
+
+.site-header .logo {
+  width: 245px;
+  flex-shrink: 0;
+}
+
+.site-header .nav {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: clamp(24px, 3vw, 48px);
+
+  white-space: nowrap;
+  flex-wrap: nowrap;
+
+  scrollbar-width: none;
+}
+
+.site-header .nav::-webkit-scrollbar {
+  display: none;
+}
+
+.site-header .nav a {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
+
+.site-header .account-menu,
+.site-header > .login-button {
+  justify-self: end;
+  flex-shrink: 0;
+}
+
+.site-header .login-button,
+.site-header .account-button {
+  min-width: max-content;
+  min-height: 58px;
+  padding: 0 28px;
+  white-space: nowrap;
+}
+
+/* Tablet */
+@media (max-width: 1120px) {
+  .site-header {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 18px;
+    padding-inline: 24px;
+  }
+
+  .site-header .logo {
+    width: 190px;
+  }
+
+  .site-header .nav {
+    gap: 24px;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    order: initial;
+    width: auto;
+  }
+}
+
+/* Mobiel */
+@media (max-width: 760px) {
+  .site-header {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 12px;
+    padding: 18px 12px 8px;
+  }
+
+  .site-header .logo {
+    width: 145px;
+  }
+
+  .site-header .nav {
+    gap: 18px;
+    font-size: 14px;
+  }
+
+  .site-header .login-button,
+  .site-header .account-button {
+    min-height: 48px;
+    padding: 0 18px;
+    font-size: 0.9rem;
+  }
+}
+/* =========================
+   KLANTENDASHBOARD FIX
+   ========================= */
+
+.portal-grid,
+.dashboard-grid,
+.customer-dashboard-grid {
+  display: grid;
+  grid-template-columns:
+    minmax(320px, 1fr)
+    minmax(520px, 1.35fr)
+    minmax(320px, 1fr);
+  gap: 32px;
+  align-items: start;
+}
+
+.portal-card,
+.dashboard-card,
+.info-card {
+  min-width: 0;
+  height: auto;
+  overflow: visible;
+}
+
+.pass-card,
+.lesson-card,
+.lesson-card-admin {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+
+  height: auto;
+  min-height: 0;
+
+  padding: 28px;
+  overflow: visible;
+
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.pass-card h3,
+.lesson-card h3,
+.lesson-card-admin h3 {
+  margin: 0;
+
+  max-width: 100%;
+
+  font-size: clamp(1.35rem, 1.45vw, 1.75rem);
+  line-height: 1.15;
+
+  word-break: normal;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+.pass-card p,
+.lesson-card p,
+.lesson-card-admin p {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.pass-card .primary-action,
+.lesson-card .primary-action,
+.lesson-card-admin .primary-action {
+  width: 100%;
+  min-height: 56px;
+  padding-inline: 22px;
+  margin-top: auto;
+
+  white-space: normal;
+  text-align: center;
+}
+
+@media (max-width: 1300px) {
+  .portal-grid,
+  .dashboard-grid,
+  .customer-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}

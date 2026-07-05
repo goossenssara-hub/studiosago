@@ -204,3 +204,49 @@
   line-height: 1.7;
   font-weight: 600;
 }
+.site-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 24px;
+  padding: 28px 48px 12px;
+}
+
+.site-header > a:first-child {
+  flex-shrink: 0;
+}
+
+.nav {
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 28px;
+
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+
+.nav::-webkit-scrollbar {
+  display: none;
+}
+
+.nav a {
+  flex: 0 0 auto;
+}
+
+.account-menu,
+.login-button {
+  justify-self: end;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.account-menu .login-button,
+.site-header > .login-button {
+  min-height: 56px;
+  padding: 0 28px;
+}

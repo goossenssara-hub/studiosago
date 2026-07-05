@@ -15,8 +15,16 @@ type Pass = {
 };
 
 const appointmentTypes = [
-  { value: "digital", label: "Digitaal", duration: 60 },
-  { value: "home", label: "Fysiek bij mij thuis", duration: 60 },
+  {
+    value: "digital",
+    label: "Digitaal",
+    duration: 60,
+  },
+  {
+    value: "home",
+    label: "Fysiek / aan huis",
+    duration: 60,
+  },
 ];
 
 function AfspraakMakenContent() {
@@ -26,18 +34,26 @@ function AfspraakMakenContent() {
 
   const [pass, setPass] = useState<Pass | null>(null);
   const [email, setEmail] = useState("");
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+
   const [error, setError] = useState("");
 
   const [selectedDate, setSelectedDate] = useState("");
   const [appointmentType, setAppointmentType] = useState("");
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [selectedSlot, setSelectedSlot] = useState("");
-  const [slotsLoading, setSlotsLoading] = useState(false);
 
   useEffect(() => {
     async function loadPass() {
+      if (!passId) {
+        setError("Geen beurtenkaart gevonden.");
+        setLoading(false);
+        return;
+      }
+
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -66,7 +82,7 @@ function AfspraakMakenContent() {
       setLoading(false);
     }
 
-    if (passId) loadPass();
+    loadPass();
   }, [passId, router]);
 
   useEffect(() => {
@@ -96,13 +112,15 @@ function AfspraakMakenContent() {
         const data = await response.json();
 
         if (!response.ok) {
-          setError(data.error || "Beschikbare momenten konden niet geladen worden.");
+          setError(
+            data.error || "Beschikbare momenten konden niet geladen worden."
+          );
           return;
         }
 
         setAvailableSlots(Array.isArray(data.slots) ? data.slots : []);
       } catch (error) {
-        console.error("Availability error:", error);
+        console.error(error);
         setError("Beschikbare momenten konden niet geladen worden.");
       } finally {
         setSlotsLoading(false);
@@ -114,6 +132,9 @@ function AfspraakMakenContent() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (!pass) return;
+
     setSaving(true);
     setError("");
 
@@ -131,7 +152,7 @@ function AfspraakMakenContent() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        passId,
+        passId: pass.id,
         email,
         date: selectedDate,
         time: selectedSlot,
@@ -204,7 +225,9 @@ function AfspraakMakenContent() {
                     name="appointmentType"
                     required
                     value={appointmentType}
-                    onChange={(event) => setAppointmentType(event.target.value)}
+                    onChange={(event) =>
+                      setAppointmentType(event.target.value)
+                    }
                   >
                     <option value="">Kies type afspraak</option>
                     {appointmentTypes.map((type) => (
@@ -282,6 +305,7 @@ function AfspraakMakenContent() {
                   required
                   style={{ marginTop: 6 }}
                 />
+
                 <span>
                   Ik ga akkoord dat een beurt enkel terug toegevoegd wordt
                   wanneer ik minstens 72 uur op voorhand annuleer. Bij

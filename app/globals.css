@@ -400,3 +400,9 @@ h3,
     min-height: 680px;
   }
 }
+.booking-form-with-calendar input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  accent-color: var(--teal);
+}

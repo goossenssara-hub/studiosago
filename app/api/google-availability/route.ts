@@ -7,9 +7,10 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
 
     const date = searchParams.get("date");
-    const duration = searchParams.get("duration");
+    const duration = searchParams.get("duration") || "60";
+    const type = searchParams.get("type") || "begeleiding";
 
-    if (!date || !duration) {
+    if (!date) {
       return NextResponse.json({ slots: [] });
     }
 
@@ -17,39 +18,29 @@ export async function GET(request: Request) {
 
     if (!scriptUrl) {
       return NextResponse.json(
-        {
-          error: "GOOGLE_APPS_SCRIPT_AVAILABILITY_URL ontbreekt.",
-        },
-        {
-          status: 500,
-        }
+        { error: "GOOGLE_APPS_SCRIPT_AVAILABILITY_URL ontbreekt." },
+        { status: 500 }
       );
     }
 
-    const response = await fetch(
-      `${scriptUrl}?date=${encodeURIComponent(
-        date
-      )}&duration=${encodeURIComponent(duration)}`,
-      {
-        cache: "no-store",
-      }
-    );
+    const url = `${scriptUrl}?date=${encodeURIComponent(
+      date
+    )}&duration=${encodeURIComponent(duration)}&type=${encodeURIComponent(
+      type
+    )}`;
 
+    const response = await fetch(url, { cache: "no-store" });
     const data = await response.json();
 
     return NextResponse.json({
       slots: data.slots ?? [],
     });
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error(error);
 
     return NextResponse.json(
-      {
-        error: "Beschikbare momenten konden niet geladen worden.",
-      },
-      {
-        status: 500,
-      }
+      { error: "Beschikbare momenten konden niet geladen worden." },
+      { status: 500 }
     );
   }
 }

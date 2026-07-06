@@ -150,18 +150,20 @@ export async function POST(request: Request) {
         status: payment.status || "created",
       });
 
-    if (saveError) {
-      console.error(saveError);
+if (saveError) {
+  console.error("SUPABASE SAVE ERROR:", saveError);
 
-      return NextResponse.json(
-        { error: "Betaling kon niet opgeslagen worden." },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({
-      url: payment._links?.checkout?.href,
-    });
+  return NextResponse.json(
+    {
+      error: saveError.message,
+      details: saveError.details,
+      hint: saveError.hint,
+      code: saveError.code,
+    },
+    { status: 500 }
+  );
+}
+  
   } catch (error) {
     console.error(error);
 

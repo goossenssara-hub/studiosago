@@ -13,17 +13,24 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
 
     const date = searchParams.get("date");
+    const serviceType = searchParams.get("serviceType");
 
     if (!date) {
       return NextResponse.json({ slots: [] });
     }
 
-    const { data, error } = await supabaseAdmin
+    let query = supabaseAdmin
       .from("availability")
-      .select("id, date, start_time, end_time, max_places, booked_places, active")
+      .select("id, date, start_time, end_time, max_places, booked_places, active, service_type")
       .eq("date", date)
       .eq("active", true)
       .order("start_time", { ascending: true });
+
+    if (serviceType) {
+      query = query.eq("service_type", serviceType);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error("Availability error:", error);
@@ -33,7 +40,7 @@ export async function GET(request: Request) {
       );
     }
 
-    const availableSlots =
+    const slots =
       data
         ?.filter((slot) => {
           const maxPlaces = slot.max_places ?? 1;
@@ -43,9 +50,7 @@ export async function GET(request: Request) {
         })
         .map((slot) => String(slot.start_time).slice(0, 5)) ?? [];
 
-    return NextResponse.json({
-      slots: availableSlots,
-    });
+    return NextResponse.json({ slots });
   } catch (error) {
     console.error(error);
 

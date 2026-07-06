@@ -10,13 +10,25 @@ type Availability = {
   max_places: number;
   booked_places: number;
   active: boolean;
+  service_type: string | null;
 };
+
+const weekDays = [
+  { value: 1, label: "Ma" },
+  { value: 2, label: "Di" },
+  { value: 3, label: "Wo" },
+  { value: 4, label: "Do" },
+  { value: 5, label: "Vr" },
+  { value: 6, label: "Za" },
+  { value: 0, label: "Zo" },
+];
 
 export default function AdminAvailability() {
   const [items, setItems] = useState<Availability[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [selectedDays, setSelectedDays] = useState<number[]>([]);
 
   async function loadAvailability() {
     setLoading(true);
@@ -38,38 +50,54 @@ export default function AdminAvailability() {
     loadAvailability();
   }, []);
 
+  function toggleDay(day: number) {
+    setSelectedDays((current) =>
+      current.includes(day)
+        ? current.filter((item) => item !== day)
+        : [...current, day]
+    );
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true);
     setMessage("");
 
-    const formData = new FormData(event.currentTarget);
+    try {
+      const formData = new FormData(event.currentTarget);
 
-    const response = await fetch("/api/admin/availability", {
-      method: "POST",
-      body: JSON.stringify({
-        date: formData.get("date"),
-        startTime: formData.get("startTime"),
-        endTime: formData.get("endTime"),
-        maxPlaces: formData.get("maxPlaces"),
-      }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+      const response = await fetch("/api/admin/availability", {
+        method: "POST",
+        body: JSON.stringify({
+          serviceType: formData.get("serviceType"),
+          startDate: formData.get("startDate"),
+          endDate: formData.get("endDate"),
+          startTime: formData.get("startTime"),
+          endTime: formData.get("endTime"),
+          maxPlaces: formData.get("maxPlaces"),
+          weekDays: selectedDays,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (!response.ok) {
-      setMessage(data.error || "Moment kon niet toegevoegd worden.");
+      if (!response.ok) {
+        setMessage(data.error || "Momenten konden niet toegevoegd worden.");
+        return;
+      }
+
+      event.currentTarget.reset();
+      setSelectedDays([]);
+      setMessage(`${data.count} beschikbare momenten toegevoegd.`);
+      await loadAvailability();
+    } catch {
+      setMessage("Er ging iets mis bij het toevoegen.");
+    } finally {
       setSaving(false);
-      return;
     }
-
-    event.currentTarget.reset();
-    setMessage("Beschikbaar moment toegevoegd.");
-    setSaving(false);
-    loadAvailability();
   }
 
   async function deleteAvailability(id: string) {
@@ -85,12 +113,28 @@ export default function AdminAvailability() {
   return (
     <div className="admin-request-list">
       <div className="admin-request-card">
-        <h2>Beschikbaar moment toevoegen</h2>
+        <h2>Beschikbare periode toevoegen</h2>
 
         <form onSubmit={handleSubmit} className="form-grid">
           <label>
-            Datum
-            <input name="date" type="date" required />
+            Type afspraak
+            <select name="serviceType" required>
+              <option value="">Kies type</option>
+              <option value="kennismaking">Kennismaking — 30 min</option>
+              <option value="begeleiding">
+                Bijles / huiswerkbegeleiding / studiecoaching — 60 min
+              </option>
+            </select>
+          </label>
+
+          <label>
+            Startdatum
+            <input name="startDate" type="date" required />
+          </label>
+
+          <label>
+            Einddatum
+            <input name="endDate" type="date" required />
           </label>
 
           <label>
@@ -104,12 +148,44 @@ export default function AdminAvailability() {
           </label>
 
           <label>
-            Aantal plaatsen
-            <input name="maxPlaces" type="number" min="1" defaultValue="1" required />
+            Aantal plaatsen per moment
+            <input
+              name="maxPlaces"
+              type="number"
+              min="1"
+              defaultValue="1"
+              required
+            />
           </label>
 
+          <div style={{ gridColumn: "1 / -1" }}>
+            <p>Herhalen op:</p>
+
+            <div className="weekday-button-row">
+              {weekDays.map((day) => {
+                const isSelected = selectedDays.includes(day.value);
+
+                return (
+                  <button
+                    key={day.value}
+                    type="button"
+                    className={
+                      isSelected
+                        ? "weekday-button selected"
+                        : "weekday-button"
+                    }
+                    aria-pressed={isSelected}
+                    onClick={() => toggleDay(day.value)}
+                  >
+                    {day.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <button className="primary-action" disabled={saving}>
-            {saving ? "Toevoegen..." : "Moment toevoegen"}
+            {saving ? "Toevoegen..." : "Periode toevoegen"}
           </button>
         </form>
 
@@ -132,6 +208,13 @@ export default function AdminAvailability() {
                 📅 {item.date} — {item.start_time.slice(0, 5)} tot{" "}
                 {item.end_time.slice(0, 5)}
               </h3>
+
+              <p>
+                Type:{" "}
+                {item.service_type === "kennismaking"
+                  ? "Kennismaking"
+                  : "Begeleiding"}
+              </p>
 
               <p>
                 Plaatsen: {item.booked_places}/{item.max_places}

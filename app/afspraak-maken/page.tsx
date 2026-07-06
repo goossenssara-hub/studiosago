@@ -99,9 +99,9 @@ function AfspraakMakenContent() {
 
       try {
         const response = await fetch(
-          `/api/availability?date=${encodeURIComponent(selectedDate)}&duration=${
-            selectedType.duration
-          }`,
+          `/api/availability?date=${encodeURIComponent(
+  selectedDate
+)}&serviceType=begeleiding`,
           { cache: "no-store" }
         );
 

@@ -126,3 +126,32 @@
     grid-template-columns: 1fr;
   }
 }
+
+.weekday-button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.weekday-button {
+  width: 88px;
+  height: 88px;
+  border-radius: 999px;
+  border: 3px solid var(--orange-deep);
+  background: #ffffff;
+  color: var(--orange-deep);
+  font-weight: 800;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.weekday-button.selected {
+  background: linear-gradient(135deg, var(--orange-deep), var(--orange));
+  color: #ffffff;
+}
+
+.weekday-button:hover {
+  transform: translateY(-2px);
+}

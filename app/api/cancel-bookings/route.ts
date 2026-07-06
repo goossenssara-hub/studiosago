@@ -7,7 +7,9 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const supabaseAdmin =
-  supabaseUrl && serviceRoleKey ? createClient(supabaseUrl, serviceRoleKey) : null;
+  supabaseUrl && serviceRoleKey
+    ? createClient(supabaseUrl, serviceRoleKey)
+    : null;
 
 function hoursUntilAppointment(startTime: string) {
   const appointmentDate = new Date(startTime);
@@ -98,6 +100,7 @@ export async function POST(request: Request) {
 
         if (passUpdateError) {
           console.error("Beurt terugzetten mislukt:", passUpdateError);
+
           return NextResponse.json(
             { error: "Beurt kon niet teruggezet worden." },
             { status: 500 }
@@ -105,6 +108,47 @@ export async function POST(request: Request) {
         }
 
         creditRefunded = true;
+      }
+    }
+
+    if (booking.appointment_date && booking.appointment_time) {
+      const { data: availability, error: availabilityError } =
+        await supabaseAdmin
+          .from("availability")
+          .select("id, booked_places, max_places")
+          .eq("date", booking.appointment_date)
+          .eq("start_time", booking.appointment_time)
+          .maybeSingle();
+
+      if (availabilityError) {
+        console.error("Beschikbaarheid terugzetten mislukt:", availabilityError);
+      }
+
+      if (availability) {
+        const newBookedPlaces = Math.max(
+          0,
+          (availability.booked_places ?? 0) - 1
+        );
+
+        const { error: availabilityUpdateError } = await supabaseAdmin
+          .from("availability")
+          .update({
+            booked_places: newBookedPlaces,
+            active: true,
+          })
+          .eq("id", availability.id);
+
+        if (availabilityUpdateError) {
+          console.error(
+            "Beschikbaarheid updaten mislukt:",
+            availabilityUpdateError
+          );
+
+          return NextResponse.json(
+            { error: "Beschikbaarheid kon niet terug vrijgezet worden." },
+            { status: 500 }
+          );
+        }
       }
     }
 

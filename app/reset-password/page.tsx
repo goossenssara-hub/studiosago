@@ -7,51 +7,83 @@ import { supabase } from "@/lib/supabase";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
-  const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  const [password, setPassword] = useState("");
+  const [repeatPassword, setRepeatPassword] = useState("");
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleReset(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setMessage("");
+
+    if (!supabase) {
+      setMessage("Supabase is niet geconfigureerd.");
+      return;
+    }
+
+    if (password !== repeatPassword) {
+      setMessage("De wachtwoorden komen niet overeen.");
+      return;
+    }
+
+    setLoading(true);
 
     const { error } = await supabase.auth.updateUser({
       password,
     });
 
+    setLoading(false);
+
     if (error) {
-      setMessage("Wachtwoord kon niet aangepast worden.");
+      setMessage("Je wachtwoord kon niet aangepast worden.");
       return;
     }
 
-    setMessage("Wachtwoord aangepast.");
-    router.replace("/klantendashboard");
+    setMessage("Je wachtwoord is aangepast. Je wordt doorgestuurd...");
+
+    setTimeout(() => {
+      router.replace("/klantendashboard");
+    }, 1200);
   }
 
   return (
     <PageShell>
-      <section className="info-grid single">
-        <div className="info-card">
-          <h1>Wachtwoord aanpassen</h1>
-
-          <form onSubmit={handleSubmit} className="booking-form-with-calendar">
-            <label>
-              Nieuw wachtwoord
-              <input
-                type="password"
-                required
-                minLength={8}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </label>
-
-            <button className="primary-action" type="submit">
-              Wachtwoord opslaan
-            </button>
-
-            {message && <p className="form-message">{message}</p>}
-          </form>
-        </div>
+      <section className="subpage-hero">
+        <p className="eyebrow">Wachtwoord resetten</p>
+        <h1>Kies een nieuw wachtwoord.</h1>
+        <p>Vul hieronder je nieuwe wachtwoord in.</p>
       </section>
+
+      <form className="form-card login-card" onSubmit={handleReset}>
+        <label>
+          Nieuw wachtwoord
+          <input
+            type="password"
+            placeholder="Nieuw wachtwoord"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            required
+          />
+        </label>
+
+        <label>
+          Herhaal wachtwoord
+          <input
+            type="password"
+            placeholder="Herhaal wachtwoord"
+            value={repeatPassword}
+            onChange={(event) => setRepeatPassword(event.target.value)}
+            required
+          />
+        </label>
+
+        <button className="primary-action" type="submit" disabled={loading}>
+          {loading ? "Opslaan..." : "Nieuw wachtwoord opslaan"}
+        </button>
+
+        {message && <p className="form-message">{message}</p>}
+      </form>
     </PageShell>
   );
 }

@@ -138,13 +138,7 @@ export default function KlantendashboardPage() {
             <>
               <p>Je hebt momenteel geen actieve beurtenkaart.</p>
 
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  marginTop: 24,
-                }}
-              >
+              <div style={{ display: "flex", justifyContent: "center", marginTop: 24 }}>
                 <Link href="/webshop" className="primary-action">
                   Beurtenkaart kopen
                 </Link>
@@ -154,8 +148,7 @@ export default function KlantendashboardPage() {
             <div style={{ display: "grid", gap: 18 }}>
               {passes.map((pass) => {
                 const total = pass.total_sessions ?? pass.total_credits;
-                const remaining =
-                  pass.remaining_sessions ?? pass.remaining_credits;
+                const remaining = pass.remaining_sessions ?? pass.remaining_credits;
                 const title = pass.product ?? pass.title;
                 const percentage = total > 0 ? (remaining / total) * 100 : 0;
 
@@ -169,9 +162,7 @@ export default function KlantendashboardPage() {
                       background: "#fff",
                     }}
                   >
-                    <h3 style={{ color: "#033663", marginBottom: 8 }}>
-                      {title}
-                    </h3>
+                    <h3 style={{ color: "#033663", marginBottom: 8 }}>{title}</h3>
 
                     <p>
                       Nog <strong>{remaining}</strong> van de{" "}
@@ -197,13 +188,7 @@ export default function KlantendashboardPage() {
                       />
                     </div>
 
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "center",
-                        marginTop: 20,
-                      }}
-                    >
+                    <div style={{ display: "flex", justifyContent: "center", marginTop: 20 }}>
                       <Link
                         href={`/afspraak-maken?passId=${pass.id}`}
                         className="primary-action"

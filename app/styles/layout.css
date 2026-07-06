@@ -3,37 +3,38 @@
    ========================================================= */
 
 .page-shell {
+  position: relative;
   width: min(100% - 48px, 1760px);
   min-height: calc(100vh - 48px);
   margin: 24px auto;
   border-radius: 56px;
   overflow: hidden;
 
-  background:
-    linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.38) 0%,
-      rgba(255, 255, 255, 0.24) 45%,
-      rgba(255, 255, 255, 0.34) 100%
-    );
+  background: rgba(255, 255, 255, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.48);
 
-  border: 1px solid rgba(255, 255, 255, 0.52);
-
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 
   box-shadow: 0 22px 70px rgba(3, 54, 99, 0.08);
 }
+
 .page-shell::before {
   content: "";
   position: absolute;
   inset: 0;
   z-index: 0;
   pointer-events: none;
+
   background:
-    radial-gradient(circle at 10% 8%, rgba(40, 185, 170, 0.08), transparent 26%),
-    radial-gradient(circle at 90% 16%, rgba(254, 160, 32, 0.08), transparent 26%),
-    radial-gradient(circle at 50% 82%, rgba(155, 129, 184, 0.06), transparent 35%);
+    radial-gradient(circle at 11% 22%, rgba(40, 185, 170, 0.10), transparent 24%),
+    radial-gradient(circle at 84% 16%, rgba(254, 160, 32, 0.08), transparent 26%),
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.18) 0%,
+      rgba(255, 255, 255, 0.08) 48%,
+      rgba(255, 255, 255, 0.16) 100%
+    );
 }
 
 .page-shell > * {
@@ -44,6 +45,7 @@
 .site-card {
   position: relative;
   overflow: hidden;
+  background: transparent;
 }
 
 /* HEADER */
@@ -159,13 +161,13 @@
   border: 0;
   border-radius: var(--radius-pill);
 
-  background: linear-gradient(135deg, var(--social-start), var(--social-end));
+  background: linear-gradient(135deg, var(--orange-deep), var(--orange));
   color: #fff;
 
   font-weight: 700;
   white-space: nowrap;
 
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 10px 24px rgba(251, 103, 48, 0.22);
 
   transition: transform 0.3s ease, filter 0.3s ease;
 }
@@ -244,11 +246,11 @@
 .booking-embed-card,
 .booking-calendar-panel {
   border-radius: 28px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.62);
-  box-shadow: 0 16px 34px rgba(3, 54, 99, 0.09);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 16px 34px rgba(3, 54, 99, 0.08);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .info-card,
@@ -296,8 +298,8 @@
 @media (max-width: 760px) {
   .page-shell {
     width: min(100% - 20px, 1440px);
+    min-height: calc(100vh - 20px);
     margin: 10px auto;
-    padding: 12px;
     border-radius: 28px;
   }
 

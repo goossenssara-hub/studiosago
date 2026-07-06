@@ -9,18 +9,28 @@ export default function AuthCallbackPage() {
 
   useEffect(() => {
     async function handleAuth() {
-      // Verwerkt de access token uit de URL
-      const { error } = await supabase.auth.exchangeCodeForSession(
-        window.location.href
-      );
-
-      if (error) {
-        console.error(error);
+      if (!supabase) {
+        console.error("Supabase is niet geconfigureerd.");
         router.replace("/login");
         return;
       }
 
-      router.replace("/klantdashboard");
+      try {
+        const { error } = await supabase.auth.exchangeCodeForSession(
+          window.location.href
+        );
+
+        if (error) {
+          console.error(error);
+          router.replace("/login");
+          return;
+        }
+
+        router.replace("/klantendashboard");
+      } catch (err) {
+        console.error(err);
+        router.replace("/login");
+      }
     }
 
     handleAuth();

@@ -1,0 +1,1 @@
+export { POST } from "../cancel-booking/route";

@@ -34,6 +34,11 @@ export default function KlantendashboardPage() {
   useEffect(() => {
     async function loadUser() {
       try {
+        if (!supabase) {
+          router.replace("/login");
+          return;
+        }
+
         const {
           data: { session },
         } = await supabase.auth.getSession();
@@ -89,6 +94,11 @@ export default function KlantendashboardPage() {
   }, [router]);
 
   async function logout() {
+    if (!supabase) {
+      router.replace("/login");
+      return;
+    }
+
     await supabase.auth.signOut();
     router.replace("/login");
   }

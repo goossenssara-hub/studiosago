@@ -17,6 +17,11 @@ export default function ResetPasswordPage() {
     event.preventDefault();
     setMessage("");
 
+    if (!supabase) {
+      setMessage("Supabase is niet geconfigureerd.");
+      return;
+    }
+
     if (password !== repeatPassword) {
       setMessage("De wachtwoorden komen niet overeen.");
       return;
@@ -38,7 +43,7 @@ export default function ResetPasswordPage() {
     setMessage("Je wachtwoord is aangepast. Je wordt doorgestuurd...");
 
     setTimeout(() => {
-      router.replace("/klantdashboard");
+      router.replace("/klantendashboard");
     }, 1200);
   }
 

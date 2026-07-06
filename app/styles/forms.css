@@ -143,3 +143,19 @@ th {
 .account-dropdown button:hover {
   background: #f5f9fb;
 }
+.profile-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  padding: 32px;
+  background: rgba(3, 54, 99, 0.72);
+  overflow-y: auto;
+}
+
+.profile-modal {
+  max-width: 1050px;
+  margin: 0 auto;
+  padding: 32px;
+  border-radius: 32px;
+  background: white;
+}

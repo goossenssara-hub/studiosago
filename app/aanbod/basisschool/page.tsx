@@ -38,6 +38,32 @@ const aanbod = [
       "Aan huis binnen 15 km rond Peer of digitaal.",
     ],
   },
+  {
+    badge: "Voor ouders",
+    label: "Ondersteuning",
+    title: "Hoe help ik mijn kind met leren?",
+    price: "€50 per uur",
+    service: "10-beurtenkaart",
+    text: [
+      "Ik help je op weg om een goede leeromgeving te creëren en je kind te ondersteunen bij het leren.",
+      "Voor deze sessie kan je vragen doorsturen zodat we gericht aan de slag kunnen. De leerling mag, maar moet hiervoor niet aanwezig zijn.",
+      "We bespreken hoe je je kind kan helpen met leren, plannen, concentreren en motiveren.",
+      "Aan huis binnen 15 km rond Peer of digitaal.",
+    ],
+  },
+
+  {
+  badge: "Voor scholen",
+  label: "Educatieve workshops",
+  title: "VR-expedities",
+  price: "In samenwerking met Speelweelde",
+  service: "vr-expedities",
+  externalHref: "https://www.speelweelde.be/workshops/educatief",
+  buttonText: "Meer informatie",
+  text: [
+    "Interactieve en leerrijke workshops gekoppeld aan de leerplannen van het Vlaamse onderwijs.",
+  ],
+},
  
 ];
 
@@ -74,13 +100,14 @@ export default function BasisschoolPage() {
                   <p key={paragraph}>{paragraph}</p>
                 ))}
 
-                <Link
-                  className="primary-action"
-                  href={`/contact?service=${item.service}`}
-                >
-                  Neem contact op
-                </Link>
-              </div>
+<Link
+  className="primary-action"
+  href={item.externalHref || `/contact?service=${item.service}`}
+  target={item.externalHref ? "_blank" : undefined}
+  rel={item.externalHref ? "noopener noreferrer" : undefined}
+>
+  {item.buttonText || "Neem contact op"}
+</Link>              </div>
             </article>
           ))}
         </section>

@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-"lint": "echo \"Skipping lint\""  },
+    "lint": "echo \"Skipping lint\""
+  },
   "dependencies": {
     "@supabase/supabase-js": "latest",
     "lucide-react": "^1.21.0",

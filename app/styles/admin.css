@@ -416,3 +416,121 @@
     display: none;
   }
 }
+.student-profile-button {
+  width: 100%;
+  border: 1px solid rgba(3, 54, 99, 0.12);
+  border-radius: 22px;
+  padding: 18px 22px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--navy);
+  text-align: left;
+  font-weight: 850;
+  font-size: 1.05rem;
+  cursor: pointer;
+}
+
+.student-profile-button:hover {
+  background: rgba(254, 160, 32, 0.12);
+}
+.profile-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  padding: 32px;
+  background: rgba(3, 54, 99, 0.72);
+  overflow-y: auto;
+}
+
+.profile-modal {
+  max-width: 1050px;
+  margin: 0 auto;
+  padding: 32px;
+  border-radius: 32px;
+  background: white;
+}
+.student-profile-card {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 110px 1fr 210px;
+  align-items: center;
+  gap: 28px;
+  border: 2px solid rgba(3, 54, 99, 0.12);
+  border-radius: 34px;
+  padding: 30px 42px;
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--navy);
+  text-align: left;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.student-profile-card:hover {
+  background: rgba(254, 160, 32, 0.08);
+  transform: translateY(-2px);
+}
+
+.student-avatar {
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(40, 185, 170, 0.16);
+  color: var(--navy);
+  font-size: 2rem;
+  font-weight: 900;
+}
+
+.student-card-info {
+  display: grid;
+  gap: 6px;
+}
+
+.student-card-info strong {
+  font-size: 1.45rem;
+  color: var(--navy);
+}
+
+.student-card-info span {
+  font-size: 1.15rem;
+  color: var(--navy);
+}
+
+.student-card-info small {
+  font-size: 1rem;
+  color: rgba(3, 54, 99, 0.55);
+}
+
+.student-photo-status {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  color: var(--navy);
+  font-weight: 800;
+}
+
+.camera-icon {
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.camera-icon.allowed {
+  color: #28b9aa;
+}
+
+.camera-icon.denied {
+  filter: grayscale(1);
+}
+
+.student-photo-status small {
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .student-profile-card {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+}

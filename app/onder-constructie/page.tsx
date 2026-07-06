@@ -1,28 +1,26 @@
-import PageShell from "@/components/PageShell";
 import Link from "next/link";
+import PageShell from "@/components/PageShell";
 
-export default function UnderConstructionPage() {
+export default function OnderConstructiePage() {
   return (
     <PageShell>
-      <section className="construction-page">
-        <div className="construction-card">
-          <div className="construction-icon">🚧</div>
-
-          <p className="eyebrow">Binnenkort beschikbaar</p>
+      <main className="construction-page">
+        <section className="construction-card">
+          <p className="eyebrow">🚧 Binnenkort beschikbaar</p>
 
           <h1>Deze pagina is nog in opbouw</h1>
 
-          <p className="construction-text">
-            Ik ben volop bezig om deze pagina verder uit te werken zodat je hier
-            binnenkort alle informatie terugvindt.
+          <p>
+            Ik werk achter de schermen aan deze pagina.<br />
+            Binnenkort vind je hier alle informatie terug.
           </p>
 
-          <p className="construction-text">
-            Heb je intussen een vraag of wil je graag meer informatie?
+          <p>
+            Heb je intussen een vraag of wil je graag meer informatie?<br />
             Neem gerust contact op.
           </p>
 
-          <div className="construction-buttons">
+          <div className="construction-actions">
             <Link href="/contact" className="primary-action">
               Neem contact op
             </Link>
@@ -31,8 +29,8 @@ export default function UnderConstructionPage() {
               Terug naar de homepage
             </Link>
           </div>
-        </div>
-      </section>
+        </section>
+      </main>
     </PageShell>
   );
 }

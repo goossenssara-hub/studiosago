@@ -8,6 +8,7 @@
 @import "./styles/hero.css";
 @import "./styles/cards.css";
 @import "./styles/aanbod.css";
+@import "./styles/kleuters.css";
 @import "./styles/webshop.css";
 @import "./styles/forms.css";
 @import "./styles/footer.css";
@@ -386,23 +387,106 @@ h3,
     grid-template-columns: 1fr;
   }
 }
-.google-booking-frame {
+.construction-page {
   width: 100%;
-  min-height: 760px;
-  border: 0;
-  border-radius: 28px;
-  background: white;
-  box-shadow: 0 18px 45px rgba(3, 54, 99, 0.12);
+  min-height: 68vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 54px 24px 96px;
 }
 
-@media (max-width: 768px) {
-  .google-booking-frame {
-    min-height: 680px;
-  }
+.construction-card {
+  position: relative;
+  width: min(100%, 980px);
+  padding: clamp(34px, 5vw, 58px);
+  border-radius: 38px;
+  background:
+    radial-gradient(circle at 14% 18%, rgba(254, 160, 32, 0.18), transparent 34%),
+    radial-gradient(circle at 88% 18%, rgba(40, 185, 170, 0.12), transparent 32%),
+    rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 22px 64px rgba(3, 54, 99, 0.14);
+  text-align: center;
+  backdrop-filter: blur(18px);
+  overflow: hidden;
 }
-.booking-form-with-calendar input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  min-width: 18px;
-  accent-color: var(--teal);
+
+.construction-card::before {
+  content: "✨";
+  position: absolute;
+  top: 34px;
+  right: 42px;
+  font-size: 2.2rem;
+  opacity: 0.45;
+}
+
+.construction-card .eyebrow {
+  margin-bottom: 14px;
+  color: var(--teal);
+  font-size: 0.95rem;
+  letter-spacing: 0.16em;
+}
+
+.construction-card h1 {
+  max-width: 760px;
+  margin: 0 auto 24px;
+  color: var(--navy);
+  font-size: clamp(2.6rem, 5vw, 4.4rem);
+  line-height: 1.02;
+}
+
+.construction-card p {
+  max-width: 720px;
+  margin: 0 auto 14px;
+  color: var(--navy);
+  font-size: clamp(1.05rem, 1.5vw, 1.32rem);
+  line-height: 1.55;
+}
+
+.construction-actions {
+  margin-top: 34px;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.construction-actions .primary-action,
+.construction-actions .secondary-action {
+  min-width: 240px;
+  min-height: 58px;
+  padding: 16px 32px;
+  border-radius: 999px;
+}
+
+.secondary-action {
+  background: rgba(3, 54, 99, 0.08);
+  color: var(--navy);
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.secondary-action:hover {
+  background: rgba(3, 54, 99, 0.13);
+}
+
+@media (max-width: 760px) {
+  .construction-page {
+    padding: 32px 18px 78px;
+  }
+
+  .construction-card {
+    border-radius: 30px;
+  }
+
+  .construction-card::before {
+    display: none;
+  }
+
+  .construction-actions a {
+    width: 100%;
+  }
 }

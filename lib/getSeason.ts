@@ -11,5 +11,5 @@ export function getSeason(date = new Date()): Season {
 }
 
 export function getSeasonBackground(season: Season) {
-  return `/assets/backgrounds/${season}.svg`;
+  return `/assets/backgrounds/${season}.png`;
 }

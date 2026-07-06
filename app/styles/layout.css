@@ -39,35 +39,68 @@
   overflow: hidden;
 }
 
+/* HEADER */
+
 .site-header {
   position: relative;
   z-index: 20;
-  display: flex;
+
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
   gap: 24px;
+
   padding: 28px 48px 12px;
+}
+
+.site-header > a:first-child {
+  flex-shrink: 0;
+  min-width: max-content;
 }
 
 .logo {
   width: 245px;
   height: auto;
+  flex-shrink: 0;
 }
 
+/* NAVIGATIE */
+
 .nav {
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+
   display: flex;
   align-items: center;
-  gap: 32px;
+  justify-content: flex-start;
+  gap: 28px;
+
+  white-space: nowrap;
+  scrollbar-width: none;
+
   font-weight: 800;
+}
+
+.nav::-webkit-scrollbar {
+  display: none;
 }
 
 .nav a {
   position: relative;
+  flex: 0 0 auto;
+
   display: inline-flex;
   align-items: center;
   gap: 10px;
+
   padding: 12px 6px;
+
   color: var(--navy);
+  white-space: nowrap;
+  word-break: keep-all;
+  overflow-wrap: normal;
+
   transition: color 0.25s ease;
 }
 
@@ -76,10 +109,13 @@
   position: absolute;
   left: 50%;
   bottom: -10px;
+
   width: 0;
   height: 5px;
+
   border-radius: var(--radius-pill);
   background: linear-gradient(135deg, var(--social-start), var(--social-end));
+
   transform: translateX(-50%);
   transition: width 0.3s ease;
 }
@@ -94,21 +130,36 @@
   height: 28px;
 }
 
+/* ACCOUNT / LOGIN */
+
+.account-menu,
+.site-header > .login-button {
+  justify-self: end;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 .login-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  min-width: 150px;
-  min-height: 40px;
-  padding: 12px 22px;
+
+  min-width: max-content;
+  min-height: 56px;
+  padding: 0 28px;
+
   border: 0;
   border-radius: var(--radius-pill);
+
   background: linear-gradient(135deg, var(--social-start), var(--social-end));
   color: #fff;
+
   font-weight: 700;
   white-space: nowrap;
+
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
+
   transition: transform 0.3s ease, filter 0.3s ease;
 }
 
@@ -122,6 +173,8 @@
   height: 22px;
   flex-shrink: 0;
 }
+
+/* ALGEMEEN */
 
 .section-heading {
   width: 100%;
@@ -159,12 +212,16 @@
   line-height: 1.6;
 }
 
+/* INFO CARDS */
+
 .info-grid {
   position: relative;
   z-index: 8;
+
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 22px;
+
   padding: 10px 54px 70px;
 }
 
@@ -204,49 +261,65 @@
   line-height: 1.7;
   font-weight: 600;
 }
-.site-header {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 24px;
-  padding: 28px 48px 12px;
+
+/* RESPONSIVE */
+
+@media (max-width: 1120px) {
+  .site-header {
+    gap: 18px;
+    padding-inline: 24px;
+  }
+
+  .logo {
+    width: 190px;
+  }
+
+  .nav {
+    gap: 22px;
+  }
 }
 
-.site-header > a:first-child {
-  flex-shrink: 0;
+@media (max-width: 900px) {
+  .info-grid {
+    grid-template-columns: 1fr;
+    padding-inline: 28px;
+  }
 }
 
-.nav {
-  min-width: 0;
-  overflow-x: auto;
-  overflow-y: hidden;
+@media (max-width: 760px) {
+  .page-shell {
+    width: min(100% - 20px, 1440px);
+    margin: 10px auto;
+    padding: 12px;
+    border-radius: 28px;
+  }
 
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 28px;
+  .site-header {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 12px;
+    padding: 18px 12px 8px;
+  }
 
-  white-space: nowrap;
-  scrollbar-width: none;
-}
+  .logo {
+    width: 145px;
+  }
 
-.nav::-webkit-scrollbar {
-  display: none;
-}
+  .nav {
+    gap: 18px;
+    font-size: 14px;
+  }
 
-.nav a {
-  flex: 0 0 auto;
-}
+  .login-button {
+    min-height: 48px;
+    padding: 0 18px;
+    font-size: 0.9rem;
+  }
 
-.account-menu,
-.login-button {
-  justify-self: end;
-  flex-shrink: 0;
-  white-space: nowrap;
-}
+  .subpage-hero {
+    padding: 48px 24px 30px;
+  }
 
-.account-menu .login-button,
-.site-header > .login-button {
-  min-height: 56px;
-  padding: 0 28px;
+  .info-grid {
+    padding: 10px 18px 50px;
+  }
 }

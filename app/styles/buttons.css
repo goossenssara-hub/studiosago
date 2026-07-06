@@ -52,30 +52,27 @@ button.login-button,
   position: relative;
   z-index: 1;
 
-display: inline-flex;
-align-items: center;
-justify-content: center;
-gap: .5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 
-height: 68px;
-min-height: 68px;
+  min-height: 68px;
+  height: auto;
 
-padding: 0 42px;
+  padding: 18px 42px;
 
-line-height: 1;
-text-align: center;
-vertical-align: middle;
-white-space: nowrap;
+  line-height: 1.2;
+  text-align: center;
+  vertical-align: middle;
+  white-space: normal;
 
-flex-shrink: 0;
+  flex-shrink: 0;
+
   border: none;
   border-radius: 9999px;
 
-  background: linear-gradient(
-    135deg,
-    var(--button-start),
-    var(--button-end)
-  );
+  background: linear-gradient(135deg, var(--button-start), var(--button-end));
 
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
@@ -135,7 +132,7 @@ a.login-button:active {
   -webkit-text-fill-color: #ffffff !important;
 }
 
-/* Geen schaduw */
+/* Geen dubbele schaduw/underline */
 .primary-action::after,
 .secondary-action::after,
 .shop-button::after,
@@ -201,7 +198,7 @@ a.login-button:active {
 /* Variaties */
 .shop-button {
   min-height: 60px;
-  padding-inline: 30px;
+  padding: 16px 30px;
 }
 
 .kleuter-button {
@@ -210,16 +207,21 @@ a.login-button:active {
 
 .login-button {
   min-height: 58px;
-  padding-inline: 28px;
+  padding: 14px 28px;
+  white-space: nowrap;
 }
 
 .aanbod-detail-card .primary-action {
   width: 100%;
+  min-height: 68px;
+  padding: 18px 30px;
+  margin-bottom: 20px;
 }
 
 .cta-card .primary-action {
   min-width: 280px;
 }
+
 /* Zorg dat links zich als echte knoppen gedragen */
 a.primary-action,
 a.secondary-action,

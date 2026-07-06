@@ -1,0 +1,101 @@
+.kleuters-page {
+  position: relative;
+  z-index: 8;
+}
+
+.kleuter-aanbod {
+  position: relative;
+  z-index: 8;
+  width: 100%;
+  max-width: var(--content-max);
+  margin: 20px auto 80px;
+  padding: 0 54px;
+}
+
+.kleuter-card {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.9fr) minmax(360px, 1.1fr);
+  gap: 34px;
+  align-items: stretch;
+
+  padding: 34px;
+  border-radius: 42px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  box-shadow: 0 22px 58px rgba(3, 54, 99, 0.13);
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.kleuter-image {
+  position: relative;
+  min-height: 420px;
+  overflow: hidden;
+  border-radius: 34px;
+}
+
+.kleuter-image img {
+  object-fit: cover;
+}
+
+.kleuter-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 24px;
+}
+
+.kleuter-content .badge {
+  width: fit-content;
+  margin-bottom: 18px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  background: rgba(40, 185, 170, 0.14);
+  color: var(--navy);
+  font-weight: 900;
+}
+
+.kleuter-content h2 {
+  margin: 0 0 18px;
+  color: var(--navy);
+  font-size: clamp(2.6rem, 5vw, 4.8rem);
+  line-height: 1;
+}
+
+.kleuter-content p {
+  margin: 0 0 28px;
+  color: var(--navy);
+  font-size: 1.25rem;
+  line-height: 1.7;
+  font-weight: 600;
+}
+
+.kleuter-content .kleuter-button {
+  width: fit-content;
+  min-width: 320px;
+}
+
+@media (max-width: 900px) {
+  .kleuter-aanbod {
+    padding: 0 22px;
+  }
+
+  .kleuter-card {
+    grid-template-columns: 1fr;
+    padding: 24px;
+  }
+
+  .kleuter-image {
+    min-height: 300px;
+  }
+
+  .kleuter-content {
+    padding: 10px 0 0;
+  }
+
+  .kleuter-content .kleuter-button {
+    width: 100%;
+    min-width: 0;
+  }
+}

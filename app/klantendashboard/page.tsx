@@ -7,6 +7,7 @@ import PageShell from "@/components/PageShell";
 import { supabase } from "@/lib/supabase";
 import CustomerAppointments from "@/components/CustomerAppointments";
 import SessionTimeout from "@/components/SessionTimeout";
+import CustomerProfileForm from "@/components/CustomerProfileForm";
 
 type Pass = {
   id: string;
@@ -24,9 +25,11 @@ type Pass = {
 
 export default function KlantendashboardPage() {
   const router = useRouter();
+
   const [email, setEmail] = useState<string | null>(null);
   const [passes, setPasses] = useState<Pass[]>([]);
   const [loading, setLoading] = useState(true);
+  const [profileRequired, setProfileRequired] = useState(false);
 
   useEffect(() => {
     async function loadUser() {
@@ -51,6 +54,14 @@ export default function KlantendashboardPage() {
         }
 
         setEmail(user.email);
+
+        const profileResponse = await fetch(
+          `/api/customer/profile?email=${encodeURIComponent(user.email)}`,
+          { cache: "no-store" }
+        );
+
+        const profileData = await profileResponse.json();
+        setProfileRequired(!profileData.profileCompleted);
 
         const { data: userPasses, error: passesError } = await supabase
           .from("passes")
@@ -204,6 +215,12 @@ export default function KlantendashboardPage() {
       </section>
 
       <section className="info-grid single">
+        <div className="info-card">
+          <CustomerProfileForm />
+        </div>
+      </section>
+
+      <section className="info-grid single">
         <div className="info-card cta-card">
           <h2>Afmelden</h2>
           <p>Wil je uitloggen uit je klantendashboard?</p>
@@ -219,6 +236,14 @@ export default function KlantendashboardPage() {
           </div>
         </div>
       </section>
+
+      {profileRequired && (
+        <div className="profile-modal-backdrop">
+          <div className="profile-modal">
+            <CustomerProfileForm onSaved={() => setProfileRequired(false)} />
+          </div>
+        </div>
+      )}
     </PageShell>
   );
 }

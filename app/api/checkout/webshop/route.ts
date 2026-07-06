@@ -5,10 +5,21 @@ import {
   webshopProducts,
 } from "@/lib/webshopProducts";
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+function getSupabaseAdmin() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error(
+      "Supabase environment variables ontbreken: NEXT_PUBLIC_SUPABASE_URL en/of SUPABASE_SERVICE_ROLE_KEY."
+    );
+  }
+
+  return createClient(supabaseUrl, serviceRoleKey);
+}
 
 export async function POST(request: Request) {
   try {
@@ -57,21 +68,25 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!process.env.MOLLIE_API_KEY) {
+    const mollieApiKey = process.env.MOLLIE_API_KEY;
+    const siteUrlEnv = process.env.NEXT_PUBLIC_SITE_URL;
+
+    if (!mollieApiKey) {
       return NextResponse.json(
         { error: "MOLLIE_API_KEY ontbreekt." },
         { status: 500 }
       );
     }
 
-    if (!process.env.NEXT_PUBLIC_SITE_URL) {
+    if (!siteUrlEnv) {
       return NextResponse.json(
         { error: "NEXT_PUBLIC_SITE_URL ontbreekt." },
         { status: 500 }
       );
     }
 
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "");
+    const supabaseAdmin = getSupabaseAdmin();
+    const siteUrl = siteUrlEnv.replace(/\/$/, "");
     const checkoutId = crypto.randomUUID();
 
     const paymentBody = {
@@ -107,7 +122,7 @@ export async function POST(request: Request) {
     const response = await fetch("https://api.mollie.com/v2/payments", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${process.env.MOLLIE_API_KEY}`,
+        Authorization: `Bearer ${mollieApiKey}`,
         "Content-Type": "application/json",
         "Idempotency-Key": checkoutId,
       },
@@ -119,8 +134,7 @@ export async function POST(request: Request) {
     if (!response.ok) {
       return NextResponse.json(
         {
-          error:
-            payment.detail || "Mollie betaling kon niet gestart worden.",
+          error: payment.detail || "Mollie betaling kon niet gestart worden.",
         },
         { status: 500 }
       );
@@ -138,6 +152,7 @@ export async function POST(request: Request) {
 
     if (saveError) {
       console.error(saveError);
+
       return NextResponse.json(
         { error: "Betaling kon niet opgeslagen worden." },
         { status: 500 }
@@ -145,7 +160,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({
-      url: payment._links.checkout.href,
+      url: payment._links?.checkout?.href,
     });
   } catch (error) {
     console.error(error);

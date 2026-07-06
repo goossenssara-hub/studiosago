@@ -1,54 +1,86 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const checkoutId = searchParams.get("checkoutId");
+  try {
+    const supabaseAdmin = getSupabaseAdmin();
 
-  if (!checkoutId) {
-    return NextResponse.json({ error: "Geen checkoutId." }, { status: 400 });
-  }
+    const { searchParams } = new URL(request.url);
+    const checkoutId = searchParams.get("checkoutId");
 
-  const { data: savedPayment, error } = await supabaseAdmin
-    .from("webshop_payments")
-    .select("*")
-    .eq("checkout_id", checkoutId)
-    .single();
-
-  if (error || !savedPayment) {
-    return NextResponse.json({ status: "open", product: "" });
-  }
-
-  const response = await fetch(
-    `https://api.mollie.com/v2/payments/${savedPayment.payment_id}`,
-    {
-      headers: {
-        Authorization: `Bearer ${process.env.MOLLIE_API_KEY}`,
-      },
+    if (!checkoutId) {
+      return NextResponse.json(
+        { error: "Geen checkoutId." },
+        { status: 400 }
+      );
     }
-  );
 
-  const payment = await response.json();
+    const { data: savedPayment, error } = await supabaseAdmin
+      .from("webshop_payments")
+      .select("*")
+      .eq("checkout_id", checkoutId)
+      .single();
 
-  if (!response.ok) {
+    if (error || !savedPayment) {
+      console.error("WEBSHOP STATUS PAYMENT FIND ERROR:", error);
+
+      return NextResponse.json({
+        status: "open",
+        product: "",
+      });
+    }
+
+    const mollieApiKey = process.env.MOLLIE_API_KEY;
+
+    if (!mollieApiKey) {
+      return NextResponse.json(
+        { error: "MOLLIE_API_KEY ontbreekt." },
+        { status: 500 }
+      );
+    }
+
+    const response = await fetch(
+      `https://api.mollie.com/v2/payments/${savedPayment.payment_id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${mollieApiKey}`,
+        },
+      }
+    );
+
+    const payment = await response.json();
+
+    if (!response.ok) {
+      console.error("MOLLIE STATUS ERROR:", payment);
+
+      return NextResponse.json({
+        status: "open",
+        product: savedPayment.product,
+      });
+    }
+
+    const { error: updateError } = await supabaseAdmin
+      .from("webshop_payments")
+      .update({ status: payment.status })
+      .eq("checkout_id", checkoutId);
+
+    if (updateError) {
+      console.error("WEBSHOP STATUS UPDATE ERROR:", updateError);
+    }
+
     return NextResponse.json({
-      status: "open",
+      status: payment.status,
       product: savedPayment.product,
     });
+  } catch (error) {
+    console.error("WEBSHOP STATUS SERVER ERROR:", error);
+
+    return NextResponse.json(
+      { error: "Status kon niet opgehaald worden." },
+      { status: 500 }
+    );
   }
-
-  await supabaseAdmin
-    .from("webshop_payments")
-    .update({ status: payment.status })
-    .eq("checkout_id", checkoutId);
-
-  return NextResponse.json({
-    status: payment.status,
-    product: savedPayment.product,
-  });
 }

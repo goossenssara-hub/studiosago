@@ -1,23 +1,55 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
-  const body = await request.json();
+  try {
+    const supabaseAdmin = getSupabaseAdmin();
 
-  const { checkoutId, paymentId, product, email } = body;
+    const body = await request.json();
 
-  await supabaseAdmin.from("webshop_payments").insert({
-    checkout_id: checkoutId,
-    payment_id: paymentId,
-    product,
-    email,
-    status: "created",
-  });
+    const checkoutId = String(body.checkoutId || "");
+    const paymentId = String(body.paymentId || "");
+    const product = String(body.product || "");
+    const email = String(body.email || "");
 
-  return NextResponse.json({ ok: true });
+    if (!checkoutId || !paymentId || !product || !email) {
+      return NextResponse.json(
+        { error: "Niet alle verplichte gegevens zijn ontvangen." },
+        { status: 400 }
+      );
+    }
+
+    const { error } = await supabaseAdmin
+      .from("webshop_payments")
+      .insert({
+        checkout_id: checkoutId,
+        payment_id: paymentId,
+        product,
+        email,
+        status: "created",
+      });
+
+    if (error) {
+      console.error("WEBSHOP PAYMENT INSERT ERROR:", error);
+
+      return NextResponse.json(
+        { error: "Betaling kon niet opgeslagen worden." },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+    });
+  } catch (error) {
+    console.error("WEBSHOP PAYMENT SERVER ERROR:", error);
+
+    return NextResponse.json(
+      { error: "Serverfout bij het opslaan van de betaling." },
+      { status: 500 }
+    );
+  }
 }

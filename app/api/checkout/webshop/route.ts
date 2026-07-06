@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import {
   calculateCorrectionPrice,
   webshopProducts,
@@ -8,21 +8,9 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function getSupabaseAdmin() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error(
-      "Supabase environment variables ontbreken: NEXT_PUBLIC_SUPABASE_URL en/of SUPABASE_SERVICE_ROLE_KEY."
-    );
-  }
-
-  return createClient(supabaseUrl, serviceRoleKey);
-}
-
 export async function POST(request: Request) {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
     const formData = await request.formData();
 
     const product = String(formData.get("product") || "");
@@ -85,7 +73,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const supabaseAdmin = getSupabaseAdmin();
     const siteUrl = siteUrlEnv.replace(/\/$/, "");
     const checkoutId = crypto.randomUUID();
 

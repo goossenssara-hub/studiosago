@@ -39,8 +39,12 @@ export default function AdminAvailability() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [selectedDays, setSelectedDays] = useState<number[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [page, setPage] = useState(1);
+
+  const itemsPerPage = 10;
 
   async function loadAvailability() {
     setLoading(true);
@@ -62,9 +66,15 @@ export default function AdminAvailability() {
     loadAvailability();
   }, []);
 
+  useEffect(() => {
+    setPage(1);
+    setSelectedIds([]);
+  }, [search, typeFilter]);
+
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
-      const text = `${item.date} ${item.start_time} ${item.end_time} ${item.service_type} ${item.booked_customer}`.toLowerCase();
+      const text =
+        `${item.date} ${item.start_time} ${item.end_time} ${item.service_type} ${item.booked_customer}`.toLowerCase();
 
       const matchesSearch = text.includes(search.toLowerCase());
       const matchesType =
@@ -74,12 +84,35 @@ export default function AdminAvailability() {
     });
   }, [items, search, typeFilter]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / itemsPerPage));
+
+  const paginatedItems = filteredItems.slice(
+    (page - 1) * itemsPerPage,
+    page * itemsPerPage
+  );
+
   function toggleDay(day: number) {
     setSelectedDays((current) =>
       current.includes(day)
         ? current.filter((item) => item !== day)
         : [...current, day]
     );
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds((current) =>
+      current.includes(id)
+        ? current.filter((item) => item !== id)
+        : [...current, id]
+    );
+  }
+
+  function selectAllVisible() {
+    setSelectedIds(paginatedItems.map((item) => item.id));
+  }
+
+  function clearSelection() {
+    setSelectedIds([]);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -130,7 +163,26 @@ export default function AdminAvailability() {
     });
 
     if (response.ok) {
-      loadAvailability();
+      await loadAvailability();
+    }
+  }
+
+  async function deleteSelectedAvailability() {
+    if (selectedIds.length === 0) return;
+
+    const response = await fetch("/api/admin/availability", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ids: selectedIds,
+      }),
+    });
+
+    if (response.ok) {
+      setSelectedIds([]);
+      await loadAvailability();
     }
   }
 
@@ -173,7 +225,13 @@ export default function AdminAvailability() {
 
           <label>
             Aantal plaatsen per moment
-            <input name="maxPlaces" type="number" min="1" defaultValue="1" required />
+            <input
+              name="maxPlaces"
+              type="number"
+              min="1"
+              defaultValue="1"
+              required
+            />
           </label>
 
           <div style={{ gridColumn: "1 / -1" }}>
@@ -187,7 +245,9 @@ export default function AdminAvailability() {
                   <button
                     key={day.value}
                     type="button"
-                    className={isSelected ? "weekday-button selected" : "weekday-button"}
+                    className={
+                      isSelected ? "weekday-button selected" : "weekday-button"
+                    }
                     onClick={() => toggleDay(day.value)}
                   >
                     {day.label}
@@ -225,6 +285,24 @@ export default function AdminAvailability() {
           </select>
         </div>
 
+        <div className="availability-bulk-actions">
+          <button type="button" onClick={selectAllVisible}>
+            Alles op deze pagina selecteren
+          </button>
+
+          <button type="button" onClick={clearSelection}>
+            Selectie wissen
+          </button>
+
+          <button
+            type="button"
+            onClick={deleteSelectedAvailability}
+            disabled={selectedIds.length === 0}
+          >
+            Geselecteerde verwijderen ({selectedIds.length})
+          </button>
+        </div>
+
         {loading && <p>Laden...</p>}
 
         {!loading && filteredItems.length === 0 && (
@@ -232,57 +310,91 @@ export default function AdminAvailability() {
         )}
 
         {!loading && filteredItems.length > 0 && (
-          <div className="availability-table">
-            <div className="availability-row availability-header">
-              <span>Datum</span>
-              <span>Tijd</span>
-              <span>Type</span>
-              <span>Klant</span>
-              <span>Plaatsen</span>
-              <span>Status</span>
-              <span>Actie</span>
+          <>
+            <div className="availability-table">
+              <div className="availability-row availability-header">
+                <span></span>
+                <span>Datum</span>
+                <span>Tijd</span>
+                <span>Type</span>
+                <span>Klant</span>
+                <span>Plaatsen</span>
+                <span>Status</span>
+                <span>Actie</span>
+              </div>
+
+              {paginatedItems.map((item) => (
+                <div key={item.id} className="availability-row">
+                  <span>
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(item.id)}
+                      onChange={() => toggleSelect(item.id)}
+                    />
+                  </span>
+
+                  <span>{formatDate(item.date)}</span>
+
+                  <span>
+                    {item.start_time.slice(0, 5)} –{" "}
+                    {item.end_time.slice(0, 5)}
+                  </span>
+
+                  <span className="availability-badge">
+                    {item.service_type === "kennismaking"
+                      ? "Kennismaking"
+                      : "Begeleiding"}
+                  </span>
+
+                  <span>{item.booked_customer ? item.booked_customer : "—"}</span>
+
+                  <span>
+                    {item.booked_places}/{item.max_places}
+                  </span>
+
+                  <span
+                    className={
+                      item.active ? "status-pill active" : "status-pill inactive"
+                    }
+                  >
+                    {item.active ? "Actief" : "Volzet"}
+                  </span>
+
+                  <button
+                    type="button"
+                    className="availability-delete"
+                    onClick={() => deleteAvailability(item.id)}
+                  >
+                    Verwijderen
+                  </button>
+                </div>
+              ))}
             </div>
 
-            {filteredItems.map((item) => (
-              <div key={item.id} className="availability-row">
-                <span>{formatDate(item.date)}</span>
+            <div className="availability-pagination">
+              <button
+                type="button"
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                disabled={page === 1}
+              >
+                Vorige
+              </button>
 
-                <span>
-                  {item.start_time.slice(0, 5)} – {item.end_time.slice(0, 5)}
-                </span>
+              <span>
+                Pagina {page} van {totalPages}
+              </span>
 
-                <span className="availability-badge">
-                  {item.service_type === "kennismaking"
-                    ? "Kennismaking"
-                    : "Begeleiding"}
-                </span>
-
-                <span>
-                  {item.booked_customer ? item.booked_customer : "—"}
-                </span>
-
-                <span>
-                  {item.booked_places}/{item.max_places}
-                </span>
-
-                <span
-                  className={
-                    item.active ? "status-pill active" : "status-pill inactive"
-                  }
-                >
-                  {item.active ? "Actief" : "Volzet"}
-                </span>
-
-                <button
-                  type="button"
-                  className="availability-delete"
-                  onClick={() => deleteAvailability(item.id)}
-                >
-                  Verwijderen
-                </button>
-              </div>
-            ))}
-          </div>
+              <button
+                type="button"
+                onClick={() =>
+                  setPage((current) => Math.min(totalPages, current + 1))
+                }
+                disabled={page === totalPages}
+              >
+                Volgende
+              </button>
+            </div>
+          </>
         )}
       </div>
     </div>

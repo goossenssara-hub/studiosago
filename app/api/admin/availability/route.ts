@@ -165,24 +165,52 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const id = searchParams.get("id");
+  try {
+    const body = await request.json().catch(() => null);
 
-  if (!id) {
-    return NextResponse.json({ error: "Geen id ontvangen." }, { status: 400 });
-  }
+    if (body?.ids && Array.isArray(body.ids)) {
+      const { error } = await supabaseAdmin
+        .from("availability")
+        .delete()
+        .in("id", body.ids);
 
-  const { error } = await supabaseAdmin
-    .from("availability")
-    .delete()
-    .eq("id", id);
+      if (error) {
+        return NextResponse.json(
+          { error: "Momenten konden niet verwijderd worden." },
+          { status: 500 }
+        );
+      }
 
-  if (error) {
+      return NextResponse.json({ success: true });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "Geen id ontvangen." },
+        { status: 400 }
+      );
+    }
+
+    const { error } = await supabaseAdmin
+      .from("availability")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      return NextResponse.json(
+        { error: "Beschikbaar moment kon niet verwijderd worden." },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch {
     return NextResponse.json(
-      { error: "Beschikbaar moment kon niet verwijderd worden." },
+      { error: "Verwijderen mislukt." },
       { status: 500 }
     );
   }
-
-  return NextResponse.json({ success: true });
 }

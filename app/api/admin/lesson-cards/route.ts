@@ -1,42 +1,110 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const runtime = "nodejs";
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const { data, error } = await supabaseAdmin
-    .from("passes")
-    .select("*")
-    .order("customer_email", { ascending: true })
-    .order("created_at", { ascending: false });
+  try {
+    const supabaseAdmin = getSupabaseAdmin();
 
-  if (error) {
-    console.error(error);
+    const { data, error } = await supabaseAdmin
+      .from("lesson_cards")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("LESSON CARDS GET ERROR:", error);
+
+      return NextResponse.json(
+        { error: "Leskaarten konden niet geladen worden." },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      lessonCards: data ?? [],
+    });
+  } catch (error) {
+    console.error("LESSON CARDS GET SERVER ERROR:", error);
 
     return NextResponse.json(
-      { error: "Beurtenkaarten konden niet geladen worden." },
+      { error: "Serverfout bij laden van leskaarten." },
       { status: 500 }
     );
   }
+}
 
-  return NextResponse.json({
-    passes: data ?? [],
-  });
+export async function POST(request: Request) {
+  try {
+    const supabaseAdmin = getSupabaseAdmin();
+    const body = await request.json();
+
+    const title = String(body.title || "");
+    const customerEmail = String(body.customerEmail || "");
+    const studentName = String(body.studentName || "");
+    const totalCredits = Number(body.totalCredits || body.totalSessions || 0);
+    const remainingCredits = Number(
+      body.remainingCredits || body.remainingSessions || totalCredits
+    );
+    const status = String(body.status || "active");
+
+    if (!title || !customerEmail || totalCredits < 1 || remainingCredits < 0) {
+      return NextResponse.json(
+        { error: "Niet alle verplichte velden zijn correct ingevuld." },
+        { status: 400 }
+      );
+    }
+
+    if (remainingCredits > totalCredits) {
+      return NextResponse.json(
+        { error: "Resterende beurten mogen niet hoger zijn dan totaal." },
+        { status: 400 }
+      );
+    }
+
+    const { error } = await supabaseAdmin.from("lesson_cards").insert({
+      title,
+      customer_email: customerEmail,
+      student_name: studentName || null,
+      total_credits: totalCredits,
+      remaining_credits: remainingCredits,
+      total_sessions: totalCredits,
+      remaining_sessions: remainingCredits,
+      status,
+    });
+
+    if (error) {
+      console.error("LESSON CARDS POST ERROR:", error);
+
+      return NextResponse.json(
+        { error: "Leskaart kon niet toegevoegd worden." },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("LESSON CARDS POST SERVER ERROR:", error);
+
+    return NextResponse.json(
+      { error: "Serverfout bij toevoegen van leskaart." },
+      { status: 500 }
+    );
+  }
 }
 
 export async function PATCH(request: Request) {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
     const body = await request.json();
 
     const id = String(body.id || "");
     const title = String(body.title || "");
-    const totalCredits = Number(body.totalCredits || 0);
-    const remainingCredits = Number(body.remainingCredits || 0);
+    const totalCredits = Number(body.totalCredits || body.totalSessions || 0);
+    const remainingCredits = Number(
+      body.remainingCredits || body.remainingSessions || 0
+    );
     const status = String(body.status || "active");
 
     if (!id || !title || totalCredits < 1 || remainingCredits < 0) {
@@ -54,7 +122,7 @@ export async function PATCH(request: Request) {
     }
 
     const { error } = await supabaseAdmin
-      .from("passes")
+      .from("lesson_cards")
       .update({
         title,
         total_credits: totalCredits,
@@ -66,68 +134,60 @@ export async function PATCH(request: Request) {
       .eq("id", id);
 
     if (error) {
-      console.error(error);
+      console.error("LESSON CARDS PATCH ERROR:", error);
 
       return NextResponse.json(
-        { error: "Beurtenkaart kon niet aangepast worden." },
+        { error: "Leskaart kon niet aangepast worden." },
         { status: 500 }
       );
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error(error);
+    console.error("LESSON CARDS PATCH SERVER ERROR:", error);
 
     return NextResponse.json(
-      { error: "Er ging iets mis bij het aanpassen." },
+      { error: "Serverfout bij aanpassen van leskaart." },
       { status: 500 }
     );
   }
 }
 
 export async function DELETE(request: Request) {
-  const { searchParams } = new URL(request.url);
+  try {
+    const supabaseAdmin = getSupabaseAdmin();
+    const { searchParams } = new URL(request.url);
 
-  const id = searchParams.get("id");
+    const id = searchParams.get("id");
 
-  if (!id) {
+    if (!id) {
+      return NextResponse.json(
+        { error: "Geen id ontvangen." },
+        { status: 400 }
+      );
+    }
+
+    const { error } = await supabaseAdmin
+      .from("lesson_cards")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      console.error("LESSON CARDS DELETE ERROR:", error);
+
+      return NextResponse.json(
+        { error: "Leskaart kon niet verwijderd worden." },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("LESSON CARDS DELETE SERVER ERROR:", error);
+
     return NextResponse.json(
-      { error: "Geen id ontvangen." },
-      { status: 400 }
-    );
-  }
-
-  // verwijder eerst alle gekoppelde afspraken
-  const { error: bookingError } = await supabaseAdmin
-    .from("bookings")
-    .delete()
-    .eq("pass_id", id);
-
-  if (bookingError) {
-    console.error(bookingError);
-
-    return NextResponse.json(
-      { error: bookingError.message },
+      { error: "Serverfout bij verwijderen van leskaart." },
       { status: 500 }
     );
   }
-
-  // verwijder daarna de beurtenkaart
-  const { error } = await supabaseAdmin
-    .from("passes")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    console.error(error);
-
-    return NextResponse.json(
-      { error: error.message },
-      { status: 500 }
-    );
-  }
-
-  return NextResponse.json({
-    success: true,
-  });
 }

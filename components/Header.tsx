@@ -20,8 +20,6 @@ export default function Header() {
     }
 
     async function checkSession() {
-      if (!supabase) return;
-
       const {
         data: { session },
       } = await supabase.auth.getSession();
@@ -38,14 +36,15 @@ export default function Header() {
       setMenuOpen(false);
     });
 
-    return () => {
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(event.target as Node)
+      ) {
         setMenuOpen(false);
       }
     }
@@ -66,15 +65,9 @@ export default function Header() {
   }, []);
 
   async function handleLogout() {
-    if (!supabase) {
-      setLoggedIn(false);
-      setMenuOpen(false);
-      router.push("/");
-      router.refresh();
-      return;
+    if (supabase) {
+      await supabase.auth.signOut();
     }
-
-    await supabase.auth.signOut();
 
     setLoggedIn(false);
     setMenuOpen(false);
@@ -89,7 +82,11 @@ export default function Header() {
 
   return (
     <header className="site-header">
-      <Link href="/" aria-label="Studio SaGo home" onClick={closeMenu}>
+      <Link
+        href="/"
+        aria-label="Studio SaGo home"
+        onClick={closeMenu}
+      >
         <Image
           className="logo"
           src="/assets/logo-studio-sago.svg"
@@ -101,11 +98,29 @@ export default function Header() {
       </Link>
 
       <nav className="nav" aria-label="Hoofdnavigatie">
-        <Link href="/">Home</Link>
-        <Link href="/#over">Over Studio SaGo</Link>
-        <Link href="/over-mij">Over mij</Link>
-        <Link href="/contact">Afspraak</Link>
-        <Link href="/webshop">Webshop</Link>
+        <Link href="/" onClick={closeMenu}>
+          Home
+        </Link>
+
+        <Link href="/#over" onClick={closeMenu}>
+          Over Studio SaGo
+        </Link>
+
+        <Link href="/over-mij" onClick={closeMenu}>
+          Over mij
+        </Link>
+
+        <Link href="/contact" onClick={closeMenu}>
+          Contact
+        </Link>
+
+        <Link href="/afspraak" onClick={closeMenu}>
+          Afspraak
+        </Link>
+
+        <Link href="/webshop" onClick={closeMenu}>
+          Webshop
+        </Link>
       </nav>
 
       {!loggedIn ? (
@@ -126,19 +141,31 @@ export default function Header() {
 
           {menuOpen && (
             <div className="account-dropdown" role="menu">
-              <Link href="/klantendashboard" onClick={closeMenu}>
+              <Link
+                href="/klantendashboard"
+                onClick={closeMenu}
+              >
                 🏠 Mijn dashboard
               </Link>
 
-              <Link href="/klantendashboard" onClick={closeMenu}>
+              <Link
+                href="/klantendashboard"
+                onClick={closeMenu}
+              >
                 📅 Mijn afspraken
               </Link>
 
-              <Link href="/boek-nu" onClick={closeMenu}>
+              <Link
+                href="/afspraak"
+                onClick={closeMenu}
+              >
                 ➕ Nieuwe afspraak
               </Link>
 
-              <button type="button" onClick={handleLogout}>
+              <button
+                type="button"
+                onClick={handleLogout}
+              >
                 🚪 Uitloggen
               </button>
             </div>

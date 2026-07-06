@@ -50,10 +50,14 @@ function AfspraakMakenContent() {
         return;
       }
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+if (!supabase) {
+  router.replace("/login");
+  return;
+}
 
+const {
+  data: { user },
+} = await supabase.auth.getUser();
       if (!user?.email) {
         router.replace("/login");
         return;

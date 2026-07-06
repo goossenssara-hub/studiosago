@@ -14,7 +14,14 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
+    if (!supabase) {
+      setLoggedIn(false);
+      return;
+    }
+
     async function checkSession() {
+      if (!supabase) return;
+
       const {
         data: { session },
       } = await supabase.auth.getSession();
@@ -38,10 +45,7 @@ export default function Header() {
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (
-        menuRef.current &&
-        !menuRef.current.contains(event.target as Node)
-      ) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setMenuOpen(false);
       }
     }
@@ -62,6 +66,14 @@ export default function Header() {
   }, []);
 
   async function handleLogout() {
+    if (!supabase) {
+      setLoggedIn(false);
+      setMenuOpen(false);
+      router.push("/");
+      router.refresh();
+      return;
+    }
+
     await supabase.auth.signOut();
 
     setLoggedIn(false);
@@ -90,7 +102,8 @@ export default function Header() {
 
       <nav className="nav" aria-label="Hoofdnavigatie">
         <Link href="/">Home</Link>
-<Link href="/#over">Studio SaGo</Link>        <Link href="/over-mij">Over mij</Link>
+        <Link href="/#over">Over Studio SaGo</Link>
+        <Link href="/over-mij">Over mij</Link>
         <Link href="/contact">Afspraak</Link>
         <Link href="/webshop">Webshop</Link>
       </nav>

@@ -43,7 +43,7 @@ function getDuration(serviceType: string) {
 }
 
 export async function GET() {
-  const { data, error } = await supabaseAdmin
+  const { data: availability, error } = await supabaseAdmin
     .from("availability")
     .select("*")
     .order("date", { ascending: true })
@@ -56,7 +56,28 @@ export async function GET() {
     );
   }
 
-  return NextResponse.json({ availability: data ?? [] });
+  const { data: bookings } = await supabaseAdmin
+    .from("bookings")
+    .select("id, appointment_date, appointment_time, customer_email, status, notes")
+    .neq("status", "cancelled");
+
+  const enrichedAvailability =
+    availability?.map((slot) => {
+      const booking = bookings?.find(
+        (item) =>
+          item.appointment_date === slot.date &&
+          String(item.appointment_time).slice(0, 5) ===
+            String(slot.start_time).slice(0, 5)
+      );
+
+      return {
+        ...slot,
+        booked_customer: booking?.customer_email ?? null,
+        booking_id: booking?.id ?? null,
+      };
+    }) ?? [];
+
+  return NextResponse.json({ availability: enrichedAvailability });
 }
 
 export async function POST(request: Request) {

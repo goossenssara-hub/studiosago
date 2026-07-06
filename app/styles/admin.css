@@ -155,3 +155,106 @@
 .weekday-button:hover {
   transform: translateY(-2px);
 }
+
+.availability-toolbar {
+  display: grid;
+  grid-template-columns: 1fr 240px;
+  gap: 18px;
+  margin: 24px 0;
+}
+
+.availability-table {
+  display: grid;
+  gap: 10px;
+}
+
+.availability-row {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1.5fr 0.7fr 0.8fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 18px 20px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(3, 54, 99, 0.08);
+}
+
+.availability-header {
+  background: rgba(3, 54, 99, 0.06);
+  font-weight: 900;
+}
+
+.availability-badge {
+  width: fit-content;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(254, 160, 32, 0.16);
+  color: var(--orange-deep);
+  font-weight: 800;
+}
+
+.status-pill {
+  width: fit-content;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 800;
+}
+
+.status-pill.active {
+  background: rgba(40, 185, 170, 0.16);
+  color: #168f82;
+}
+
+.status-pill.inactive {
+  background: rgba(254, 32, 32, 0.12);
+  color: var(--red);
+}
+
+.availability-delete {
+  border: none;
+  border-radius: 999px;
+  padding: 10px 18px;
+  background: linear-gradient(135deg, var(--orange-deep), var(--orange));
+  color: white;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.weekday-button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.weekday-button {
+  width: 82px;
+  height: 82px;
+  border-radius: 999px;
+  border: 3px solid var(--orange-deep);
+  background: #ffffff;
+  color: var(--orange-deep);
+  font-weight: 800;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.weekday-button.selected {
+  background: linear-gradient(135deg, var(--orange-deep), var(--orange));
+  color: #ffffff;
+}
+
+@media (max-width: 1100px) {
+  .availability-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .availability-row,
+  .availability-header {
+    grid-template-columns: 1fr;
+  }
+
+  .availability-header {
+    display: none;
+  }
+}

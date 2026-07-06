@@ -1,12 +1,8 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const runtime = "nodejs";
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+export const dynamic = "force-dynamic";
 
 function isWithin15KmOfPeer(address: string) {
   const normalized = address.toLowerCase();
@@ -27,6 +23,8 @@ function isWithin15KmOfPeer(address: string) {
 
 export async function POST(request: Request) {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
+
     const {
       passId,
       email,
@@ -36,7 +34,9 @@ export async function POST(request: Request) {
       cancellationPolicyAccepted,
     } = await request.json();
 
-    if (!passId || !email || !appointmentType || !notes) {
+    const cleanNotes = String(notes || "").trim();
+
+    if (!passId || !email || !appointmentType || !cleanNotes) {
       return NextResponse.json(
         { error: "Niet alle verplichte velden zijn ingevuld." },
         { status: 400 }
@@ -78,13 +78,16 @@ export async function POST(request: Request) {
       .single();
 
     if (passError || !pass) {
+      console.error("GOOGLE APPOINTMENT PASS ERROR:", passError);
+
       return NextResponse.json(
         { error: "Geen actieve beurtenkaart gevonden." },
         { status: 404 }
       );
     }
 
-    const remaining = pass.remaining_credits ?? 0;
+    const remaining =
+      pass.remaining_credits ?? pass.remaining_sessions ?? 0;
 
     if (remaining <= 0) {
       return NextResponse.json(
@@ -99,51 +102,56 @@ export async function POST(request: Request) {
       .from("passes")
       .update({
         remaining_credits: newRemaining,
+        remaining_sessions: newRemaining,
         status: newRemaining === 0 ? "used" : "active",
       })
       .eq("id", passId);
 
     if (updateError) {
-      console.error(updateError);
+      console.error("GOOGLE APPOINTMENT PASS UPDATE ERROR:", updateError);
+
       return NextResponse.json(
         { error: "De beurt kon niet afgeschreven worden." },
         { status: 500 }
       );
     }
 
-    const { error: bookingError } = await supabaseAdmin.from("bookings").insert({
-      title: "Afspraak Studio SaGo",
-      pass_id: passId,
-      customer_email: email,
-      appointment_date: null,
-      appointment_time: null,
-      appointment_type: appointmentType,
-      customer_address: appointmentType === "home" ? customerAddress : null,
-      status: "confirmed",
-      payment_status: "paid",
-      amount: 0,
-      location:
-        appointmentType === "home"
-          ? customerAddress
-          : "Digitale afspraak via Google Calendar",
-      cancellation_policy_accepted: true,
-      notes: [
-        "Afspraak geboekt via Google Calendar",
-        `Beurtenkaart: ${pass.title}`,
-        `Type afspraak: ${
-          appointmentType === "home" ? "Fysiek aan huis" : "Digitaal"
-        }`,
-        appointmentType === "home" ? `Adres: ${customerAddress}` : "",
-        `Inhoud bijles: ${notes}`,
-        `Klant: ${email}`,
-        `Resterende beurten: ${newRemaining}`,
-      ]
-        .filter(Boolean)
-        .join("\n"),
-    });
+    const { error: bookingError } = await supabaseAdmin
+      .from("bookings")
+      .insert({
+        title: "Afspraak Studio SaGo",
+        pass_id: passId,
+        customer_email: email,
+        appointment_date: null,
+        appointment_time: null,
+        appointment_type: appointmentType,
+        customer_address: appointmentType === "home" ? customerAddress : null,
+        status: "confirmed",
+        payment_status: "paid",
+        amount: 0,
+        location:
+          appointmentType === "home"
+            ? customerAddress
+            : "Digitale afspraak via Google Calendar",
+        cancellation_policy_accepted: true,
+        notes: [
+          "Afspraak geboekt via Google Calendar",
+          `Beurtenkaart: ${pass.title ?? pass.product ?? "Beurtenkaart"}`,
+          `Type afspraak: ${
+            appointmentType === "home" ? "Fysiek aan huis" : "Digitaal"
+          }`,
+          appointmentType === "home" ? `Adres: ${customerAddress}` : "",
+          `Inhoud bijles: ${cleanNotes}`,
+          `Klant: ${email}`,
+          `Resterende beurten: ${newRemaining}`,
+        ]
+          .filter(Boolean)
+          .join("\n"),
+      });
 
     if (bookingError) {
-      console.error(bookingError);
+      console.error("GOOGLE APPOINTMENT BOOKING ERROR:", bookingError);
+
       return NextResponse.json(
         {
           error:
@@ -158,7 +166,7 @@ export async function POST(request: Request) {
       remaining_credits: newRemaining,
     });
   } catch (error) {
-    console.error(error);
+    console.error("GOOGLE APPOINTMENT SERVER ERROR:", error);
 
     return NextResponse.json(
       { error: "Er ging iets mis bij het afschrijven van de beurt." },

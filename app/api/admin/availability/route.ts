@@ -1,16 +1,16 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const runtime = "nodejs";
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+export const dynamic = "force-dynamic";
 
 const BUFFER_MINUTES = 30;
 
-function getDatesBetween(startDate: string, endDate: string, weekDays: number[]) {
+function getDatesBetween(
+  startDate: string,
+  endDate: string,
+  weekDays: number[]
+) {
   const dates: string[] = [];
   const current = new Date(`${startDate}T00:00:00`);
   const end = new Date(`${endDate}T00:00:00`);
@@ -35,7 +35,10 @@ function minutesToTime(totalMinutes: number) {
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
 
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
+    2,
+    "0"
+  )}`;
 }
 
 function getDuration(serviceType: string) {
@@ -43,45 +46,65 @@ function getDuration(serviceType: string) {
 }
 
 export async function GET() {
-  const { data: availability, error } = await supabaseAdmin
-    .from("availability")
-    .select("*")
-    .order("date", { ascending: true })
-    .order("start_time", { ascending: true });
+  try {
+    const supabaseAdmin = getSupabaseAdmin();
 
-  if (error) {
+    const { data: availability, error } = await supabaseAdmin
+      .from("availability")
+      .select("*")
+      .order("date", { ascending: true })
+      .order("start_time", { ascending: true });
+
+    if (error) {
+      console.error("AVAILABILITY GET ERROR:", error);
+
+      return NextResponse.json(
+        { error: "Beschikbaarheden konden niet geladen worden." },
+        { status: 500 }
+      );
+    }
+
+    const { data: bookings, error: bookingsError } = await supabaseAdmin
+      .from("bookings")
+      .select(
+        "id, appointment_date, appointment_time, customer_email, status, notes"
+      )
+      .neq("status", "cancelled");
+
+    if (bookingsError) {
+      console.error("BOOKINGS GET ERROR:", bookingsError);
+    }
+
+    const enrichedAvailability =
+      availability?.map((slot) => {
+        const booking = bookings?.find(
+          (item) =>
+            item.appointment_date === slot.date &&
+            String(item.appointment_time).slice(0, 5) ===
+              String(slot.start_time).slice(0, 5)
+        );
+
+        return {
+          ...slot,
+          booked_customer: booking?.customer_email ?? null,
+          booking_id: booking?.id ?? null,
+        };
+      }) ?? [];
+
+    return NextResponse.json({ availability: enrichedAvailability });
+  } catch (error) {
+    console.error("AVAILABILITY GET SERVER ERROR:", error);
+
     return NextResponse.json(
-      { error: "Beschikbaarheden konden niet geladen worden." },
+      { error: "Serverfout bij laden van beschikbaarheden." },
       { status: 500 }
     );
   }
-
-  const { data: bookings } = await supabaseAdmin
-    .from("bookings")
-    .select("id, appointment_date, appointment_time, customer_email, status, notes")
-    .neq("status", "cancelled");
-
-  const enrichedAvailability =
-    availability?.map((slot) => {
-      const booking = bookings?.find(
-        (item) =>
-          item.appointment_date === slot.date &&
-          String(item.appointment_time).slice(0, 5) ===
-            String(slot.start_time).slice(0, 5)
-      );
-
-      return {
-        ...slot,
-        booked_customer: booking?.customer_email ?? null,
-        booking_id: booking?.id ?? null,
-      };
-    }) ?? [];
-
-  return NextResponse.json({ availability: enrichedAvailability });
 }
 
 export async function POST(request: Request) {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
     const body = await request.json();
 
     const serviceType = String(body.serviceType || "");
@@ -90,10 +113,15 @@ export async function POST(request: Request) {
     const startTime = String(body.startTime || "");
     const endTime = String(body.endTime || "");
     const maxPlaces = Math.max(1, Number(body.maxPlaces || 1));
-    const weekDays = Array.isArray(body.weekDays) ? body.weekDays : [];
+    const weekDays = Array.isArray(body.weekDays)
+      ? body.weekDays.map(Number)
+      : [];
 
     if (!serviceType || !startDate || !endDate || !startTime || !endTime) {
-      return NextResponse.json({ error: "Vul alle velden in." }, { status: 400 });
+      return NextResponse.json(
+        { error: "Vul alle velden in." },
+        { status: 400 }
+      );
     }
 
     if (weekDays.length === 0) {
@@ -146,7 +174,8 @@ export async function POST(request: Request) {
     const { error } = await supabaseAdmin.from("availability").insert(rows);
 
     if (error) {
-      console.error(error);
+      console.error("AVAILABILITY POST ERROR:", error);
+
       return NextResponse.json(
         { error: "Beschikbare momenten konden niet toegevoegd worden." },
         { status: 500 }
@@ -155,7 +184,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, count: rows.length });
   } catch (error) {
-    console.error(error);
+    console.error("AVAILABILITY POST SERVER ERROR:", error);
 
     return NextResponse.json(
       { error: "Er ging iets mis bij het toevoegen." },
@@ -166,6 +195,7 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
     const body = await request.json().catch(() => null);
 
     if (body?.ids && Array.isArray(body.ids)) {
@@ -175,6 +205,8 @@ export async function DELETE(request: Request) {
         .in("id", body.ids);
 
       if (error) {
+        console.error("AVAILABILITY DELETE MANY ERROR:", error);
+
         return NextResponse.json(
           { error: "Momenten konden niet verwijderd worden." },
           { status: 500 }
@@ -200,6 +232,8 @@ export async function DELETE(request: Request) {
       .eq("id", id);
 
     if (error) {
+      console.error("AVAILABILITY DELETE ERROR:", error);
+
       return NextResponse.json(
         { error: "Beschikbaar moment kon niet verwijderd worden." },
         { status: 500 }
@@ -207,7 +241,9 @@ export async function DELETE(request: Request) {
     }
 
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (error) {
+    console.error("AVAILABILITY DELETE SERVER ERROR:", error);
+
     return NextResponse.json(
       { error: "Verwijderen mislukt." },
       { status: 500 }

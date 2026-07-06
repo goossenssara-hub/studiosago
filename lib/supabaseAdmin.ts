@@ -6,7 +6,7 @@ export function getSupabaseAdmin() {
 
   if (!supabaseUrl || !serviceRoleKey) {
     throw new Error(
-      "Supabase environment variables ontbreken: NEXT_PUBLIC_SUPABASE_URL en/of SUPABASE_SERVICE_ROLE_KEY."
+      "Supabase environment variables ontbreken."
     );
   }
 

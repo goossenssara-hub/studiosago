@@ -1,15 +1,8 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const runtime = "nodejs";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-const supabaseAdmin =
-  supabaseUrl && serviceRoleKey
-    ? createClient(supabaseUrl, serviceRoleKey)
-    : null;
+export const dynamic = "force-dynamic";
 
 function hoursUntilAppointment(startTime: string) {
   const appointmentDate = new Date(startTime);
@@ -20,12 +13,7 @@ function hoursUntilAppointment(startTime: string) {
 
 export async function POST(request: Request) {
   try {
-    if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Supabase env variables ontbreken." },
-        { status: 500 }
-      );
-    }
+    const supabaseAdmin = getSupabaseAdmin();
 
     const { bookingId } = await request.json();
 
@@ -43,6 +31,8 @@ export async function POST(request: Request) {
       .single();
 
     if (bookingError || !booking) {
+      console.error("CANCEL BOOKING FIND ERROR:", bookingError);
+
       return NextResponse.json(
         { error: "Geen afspraak gevonden." },
         { status: 404 }
@@ -59,7 +49,10 @@ export async function POST(request: Request) {
     const appointmentStart =
       booking.start_time ||
       (booking.appointment_date && booking.appointment_time
-        ? `${booking.appointment_date}T${booking.appointment_time}:00`
+        ? `${booking.appointment_date}T${String(booking.appointment_time).slice(
+            0,
+            5
+          )}:00`
         : null);
 
     if (!appointmentStart) {
@@ -81,12 +74,15 @@ export async function POST(request: Request) {
         .eq("id", booking.pass_id)
         .single();
 
-      if (!passError && pass) {
+      if (passError) {
+        console.error("CANCEL BOOKING PASS FIND ERROR:", passError);
+      }
+
+      if (pass) {
         const currentRemaining =
           pass.remaining_credits ?? pass.remaining_sessions ?? 0;
 
         const total = pass.total_credits ?? pass.total_sessions ?? 10;
-
         const newRemaining = Math.min(currentRemaining + 1, total);
 
         const { error: passUpdateError } = await supabaseAdmin
@@ -99,7 +95,7 @@ export async function POST(request: Request) {
           .eq("id", pass.id);
 
         if (passUpdateError) {
-          console.error("Beurt terugzetten mislukt:", passUpdateError);
+          console.error("CANCEL BOOKING PASS UPDATE ERROR:", passUpdateError);
 
           return NextResponse.json(
             { error: "Beurt kon niet teruggezet worden." },
@@ -112,16 +108,21 @@ export async function POST(request: Request) {
     }
 
     if (booking.appointment_date && booking.appointment_time) {
+      const cleanTime = String(booking.appointment_time).slice(0, 5);
+
       const { data: availability, error: availabilityError } =
         await supabaseAdmin
           .from("availability")
           .select("id, booked_places, max_places")
           .eq("date", booking.appointment_date)
-          .eq("start_time", booking.appointment_time)
+          .eq("start_time", cleanTime)
           .maybeSingle();
 
       if (availabilityError) {
-        console.error("Beschikbaarheid terugzetten mislukt:", availabilityError);
+        console.error(
+          "CANCEL BOOKING AVAILABILITY FIND ERROR:",
+          availabilityError
+        );
       }
 
       if (availability) {
@@ -140,7 +141,7 @@ export async function POST(request: Request) {
 
         if (availabilityUpdateError) {
           console.error(
-            "Beschikbaarheid updaten mislukt:",
+            "CANCEL BOOKING AVAILABILITY UPDATE ERROR:",
             availabilityUpdateError
           );
 
@@ -172,6 +173,8 @@ export async function POST(request: Request) {
       .single();
 
     if (updateError) {
+      console.error("CANCEL BOOKING UPDATE ERROR:", updateError);
+
       return NextResponse.json(
         { error: updateError.message },
         { status: 500 }
@@ -187,7 +190,7 @@ export async function POST(request: Request) {
         : "Afspraak geannuleerd. De beurt werd niet terug toegevoegd omdat de annulatie minder dan 72 uur op voorhand gebeurde.",
     });
   } catch (error) {
-    console.error("Cancel booking error:", error);
+    console.error("CANCEL BOOKING SERVER ERROR:", error);
 
     return NextResponse.json(
       { error: "Serverfout bij annuleren." },

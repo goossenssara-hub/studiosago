@@ -1,12 +1,8 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const runtime = "nodejs";
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+export const dynamic = "force-dynamic";
 
 function isWithin15KmOfPeer(address: string) {
   const normalized = address.toLowerCase();
@@ -27,6 +23,8 @@ function isWithin15KmOfPeer(address: string) {
 
 export async function POST(request: Request) {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
+
     const {
       passId,
       email,
@@ -92,6 +90,8 @@ export async function POST(request: Request) {
         .single();
 
     if (availabilityError || !availability) {
+      console.error("APPOINTMENT AVAILABILITY ERROR:", availabilityError);
+
       return NextResponse.json(
         { error: "Dit tijdstip is niet beschikbaar." },
         { status: 400 }
@@ -117,6 +117,8 @@ export async function POST(request: Request) {
       .single();
 
     if (passError || !pass) {
+      console.error("APPOINTMENT PASS ERROR:", passError);
+
       return NextResponse.json(
         { error: "Geen geldige actieve beurtenkaart gevonden." },
         { status: 400 }
@@ -177,7 +179,8 @@ export async function POST(request: Request) {
       .single();
 
     if (bookingError || !booking) {
-      console.error(bookingError);
+      console.error("APPOINTMENT BOOKING ERROR:", bookingError);
+
       return NextResponse.json(
         { error: "Afspraak kon niet opgeslagen worden." },
         { status: 500 }
@@ -193,7 +196,11 @@ export async function POST(request: Request) {
       .eq("id", availability.id);
 
     if (availabilityUpdateError) {
-      console.error(availabilityUpdateError);
+      console.error(
+        "APPOINTMENT AVAILABILITY UPDATE ERROR:",
+        availabilityUpdateError
+      );
+
       return NextResponse.json(
         {
           error:
@@ -213,7 +220,8 @@ export async function POST(request: Request) {
       .eq("id", pass.id);
 
     if (passUpdateError) {
-      console.error(passUpdateError);
+      console.error("APPOINTMENT PASS UPDATE ERROR:", passUpdateError);
+
       return NextResponse.json(
         { error: "Beurtenkaart kon niet aangepast worden." },
         { status: 500 }
@@ -226,7 +234,7 @@ export async function POST(request: Request) {
       remaining_credits: newRemaining,
     });
   } catch (error) {
-    console.error(error);
+    console.error("APPOINTMENT SERVER ERROR:", error);
 
     return NextResponse.json(
       { error: "Er ging iets mis bij het inplannen van de afspraak." },

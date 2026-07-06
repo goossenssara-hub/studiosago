@@ -9,9 +9,15 @@ export default function AdminDashboard() {
   const [passes, setPasses] = useState(0);
   const [payments, setPayments] = useState(0);
   const [availability, setAvailability] = useState(0);
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     async function loadStats() {
+      if (!supabase) {
+        setMessage("Supabase is niet geconfigureerd.");
+        return;
+      }
+
       const [
         contactsResult,
         bookingsResult,
@@ -19,13 +25,9 @@ export default function AdminDashboard() {
         paymentsResult,
         availabilityResult,
       ] = await Promise.all([
-        supabase
-          .from("contacts")
-          .select("*", { count: "exact", head: true }),
+        supabase.from("contacts").select("*", { count: "exact", head: true }),
 
-        supabase
-          .from("bookings")
-          .select("*", { count: "exact", head: true }),
+        supabase.from("bookings").select("*", { count: "exact", head: true }),
 
         supabase
           .from("passes")
@@ -54,36 +56,40 @@ export default function AdminDashboard() {
   }, []);
 
   return (
-    <div className="admin-dashboard-grid">
-      <div className="table-card stat-card">
-        <span>📥</span>
-        <h2>{bookings}</h2>
-        <p>Afspraken / aanvragen</p>
-      </div>
+    <>
+      {message && <p className="form-message">{message}</p>}
 
-      <div className="table-card stat-card">
-        <span>👤</span>
-        <h2>{contacts}</h2>
-        <p>Contacten</p>
-      </div>
+      <div className="admin-dashboard-grid">
+        <div className="table-card stat-card">
+          <span>📥</span>
+          <h2>{bookings}</h2>
+          <p>Afspraken / aanvragen</p>
+        </div>
 
-      <div className="table-card stat-card">
-        <span>🎟️</span>
-        <h2>{passes}</h2>
-        <p>Actieve beurtenkaarten</p>
-      </div>
+        <div className="table-card stat-card">
+          <span>👤</span>
+          <h2>{contacts}</h2>
+          <p>Contacten</p>
+        </div>
 
-      <div className="table-card stat-card">
-        <span>🕒</span>
-        <h2>{availability}</h2>
-        <p>Beschikbare momenten</p>
-      </div>
+        <div className="table-card stat-card">
+          <span>🎟️</span>
+          <h2>{passes}</h2>
+          <p>Actieve beurtenkaarten</p>
+        </div>
 
-      <div className="table-card stat-card">
-        <span>💶</span>
-        <h2>{payments}</h2>
-        <p>Openstaande betalingen</p>
+        <div className="table-card stat-card">
+          <span>🕒</span>
+          <h2>{availability}</h2>
+          <p>Beschikbare momenten</p>
+        </div>
+
+        <div className="table-card stat-card">
+          <span>💶</span>
+          <h2>{payments}</h2>
+          <p>Openstaande betalingen</p>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -24,6 +24,11 @@ export default function AdminAgenda() {
   const [message, setMessage] = useState("");
 
   async function loadLessons() {
+    if (!supabase) {
+      setMessage("Supabase is niet geconfigureerd.");
+      return;
+    }
+
     const { data, error } = await supabase
       .from("lessons")
       .select("*")
@@ -31,6 +36,7 @@ export default function AdminAgenda() {
       .order("start_time", { ascending: true });
 
     if (error) {
+      console.error("LESSONS LOAD ERROR:", error);
       setMessage("Agenda kon niet geladen worden.");
       return;
     }
@@ -44,6 +50,11 @@ export default function AdminAgenda() {
 
   async function addLesson(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (!supabase) {
+      setMessage("Supabase is niet geconfigureerd.");
+      return;
+    }
 
     const form = new FormData(event.currentTarget);
 
@@ -63,18 +74,32 @@ export default function AdminAgenda() {
     });
 
     if (error) {
+      console.error("LESSON INSERT ERROR:", error);
       setMessage("Les kon niet worden toegevoegd.");
       return;
     }
 
     setMessage("Les toegevoegd.");
     event.currentTarget.reset();
-    loadLessons();
+    await loadLessons();
   }
 
   async function deleteLesson(id: string) {
-    await supabase.from("lessons").delete().eq("id", id);
-    loadLessons();
+    if (!supabase) {
+      setMessage("Supabase is niet geconfigureerd.");
+      return;
+    }
+
+    const { error } = await supabase.from("lessons").delete().eq("id", id);
+
+    if (error) {
+      console.error("LESSON DELETE ERROR:", error);
+      setMessage("Les kon niet verwijderd worden.");
+      return;
+    }
+
+    setMessage("Les verwijderd.");
+    await loadLessons();
   }
 
   return (
@@ -83,7 +108,11 @@ export default function AdminAgenda() {
       <h2>Lessen en afspraken</h2>
 
       <form className="admin-agenda-form" onSubmit={addLesson}>
-        <input name="title" placeholder="Titel bv. Huiswerkbegeleiding" required />
+        <input
+          name="title"
+          placeholder="Titel bv. Huiswerkbegeleiding"
+          required
+        />
         <input name="student_name" placeholder="Naam leerling" />
         <input name="parent_name" placeholder="Naam ouder" />
         <input name="email" type="email" placeholder="E-mail" />
@@ -98,17 +127,15 @@ export default function AdminAgenda() {
           <option value="huiswerkbegeleiding">Huiswerkbegeleiding</option>
           <option value="mini-groep">Mini-groep</option>
           <option value="10-beurtenkaart">10-beurtenkaart</option>
-          <option value="wekelijkse-begeleiding">Wekelijkse begeleiding</option>
+          <option value="wekelijkse-begeleiding">
+            Wekelijkse begeleiding
+          </option>
           <option value="kennismaking">Kennismaking</option>
         </select>
 
         <input name="location" placeholder="Locatie of digitaal" />
 
-        <textarea
-          name="notes"
-          rows={4}
-          placeholder="Extra notities"
-        />
+        <textarea name="notes" rows={4} placeholder="Extra notities" />
 
         <button className="primary-action" type="submit">
           Les toevoegen
@@ -127,7 +154,8 @@ export default function AdminAgenda() {
                 {lesson.end_time?.slice(0, 5)}
               </p>
               <p>
-                {lesson.student_name} {lesson.parent_name && `· ouder: ${lesson.parent_name}`}
+                {lesson.student_name}{" "}
+                {lesson.parent_name && `· ouder: ${lesson.parent_name}`}
               </p>
               <p>{lesson.location}</p>
               {lesson.notes && <p>{lesson.notes}</p>}

@@ -20,6 +20,11 @@ export default function AdminManualAdd() {
       return;
     }
 
+    if (!supabase) {
+      alert("Supabase is niet geconfigureerd.");
+      return;
+    }
+
     setSaving(true);
 
     const { error } = await supabase.from("passes").insert({
@@ -27,6 +32,9 @@ export default function AdminManualAdd() {
       title: passTitle,
       total_credits: credits,
       remaining_credits: credits,
+      total_sessions: credits,
+      remaining_sessions: credits,
+      status: "active",
     });
 
     setSaving(false);
@@ -46,6 +54,11 @@ export default function AdminManualAdd() {
       return;
     }
 
+    if (!supabase) {
+      alert("Supabase is niet geconfigureerd.");
+      return;
+    }
+
     setSaving(true);
 
     const { error } = await supabase.from("bookings").insert({
@@ -55,6 +68,8 @@ export default function AdminManualAdd() {
       end_time: endTime || null,
       location: location || null,
       status: "confirmed",
+      payment_status: "paid",
+      amount: 0,
       confirmed_at: new Date().toISOString(),
       internal_notes: "Manueel toegevoegd via admin",
     });
@@ -113,7 +128,7 @@ export default function AdminManualAdd() {
           onClick={addPass}
           disabled={saving}
         >
-          Beurtenkaart toevoegen
+          {saving ? "Opslaan..." : "Beurtenkaart toevoegen"}
         </button>
 
         <hr />
@@ -162,7 +177,7 @@ export default function AdminManualAdd() {
           onClick={addLesson}
           disabled={saving}
         >
-          Les of workshop toevoegen
+          {saving ? "Opslaan..." : "Les of workshop toevoegen"}
         </button>
       </div>
     </section>

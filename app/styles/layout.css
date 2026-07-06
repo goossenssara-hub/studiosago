@@ -3,20 +3,27 @@
    ========================================================= */
 
 .page-shell {
-  position: relative;
-  width: min(1440px, calc(100% - 44px));
-  min-height: calc(100vh - 52px);
-  margin: 26px auto;
-  padding: 24px;
+  width: min(100% - 48px, 1760px);
+  min-height: calc(100vh - 48px);
+  margin: 24px auto;
+  border-radius: 56px;
   overflow: hidden;
-  border-radius: var(--radius-xl);
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid rgba(255, 255, 255, 0.72);
-  box-shadow: var(--shadow-strong);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
 
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.38) 0%,
+      rgba(255, 255, 255, 0.24) 45%,
+      rgba(255, 255, 255, 0.34) 100%
+    );
+
+  border: 1px solid rgba(255, 255, 255, 0.52);
+
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+
+  box-shadow: 0 22px 70px rgba(3, 54, 99, 0.08);
+}
 .page-shell::before {
   content: "";
   position: absolute;

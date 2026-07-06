@@ -31,34 +31,61 @@ export default function WebshopOrderForm({ product }: Props) {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    if (loading) return;
+
     setLoading(true);
     setError("");
 
-    const formData = new FormData(event.currentTarget);
-    formData.set("product", product);
+    try {
+      const formData = new FormData(event.currentTarget);
+      formData.set("product", product);
 
-    if (isTextCorrection) {
-      formData.set("amount", String(correctionPrice));
-    }
+      if (isTextCorrection) {
+        formData.set("amount", String(correctionPrice));
+      }
 
-    const response = await fetch("/api/checkout/webshop", {
-      method: "POST",
-      body: formData,
-    });
+      const response = await fetch("/api/checkout/webshop", {
+        method: "POST",
+        body: formData,
+      });
 
-    const data = await response.json();
+      let data: any = {};
 
-    if (!response.ok || !data.url) {
+      try {
+        data = await response.json();
+      } catch {
+        throw new Error("De server stuurde geen geldige JSON terug.");
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          data.error || `Serverfout (${response.status}).`
+        );
+      }
+
+      if (!data.url) {
+        throw new Error("Geen Mollie-betaallink ontvangen.");
+      }
+
+      window.location.assign(data.url);
+    } catch (err) {
+      console.error("Checkout error:", err);
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Er ging iets mis bij het starten van de betaling."
+      );
+
       setLoading(false);
-      setError(data.error || "De betaling kon niet gestart worden.");
-      return;
     }
-
-    window.location.href = data.url;
   }
 
   return (
-    <form className="form-card booking-form-with-calendar" onSubmit={handleSubmit}>
+    <form
+      className="form-card booking-form-with-calendar"
+      onSubmit={handleSubmit}
+    >
       <div className="form-grid">
         <label>
           Naam ouder / klant
@@ -84,7 +111,13 @@ export default function WebshopOrderForm({ product }: Props) {
 
             <label>
               Leeftijd leerling
-              <input name="student_age" type="number" min="4" max="20" required />
+              <input
+                name="student_age"
+                type="number"
+                min="4"
+                max="20"
+                required
+              />
             </label>
 
             <label>
@@ -94,37 +127,37 @@ export default function WebshopOrderForm({ product }: Props) {
 
                 {product === "10-beurtenkaart-lager" && (
                   <>
-                    <option value="1e leerjaar">1e leerjaar</option>
-                    <option value="2e leerjaar">2e leerjaar</option>
-                    <option value="3e leerjaar">3e leerjaar</option>
-                    <option value="4e leerjaar">4e leerjaar</option>
-                    <option value="5e leerjaar">5e leerjaar</option>
-                    <option value="6e leerjaar">6e leerjaar</option>
+                    <option>1e leerjaar</option>
+                    <option>2e leerjaar</option>
+                    <option>3e leerjaar</option>
+                    <option>4e leerjaar</option>
+                    <option>5e leerjaar</option>
+                    <option>6e leerjaar</option>
                   </>
                 )}
 
                 {product === "10-beurtenkaart-secundair" && (
                   <>
-                    <option value="1e middelbaar">1e middelbaar</option>
-                    <option value="2e middelbaar">2e middelbaar</option>
-                    <option value="3e middelbaar">3e middelbaar</option>
-                    <option value="4e middelbaar">4e middelbaar</option>
-                    <option value="5e middelbaar">5e middelbaar</option>
-                    <option value="6e middelbaar">6e middelbaar</option>
+                    <option>1e middelbaar</option>
+                    <option>2e middelbaar</option>
+                    <option>3e middelbaar</option>
+                    <option>4e middelbaar</option>
+                    <option>5e middelbaar</option>
+                    <option>6e middelbaar</option>
                   </>
                 )}
 
                 {product === "klaar-voor-de-sprong-middelbaar" && (
                   <>
-                    <option value="6e leerjaar">6e leerjaar</option>
-                    <option value="1e middelbaar">1e middelbaar</option>
+                    <option>6e leerjaar</option>
+                    <option>1e middelbaar</option>
                   </>
                 )}
 
                 {product === "klaar-voor-de-sprong-eerste-leerjaar" && (
                   <>
-                    <option value="3e kleuterklas">3e kleuterklas</option>
-                    <option value="1e leerjaar">1e leerjaar</option>
+                    <option>3e kleuterklas</option>
+                    <option>1e leerjaar</option>
                   </>
                 )}
               </select>
@@ -145,9 +178,9 @@ export default function WebshopOrderForm({ product }: Props) {
                 name="word_count"
                 type="number"
                 min="1"
-                value={wordCount}
-                onChange={(event) => setWordCount(event.target.value)}
                 required
+                value={wordCount}
+                onChange={(e) => setWordCount(e.target.value)}
               />
             </label>
 
@@ -166,7 +199,12 @@ export default function WebshopOrderForm({ product }: Props) {
 
             <label>
               Bestand uploaden
-              <input name="file" type="file" accept=".pdf,.doc,.docx" required />
+              <input
+                name="file"
+                type="file"
+                accept=".pdf,.doc,.docx"
+                required
+              />
             </label>
           </>
         )}
@@ -192,13 +230,29 @@ export default function WebshopOrderForm({ product }: Props) {
       </p>
 
       {error && (
-        <p className="form-message" style={{ color: "#fe2020" }}>
+        <p
+          className="form-message"
+          style={{
+            color: "#fe2020",
+            fontWeight: 700,
+          }}
+        >
           {error}
         </p>
       )}
 
-      <div style={{ display: "flex", justifyContent: "center", marginTop: 24 }}>
-        <button className="primary-action" type="submit" disabled={loading}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          marginTop: 24,
+        }}
+      >
+        <button
+          className="primary-action"
+          type="submit"
+          disabled={loading}
+        >
           {loading ? "Betaling starten..." : "Betaal nu"}
         </button>
       </div>

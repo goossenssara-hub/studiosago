@@ -150,25 +150,33 @@ export async function POST(request: Request) {
         status: payment.status || "created",
       });
 
-if (saveError) {
-  console.error("SUPABASE SAVE ERROR:", saveError);
+    if (saveError) {
+      console.error("SUPABASE SAVE ERROR:", saveError);
 
-  return NextResponse.json(
-    {
-      error: saveError.message,
-      details: saveError.details,
-      hint: saveError.hint,
-      code: saveError.code,
-    },
-    { status: 500 }
-  );
-}
-  
+      return NextResponse.json(
+        {
+          error: saveError.message,
+          details: saveError.details,
+          hint: saveError.hint,
+          code: saveError.code,
+        },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      url: payment._links?.checkout?.href,
+    });
   } catch (error) {
-    console.error(error);
+    console.error("WEBSHOP CHECKOUT ERROR:", error);
 
     return NextResponse.json(
-      { error: "Er ging iets mis bij het starten van de betaling." },
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Er ging iets mis bij het starten van de betaling.",
+      },
       { status: 500 }
     );
   }

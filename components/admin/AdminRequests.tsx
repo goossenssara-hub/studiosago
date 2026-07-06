@@ -18,12 +18,18 @@ export default function AdminRequests() {
   const [message, setMessage] = useState("Laden...");
 
   async function loadContacts() {
+    if (!supabase) {
+      setMessage("Supabase is niet geconfigureerd.");
+      return;
+    }
+
     const { data, error } = await supabase
       .from("contacts")
       .select("id,created_at,first_name,last_name,email,phone,notes")
       .order("created_at", { ascending: false });
 
     if (error) {
+      console.error("CONTACTS LOAD ERROR:", error);
       setMessage("Kon aanvragen niet laden.");
       return;
     }

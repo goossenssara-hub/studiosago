@@ -1,17 +1,16 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const syncSecret = process.env.GOOGLE_CALENDAR_SYNC_SECRET;
 
 export async function POST(request: Request) {
   try {
-    if (!supabaseUrl || !serviceRoleKey || !syncSecret) {
+    if (!syncSecret) {
       return NextResponse.json(
-        { error: "Supabase of Google sync env variables ontbreken." },
+        { error: "GOOGLE_CALENDAR_SYNC_SECRET ontbreekt." },
         { status: 500 }
       );
     }
@@ -22,8 +21,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
-
+    const supabaseAdmin = getSupabaseAdmin();
     const body = await request.json();
 
     const {
@@ -79,7 +77,12 @@ export async function POST(request: Request) {
     );
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error("GOOGLE CALENDAR SYNC UPSERT ERROR:", error);
+
+      return NextResponse.json(
+        { error: error.message },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({
@@ -88,7 +91,7 @@ export async function POST(request: Request) {
       appointment_time: appointmentTime,
     });
   } catch (error) {
-    console.error("Google Calendar sync error:", error);
+    console.error("GOOGLE CALENDAR SYNC SERVER ERROR:", error);
 
     return NextResponse.json(
       { error: "Synchronisatie mislukt." },

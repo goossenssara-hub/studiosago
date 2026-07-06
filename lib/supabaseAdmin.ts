@@ -1,14 +1,38 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
-export function getSupabaseAdmin() {
+let adminClient: SupabaseClient | null = null;
+
+export function getSupabaseAdmin(): SupabaseClient {
+  if (adminClient) {
+    return adminClient;
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!supabaseUrl || !serviceRoleKey) {
+  if (!supabaseUrl) {
     throw new Error(
-      "Supabase environment variables ontbreken."
+      "NEXT_PUBLIC_SUPABASE_URL ontbreekt in de environment variables."
     );
   }
 
-  return createClient(supabaseUrl, serviceRoleKey);
+  if (!serviceRoleKey) {
+    throw new Error(
+      "SUPABASE_SERVICE_ROLE_KEY ontbreekt in de environment variables."
+    );
+  }
+
+  adminClient = createClient(supabaseUrl, serviceRoleKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+    global: {
+      headers: {
+        "X-Client-Info": "studiosago-server",
+      },
+    },
+  });
+
+  return adminClient;
 }

@@ -116,7 +116,7 @@ export default function OverMijPage() {
 
             <p>
               Met SaGo Photography leg ik warme, echte momenten vast voor
-              gezinnen, newborns, branding, huwelijken en bijzondere verhalen.
+              gezinnen, newborns, branding, vrolijke viervoeters en bijzondere verhalen.
             </p>
           </article>
 

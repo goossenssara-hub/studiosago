@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -8,7 +9,7 @@ export async function POST(request: Request) {
     const formData = await request.formData();
 
     const name = String(formData.get("name") || "").trim();
-    const email = String(formData.get("email") || "").trim();
+    const email = String(formData.get("email") || "").trim().toLowerCase();
     const phone = String(formData.get("phone") || "").trim();
     const question = String(formData.get("question") || "").trim();
 
@@ -32,27 +33,44 @@ export async function POST(request: Request) {
       );
     }
 
-    const resendApiKey = process.env.RESEND_API_KEY;
+    const supabaseAdmin = getSupabaseAdmin();
 
-    if (!resendApiKey) {
+    const { error: appointmentError } = await supabaseAdmin
+      .from("appointments")
+      .insert({
+        customer_name: name,
+        customer_email: email,
+        phone,
+        notes: question,
+        service: "Contactaanvraag",
+        status: "pending",
+        credit_deducted: false,
+      });
+
+    if (appointmentError) {
+      console.error("CONTACT SAVE ERROR:", appointmentError);
+
       return NextResponse.json(
-        { error: "RESEND_API_KEY ontbreekt." },
+        { error: "Aanvraag kon niet opgeslagen worden." },
         { status: 500 }
       );
     }
 
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${resendApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: "Studio SaGo <onboarding@resend.dev>",
-        to: "creativestudiosago@gmail.com",
-        subject: `Nieuwe contactvraag van ${name}`,
-        reply_to: email,
-        text: `
+    const resendApiKey = process.env.RESEND_API_KEY;
+
+    if (resendApiKey) {
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${resendApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: "Studio SaGo <onboarding@resend.dev>",
+          to: "creativestudiosago@gmail.com",
+          subject: `Nieuwe contactvraag van ${name}`,
+          reply_to: email,
+          text: `
 Nieuwe vraag via Studio SaGo
 
 Naam: ${name}
@@ -65,23 +83,24 @@ ${question}
 Toestemmingen:
 - Privacyverklaring gelezen: ja
 - Akkoord met Algemene Voorwaarden: ja
-        `.trim(),
-      }),
-    });
+          `.trim(),
+        }),
+      });
 
-    if (!response.ok) {
-      const error = await response.json();
-      console.error("MAIL ERROR:", error);
-
-      return NextResponse.json(
-        { error: "E-mail kon niet verzonden worden." },
-        { status: 500 }
-      );
+      if (!response.ok) {
+        const mailError = await response.json();
+        console.error("MAIL ERROR:", mailError);
+      }
+    } else {
+      console.warn("RESEND_API_KEY ontbreekt. Aanvraag is wel opgeslagen.");
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: true,
+      message: "Je aanvraag werd succesvol ontvangen.",
+    });
   } catch (error) {
-    console.error(error);
+    console.error("CONTACT SERVER ERROR:", error);
 
     return NextResponse.json(
       { error: "Er ging iets mis bij het verzenden." },

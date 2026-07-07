@@ -1,23 +1,31 @@
 "use client";
 
 import { useState } from "react";
-import { User, Mail, Phone, MessageSquare, Send, CheckCircle } from "lucide-react";
+import {
+  User,
+  Mail,
+  Phone,
+  MessageSquare,
+  Send,
+  CheckCircle,
+} from "lucide-react";
 
 export default function ContactForm() {
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">(
-    "idle"
-  );
+  const [status, setStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
   const [message, setMessage] = useState("");
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+
     setStatus("loading");
     setMessage("");
-
-    const formData = new FormData(event.currentTarget);
 
     try {
       const response = await fetch("/api/contact", {
@@ -31,11 +39,14 @@ export default function ContactForm() {
         throw new Error(data.error || "Er ging iets mis.");
       }
 
-      event.currentTarget.reset();
+      form.reset();
       setPrivacyAccepted(false);
       setTermsAccepted(false);
+
       setStatus("success");
-      setMessage("Je vraag werd succesvol verzonden. Ik neem zo snel mogelijk contact met je op.");
+      setMessage(
+        "Je aanvraag werd succesvol ontvangen. Ik neem zo snel mogelijk contact met je op."
+      );
     } catch (error) {
       setStatus("error");
       setMessage(
@@ -61,7 +72,12 @@ export default function ContactForm() {
           <label>E-mailadres</label>
           <div className="input-icon">
             <Mail size={20} />
-            <input type="email" name="email" placeholder="naam@email.be" required />
+            <input
+              type="email"
+              name="email"
+              placeholder="naam@email.be"
+              required
+            />
           </div>
         </div>
 
@@ -96,7 +112,11 @@ export default function ContactForm() {
           />
           <span>
             Ik heb de{" "}
-            <a href="/algemene-voorwaarden#privacy" target="_blank">
+            <a
+              href="/algemene-voorwaarden#privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               Privacyverklaring
             </a>{" "}
             gelezen.
@@ -113,9 +133,14 @@ export default function ContactForm() {
           />
           <span>
             Ik ga akkoord met de{" "}
-            <a href="/algemene-voorwaarden" target="_blank">
+            <a
+              href="/algemene-voorwaarden"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               Algemene Voorwaarden
-            </a>.
+            </a>
+            .
           </span>
         </label>
 

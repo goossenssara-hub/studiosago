@@ -348,24 +348,14 @@ const {
                 />
               </label>
 
-              <label className="checkbox-row">
-                <input
-                  name="cancellationPolicyAccepted"
-                  type="checkbox"
-                  checked={policyAccepted}
-                  onChange={(event) =>
-                    setPolicyAccepted(event.target.checked)
-                  }
-                  required
-                />
-                <span>
-                  Ik ga akkoord dat een beurt enkel terug toegevoegd wordt
-                  wanneer ik minstens 72 uur op voorhand annuleer. Bij
-                  laattijdige annulatie blijft de beurt aangerekend.
-                </span>
-              </label>
-
-              <div
+<label className="checkbox-row">
+  <input type="checkbox" required />
+  <span>
+    Ik ga akkoord dat een beurt enkel terug toegevoegd wordt wanneer ik minstens
+    72 uur op voorhand annuleer. Bij laattijdige annulatie blijft de beurt
+    aangerekend.
+  </span>
+</label>              <div
                 style={{
                   display: "flex",
                   justifyContent: "center",

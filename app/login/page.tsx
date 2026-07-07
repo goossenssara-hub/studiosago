@@ -2,16 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const router = useRouter();
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -24,18 +24,16 @@ export default function LoginPage() {
       password,
     });
 
-    if (error) {
-      setLoading(false);
+    if (error || !data.user) {
       setErrorMessage("Onjuist e-mailadres of wachtwoord.");
+      setLoading(false);
       return;
     }
 
-    // Enkel jouw account toegang geven
-    if (data.user?.email !== "goossens.saraa@gmail.com") {
+    if (data.user.email !== "goossens.saraa@gmail.com") {
       await supabase.auth.signOut();
-
-      setLoading(false);
       setErrorMessage("Je hebt geen toegang tot het beheerpaneel.");
+      setLoading(false);
       return;
     }
 
@@ -46,9 +44,7 @@ export default function LoginPage() {
   return (
     <main className="login-page">
       <form className="login-card" onSubmit={handleLogin}>
-
         <h1>Studio SaGo Beheer</h1>
-
         <p>Meld je aan om verder te gaan.</p>
 
         <input
@@ -67,14 +63,11 @@ export default function LoginPage() {
           required
         />
 
-        {errorMessage && (
-          <p className="login-error">{errorMessage}</p>
-        )}
+        {errorMessage && <p className="login-error">{errorMessage}</p>}
 
-        <button disabled={loading}>
+        <button type="submit" disabled={loading}>
           {loading ? "Bezig..." : "Inloggen"}
         </button>
-
       </form>
     </main>
   );

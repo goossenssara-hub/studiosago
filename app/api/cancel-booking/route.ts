@@ -31,8 +31,6 @@ export async function POST(request: Request) {
       .single();
 
     if (bookingError || !booking) {
-      console.error("CANCEL BOOKING FIND ERROR:", bookingError);
-
       return NextResponse.json(
         { error: "Geen afspraak gevonden." },
         { status: 404 }
@@ -63,67 +61,65 @@ export async function POST(request: Request) {
     }
 
     const hoursBefore = hoursUntilAppointment(appointmentStart);
-    const mayRefundCredit = hoursBefore >= 72;
 
-    let creditRefunded = false;
+    const mayRestoreLesson = hoursBefore >= 72;
 
-    if (mayRefundCredit && booking.pass_id && !booking.credit_refunded) {
+    let lessonRestored = false;
+
+    if (
+      mayRestoreLesson &&
+      booking.pass_id &&
+      booking.deducted === true &&
+      booking.restored_lesson !== true
+    ) {
       const { data: pass, error: passError } = await supabaseAdmin
         .from("passes")
         .select("*")
         .eq("id", booking.pass_id)
         .single();
 
-      if (passError) {
-        console.error("CANCEL BOOKING PASS FIND ERROR:", passError);
+      if (passError || !pass) {
+        return NextResponse.json(
+          { error: "Beurtenkaart niet gevonden." },
+          { status: 404 }
+        );
       }
 
-      if (pass) {
-        const currentRemaining =
-          pass.remaining_credits ?? pass.remaining_sessions ?? 0;
+      const currentRemaining =
+        pass.remaining_credits ?? pass.remaining_sessions ?? 0;
 
-        const total = pass.total_credits ?? pass.total_sessions ?? 10;
-        const newRemaining = Math.min(currentRemaining + 1, total);
+      const total = pass.total_credits ?? pass.total_sessions ?? 10;
 
-        const { error: passUpdateError } = await supabaseAdmin
-          .from("passes")
-          .update({
-            remaining_credits: newRemaining,
-            remaining_sessions: newRemaining,
-            status: "active",
-          })
-          .eq("id", pass.id);
+      const newRemaining = Math.min(currentRemaining + 1, total);
 
-        if (passUpdateError) {
-          console.error("CANCEL BOOKING PASS UPDATE ERROR:", passUpdateError);
+      const { error: passUpdateError } = await supabaseAdmin
+        .from("passes")
+        .update({
+          remaining_credits: newRemaining,
+          remaining_sessions: newRemaining,
+          status: "active",
+        })
+        .eq("id", pass.id);
 
-          return NextResponse.json(
-            { error: "Beurt kon niet teruggezet worden." },
-            { status: 500 }
-          );
-        }
-
-        creditRefunded = true;
+      if (passUpdateError) {
+        return NextResponse.json(
+          { error: "Beurt kon niet teruggezet worden." },
+          { status: 500 }
+        );
       }
+
+      lessonRestored = true;
     }
 
     if (booking.appointment_date && booking.appointment_time) {
       const cleanTime = String(booking.appointment_time).slice(0, 5);
 
-      const { data: availability, error: availabilityError } =
-        await supabaseAdmin
-          .from("availability")
-          .select("id, booked_places, max_places")
-          .eq("date", booking.appointment_date)
-          .eq("start_time", cleanTime)
-          .maybeSingle();
-
-      if (availabilityError) {
-        console.error(
-          "CANCEL BOOKING AVAILABILITY FIND ERROR:",
-          availabilityError
-        );
-      }
+      const { data: availability } = await supabaseAdmin
+        .from("availability")
+        .select("id, booked_places")
+        .eq("date", booking.appointment_date)
+        .eq("start_time", cleanTime)
+        .maybeSingle();
 
       if (availability) {
         const newBookedPlaces = Math.max(
@@ -131,25 +127,13 @@ export async function POST(request: Request) {
           (availability.booked_places ?? 0) - 1
         );
 
-        const { error: availabilityUpdateError } = await supabaseAdmin
+        await supabaseAdmin
           .from("availability")
           .update({
             booked_places: newBookedPlaces,
             active: true,
           })
           .eq("id", availability.id);
-
-        if (availabilityUpdateError) {
-          console.error(
-            "CANCEL BOOKING AVAILABILITY UPDATE ERROR:",
-            availabilityUpdateError
-          );
-
-          return NextResponse.json(
-            { error: "Beschikbaarheid kon niet terug vrijgezet worden." },
-            { status: 500 }
-          );
-        }
       }
     }
 
@@ -158,12 +142,15 @@ export async function POST(request: Request) {
       .update({
         status: "cancelled",
         cancelled_at: new Date().toISOString(),
-        credit_refunded: creditRefunded,
+
+        restored_lesson: lessonRestored,
+        credit_refunded: lessonRestored,
+
         internal_notes: [
           booking.internal_notes || "",
-          mayRefundCredit
-            ? "Annulatie minstens 72u op voorhand: beurt teruggegeven."
-            : "Annulatie minder dan 72u op voorhand: beurt niet teruggegeven.",
+          lessonRestored
+            ? "Annulatie minstens 72u op voorhand: beurt terug toegevoegd."
+            : "Annulatie minder dan 72u op voorhand: beurt blijft aangerekend.",
         ]
           .filter(Boolean)
           .join("\n"),
@@ -173,8 +160,6 @@ export async function POST(request: Request) {
       .single();
 
     if (updateError) {
-      console.error("CANCEL BOOKING UPDATE ERROR:", updateError);
-
       return NextResponse.json(
         { error: updateError.message },
         { status: 500 }
@@ -184,10 +169,10 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       booking: updatedBooking,
-      creditRefunded,
-      message: creditRefunded
+      lessonRestored,
+      message: lessonRestored
         ? "Afspraak geannuleerd. De beurt werd terug toegevoegd aan de beurtenkaart."
-        : "Afspraak geannuleerd. De beurt werd niet terug toegevoegd omdat de annulatie minder dan 72 uur op voorhand gebeurde.",
+        : "Afspraak geannuleerd. De beurt blijft aangerekend omdat de annulatie minder dan 72 uur op voorhand gebeurde.",
     });
   } catch (error) {
     console.error("CANCEL BOOKING SERVER ERROR:", error);

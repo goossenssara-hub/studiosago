@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -10,8 +11,9 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -19,56 +21,83 @@ export default function LoginPage() {
     setLoading(true);
     setErrorMessage("");
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+const { data, error } = await supabase.auth.signInWithPassword({
+  email,
+  password,
+});
 
-    if (error || !data.user) {
-      setErrorMessage("Onjuist e-mailadres of wachtwoord.");
-      setLoading(false);
-      return;
-    }
+console.log("LOGIN DATA:", data);
+console.log("LOGIN ERROR:", error);
 
-    if (data.user.email !== "goossens.saraa@gmail.com") {
-      await supabase.auth.signOut();
-      setErrorMessage("Je hebt geen toegang tot het beheerpaneel.");
-      setLoading(false);
-      return;
-    }
-
+if (error) {
+  setErrorMessage(error.message);
+  setLoading(false);
+  return;
+}
     router.refresh();
-    router.push("/admin");
+    router.push("/dashboard");
   }
 
   return (
     <main className="login-page">
-      <form className="login-card" onSubmit={handleLogin}>
-        <h1>Studio SaGo Beheer</h1>
-        <p>Meld je aan om verder te gaan.</p>
+      <div className="login-card">
 
-        <input
-          type="email"
-          placeholder="E-mailadres"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
+        <h1>Welkom terug</h1>
 
-        <input
-          type="password"
-          placeholder="Wachtwoord"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+        <p className="login-subtitle">
+          Meld je aan om je klantendashboard te openen.
+        </p>
 
-        {errorMessage && <p className="login-error">{errorMessage}</p>}
+        <form onSubmit={handleLogin}>
 
-        <button type="submit" disabled={loading}>
-          {loading ? "Bezig..." : "Inloggen"}
-        </button>
-      </form>
+          <input
+            type="email"
+            placeholder="E-mailadres"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
+            required
+          />
+
+          <input
+            type="password"
+            placeholder="Wachtwoord"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
+            required
+          />
+
+          {errorMessage && (
+            <p className="login-error">{errorMessage}</p>
+          )}
+
+          <button
+            type="submit"
+            className="login-button"
+            disabled={loading}
+          >
+            {loading ? "Bezig met aanmelden..." : "Inloggen"}
+          </button>
+
+        </form>
+
+        <div className="login-divider">
+          <span>OF</span>
+        </div>
+
+        <Link href="/register" className="register-button">
+          Account aanmaken
+        </Link>
+
+        <Link
+          href="/forgot-password"
+          className="forgot-password"
+        >
+          Wachtwoord vergeten?
+        </Link>
+
+      </div>
     </main>
   );
 }

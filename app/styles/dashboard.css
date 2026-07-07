@@ -1,0 +1,91 @@
+.dashboard-grid {
+  max-width: 1280px;
+  margin: 60px auto 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 34px;
+  align-items: start;
+}
+
+.dashboard-card {
+  min-height: 420px;
+  padding: 44px;
+  border-radius: 34px;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 18px 45px rgba(3, 54, 99, 0.08);
+}
+
+.dashboard-card h2 {
+  color: #033663;
+  font-size: 34px;
+  line-height: 1.08;
+  margin: 0 0 34px;
+}
+
+.dashboard-card p {
+  color: #496783;
+  font-size: 21px;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.lesson-card-mini {
+  max-width: 320px;
+  margin: 0 auto;
+  padding: 28px;
+  border: 2px solid #dbe4ef;
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.lesson-card-mini h3 {
+  color: #033663;
+  font-size: 24px;
+  line-height: 1.08;
+  margin: 0 0 22px;
+}
+
+.lesson-card-mini p {
+  font-size: 20px;
+  line-height: 1.4;
+}
+
+.lesson-progress {
+  height: 12px;
+  margin: 24px 0;
+  border-radius: 999px;
+  background: #e5edf5;
+  overflow: hidden;
+}
+
+.lesson-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #28b9aa;
+}
+
+.orange-button {
+  display: block;
+  width: 100%;
+  padding: 17px 22px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ff6b3d, #fea020);
+  color: white;
+  text-align: center;
+  text-decoration: none;
+  font-size: 19px;
+  font-weight: 600;
+}
+
+@media (max-width: 1100px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    margin-top: 40px;
+  }
+
+  .dashboard-card {
+    min-height: auto;
+  }
+}

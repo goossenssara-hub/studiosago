@@ -81,9 +81,7 @@ export async function POST(request: Request) {
     const { data: availability, error: availabilityError } =
       await supabaseAdmin
         .from("availability")
-        .select(
-          "id, date, start_time, end_time, max_places, booked_places, active"
-        )
+        .select("id, date, start_time, end_time, max_places, booked_places, active")
         .eq("date", date)
         .eq("start_time", time)
         .eq("active", true)
@@ -145,46 +143,44 @@ export async function POST(request: Request) {
 
     const { data: booking, error: bookingError } = await supabaseAdmin
       .from("bookings")
-const { data: booking, error: bookingError } = await supabaseAdmin
-  .from("bookings")
-  .insert({
-    title: "Afspraak Studio SaGo",
-    pass_id: pass.id,
-    customer_email: email,
-    appointment_date: date,
-    appointment_time: time,
-    appointment_type: appointmentType,
-    customer_address: appointmentType === "home" ? customerAddress : null,
-    location,
-    cancellation_policy_accepted: cancellationPolicyAccepted,
+      .insert({
+        title: "Afspraak Studio SaGo",
+        pass_id: pass.id,
+        customer_email: email,
+        appointment_date: date,
+        appointment_time: time,
+        appointment_type: appointmentType,
+        customer_address: appointmentType === "home" ? customerAddress : null,
+        location,
+        cancellation_policy_accepted: cancellationPolicyAccepted,
 
-    status: "confirmed",
-    payment_status: "paid",
-    amount: 0,
+        status: "confirmed",
+        payment_status: "paid",
+        amount: 0,
 
-    deducted: true,
-    restored_lesson: false,
+        deducted: true,
+        restored_lesson: false,
+        credit_refunded: false,
 
-    notes: [
-      "Afspraak ingepland via beurtenkaart",
-      `Beurtenkaart: ${appointmentTitle}`,
-      `Type afspraak: ${
-        appointmentType === "home" ? "Fysiek aan huis" : "Digitaal"
-      }`,
-      appointmentType === "home" && customerAddress
-        ? `Adres: ${customerAddress}`
-        : "",
-      `Datum: ${date}`,
-      `Tijdstip: ${time}`,
-      `Inhoud bijles: ${cleanNotes}`,
-      `Beurt automatisch afgeschreven bij inplannen.`,
-      `Resterende beurten na boeking: ${newRemaining}`,
-    ]
-      .filter(Boolean)
-      .join("\n"),
-  })
-  .select("id")
-  .single();      .select("id")
+        notes: [
+          "Afspraak ingepland via beurtenkaart",
+          `Beurtenkaart: ${appointmentTitle}`,
+          `Type afspraak: ${
+            appointmentType === "home" ? "Fysiek aan huis" : "Digitaal"
+          }`,
+          appointmentType === "home" && customerAddress
+            ? `Adres: ${customerAddress}`
+            : "",
+          `Datum: ${date}`,
+          `Tijdstip: ${time}`,
+          `Inhoud bijles: ${cleanNotes}`,
+          "Beurt automatisch afgeschreven bij inplannen.",
+          `Resterende beurten na boeking: ${newRemaining}`,
+        ]
+          .filter(Boolean)
+          .join("\n"),
+      })
+      .select("id")
       .single();
 
     if (bookingError || !booking) {

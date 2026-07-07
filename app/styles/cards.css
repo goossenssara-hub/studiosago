@@ -31,7 +31,6 @@
   color: var(--navy);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   overflow: hidden;
   text-decoration: none;
   transition: transform 0.28s ease, box-shadow 0.28s ease, background 0.28s ease;
@@ -285,4 +284,70 @@
     overflow: visible;
     margin-top: 22px;
   }
+}
+/* =========================================================
+   Studio SaGo — definitieve kleuren service cards
+   Moet helemaal onderaan cards.css staan
+   ========================================================= */
+
+.service-card.red {
+  --card-color: var(--red);
+}
+
+.service-card.orange {
+  --card-color: var(--orange);
+}
+
+.service-card.yellow {
+  --card-color: var(--yellow);
+}
+
+.service-card.green {
+  --card-color: var(--green);
+}
+
+.service-card.teal {
+  --card-color: var(--teal);
+}
+
+.service-card.purple {
+  --card-color: var(--purple);
+}
+
+.service-card.red .service-icon,
+.service-card.red .service-arrow {
+  background: var(--red) !important;
+}
+
+.service-card.orange .service-icon,
+.service-card.orange .service-arrow {
+  background: var(--orange) !important;
+}
+
+.service-card.yellow .service-icon,
+.service-card.yellow .service-arrow {
+  background: var(--yellow) !important;
+}
+
+.service-card.green .service-icon,
+.service-card.green .service-arrow {
+  background: var(--green) !important;
+}
+
+.service-card.teal .service-icon,
+.service-card.teal .service-arrow {
+  background: var(--teal) !important;
+}
+
+.service-card.purple .service-icon,
+.service-card.purple .service-arrow {
+  background: var(--purple) !important;
+}
+.service-main{
+    display:flex;
+    flex-direction:column;
+    flex:1;
+}
+.service-content{
+    margin-bottom:42px;
 }

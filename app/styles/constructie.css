@@ -1,0 +1,164 @@
+/* =========================================================
+   Onder constructie
+   ========================================================= */
+
+.construction-page {
+  position: relative;
+  z-index: 8;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  padding: 70px 24px;
+}
+
+.construction-card {
+  width: 100%;
+  max-width: 900px;
+
+  margin: 0 auto;
+
+  padding: 70px 60px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+
+  border-radius: 40px;
+  background: rgba(255,255,255,.86);
+  border: 1px solid rgba(255,255,255,.75);
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  box-shadow: 0 24px 70px rgba(3,54,99,.12);
+}
+
+.construction-eyebrow{
+  margin-bottom:18px;
+
+  color:var(--teal);
+
+  font-size:.95rem;
+  font-weight:700;
+
+  letter-spacing:.18em;
+  text-transform:uppercase;
+}
+
+.construction-card h1{
+
+  margin:0 0 26px;
+
+  color:var(--navy);
+
+  font-size:clamp(3rem,6vw,4.8rem);
+
+  line-height:1.05;
+}
+
+.construction-card p{
+  max-width:680px;
+  margin:0 auto 24px;
+}
+
+.construction-actions{
+  margin-top:42px;
+
+  display:flex;
+  justify-content:center;
+  align-items:center;
+
+  gap:22px;
+  flex-wrap:wrap;
+}
+
+.construction-button{
+
+  display:inline-flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  min-width:280px;
+
+  min-height:64px;
+
+  padding:18px 34px;
+
+  border-radius:999px;
+
+  text-decoration:none;
+
+  font-size:1.15rem;
+
+  font-weight:700;
+
+  transition:.25s;
+}
+
+.construction-button-primary{
+
+  background:linear-gradient(135deg,#ff7a3d,#fea020);
+
+  color:#fff;
+
+  box-shadow:0 14px 32px rgba(254,160,32,.32);
+}
+
+.construction-button-primary:hover{
+
+  transform:translateY(-2px);
+
+  box-shadow:0 18px 40px rgba(254,160,32,.38);
+}
+
+.construction-button-secondary{
+
+  background:#fff;
+
+  color:var(--navy);
+
+  border:2px solid rgba(3,54,99,.12);
+}
+
+.construction-button-secondary:hover{
+
+  background:#f6fbff;
+
+  transform:translateY(-2px);
+}
+
+@media(max-width:800px){
+
+  .construction-card{
+
+    padding:34px 24px;
+  }
+
+  .construction-card h1{
+
+    font-size:2.6rem;
+  }
+
+  .construction-card p{
+
+    font-size:1.1rem;
+  }
+
+  .construction-actions{
+
+    flex-direction:column;
+  }
+
+  .construction-button{
+
+    width:100%;
+  }
+
+}

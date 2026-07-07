@@ -25,22 +25,35 @@ export default function KleutersPage() {
                 src="/assets/eilandenavontuur.jpg"
                 alt="Eilandenavontuur"
                 fill
-                sizes="(max-width: 1000px) 100vw, 45vw"
+                priority
+                sizes="(max-width: 900px) 100vw, 380px"
               />
             </div>
 
             <div className="kleuter-content">
               <span className="badge">Educatief kleuterkamp</span>
 
-              <h2>Eilandenavontuur</h2>
+              <h1>Eilandenavontuur</h1>
+
+              <p className="kleuter-intro">
+                Ga samen met Pixel op avontuur naar een geheim eiland en help
+                de verdwenen schat terug te vinden.
+              </p>
 
               <p>
-                Ga samen met Pixel op avontuur naar een geheim eiland en help de
-                verdwenen schat terug te vinden. Kinderen beleven een dag vol
+                Tijdens dit kamp beleven kinderen een dag vol
                 bewegingsspelletjes, creatieve opdrachten, sensorisch spel,
                 muziek, verhalen en spannende ontdekactiviteiten in een
                 tropische eilandwereld.
               </p>
+
+              <div className="kleuter-features">
+                <span>🌴 3 - 6 jaar</span><br />
+                <span>🎨 Creatief</span><br />
+                <span>🏃 Beweging</span><br />
+                <span>🧩 Sensorisch</span><br />
+                <span>🥽 VR-beleving door interactieve muur</span>
+              </div>
 
               <Link
                 href="https://www.speelweelde.be/kampen/aanbod/Kleutereditie_-_Eilandenavontuur:_19,_20_&_21_augustus_2026_-_Peer_%7C_3-6j"

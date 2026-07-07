@@ -1,30 +1,53 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
+import { createServerClient } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
 
-export async function middleware(req: NextRequest) {
-  const res = NextResponse.next();
+const ADMIN_EMAIL = "creativestudiosago@gmail.com";
 
-  const supabase = createMiddlewareClient({
-    req,
-    res,
-  });
+export async function middleware(request: NextRequest) {
+  let response = NextResponse.next({ request });
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll: () => request.cookies.getAll(),
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+
+          response = NextResponse.next({ request });
+
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
 
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (
-    req.nextUrl.pathname.startsWith("/admin") &&
-    (!session ||
-      session.user.email !== "goossens.saraa@gmail.com")
-  ) {
-    return NextResponse.redirect(new URL("/login", req.url));
+  const path = request.nextUrl.pathname;
+
+  if (path.startsWith("/admin")) {
+    if (!user || user.email !== ADMIN_EMAIL) {
+      return NextResponse.redirect(new URL("/admin-login", request.url));
+    }
   }
 
-  return res;
+  if (path.startsWith("/dashboard")) {
+    if (!user) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+  }
+
+  return response;
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin/:path*", "/dashboard/:path*"],
 };

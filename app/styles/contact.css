@@ -1,0 +1,30 @@
+.form-message {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0 4px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  font-weight: 700;
+}
+
+.form-message.success {
+  background: rgba(84, 149, 92, 0.12);
+  color: #54955c;
+}
+
+.form-message.error {
+  background: rgba(254, 32, 32, 0.1);
+  color: #b42318;
+}
+
+.checkbox-row a {
+  color: #033663;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.checkbox-row a:hover {
+  color: #fea020;
+  text-decoration: underline;
+}

@@ -196,7 +196,7 @@ const {
     }
 
     setSaving(false);
-    router.replace("/klantendashboard");
+    router.replace("/dashboard");
   }
 
   if (loading) {

@@ -49,8 +49,27 @@ export async function GET(request: Request) {
       );
     }
 
+    const firstName =
+      profile?.first_name || profile?.parent1_first_name || "";
+
+    const lastName =
+      profile?.last_name || profile?.parent1_last_name || "";
+
+    const fullName =
+      profile?.full_name ||
+      `${firstName} ${lastName}`.trim() ||
+      profile?.parent_name ||
+      "";
+
     return NextResponse.json({
-      profile,
+      profile: profile
+        ? {
+            ...profile,
+            first_name: firstName,
+            last_name: lastName,
+            full_name: fullName,
+          }
+        : null,
       students: students ?? [],
       profileCompleted: !!profile?.profile_completed,
     });
@@ -124,7 +143,8 @@ export async function POST(request: Request) {
 
           first_name: parent1FirstName,
           last_name: parent1LastName,
-          parent_name: `${parent1FirstName} ${parent1LastName}`,
+          full_name: `${parent1FirstName} ${parent1LastName}`.trim(),
+          parent_name: `${parent1FirstName} ${parent1LastName}`.trim(),
 
           parent1_first_name: parent1FirstName,
           parent1_last_name: parent1LastName,
@@ -172,10 +192,7 @@ export async function POST(request: Request) {
         .eq("parent_email", email);
 
       if (deleteStudentsError) {
-        console.error(
-          "CUSTOMER STUDENTS DELETE ERROR:",
-          deleteStudentsError
-        );
+        console.error("CUSTOMER STUDENTS DELETE ERROR:", deleteStudentsError);
 
         return NextResponse.json(
           { error: "Oude leerlinggegevens konden niet vervangen worden." },

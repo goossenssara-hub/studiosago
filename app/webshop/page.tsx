@@ -31,7 +31,7 @@ const products = [
   {
     category: "Tekstcorrectie",
     title: "Tekst of cursus laten nalezen",
-    price: "Vanaf €20",
+    price: "v.a. €20",
     href: "/webshop/tekstcorrectie",
   },
 ];

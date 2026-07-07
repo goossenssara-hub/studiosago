@@ -47,13 +47,7 @@ export default function KleutersPage() {
                 tropische eilandwereld.
               </p>
 
-              <div className="kleuter-features">
-                <span>🌴 3 - 6 jaar</span><br />
-                <span>🎨 Creatief</span><br />
-                <span>🏃 Beweging</span><br />
-                <span>🧩 Sensorisch</span><br />
-                <span>🥽 VR-beleving door interactieve muur</span>
-              </div>
+             
 
               <Link
                 href="https://www.speelweelde.be/kampen/aanbod/Kleutereditie_-_Eilandenavontuur:_19,_20_&_21_augustus_2026_-_Peer_%7C_3-6j"

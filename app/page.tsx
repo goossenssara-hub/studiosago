@@ -32,7 +32,7 @@ export default function Home() {
             dien eenvoudig je aanvraag in. Ik neem vervolgens zo snel mogelijk
             contact met je op om alles te bevestigen.
           </p>
-          <Link className="primary-action" href="/contact">
+          <Link className="primary-action" href="/afspraak">
             Plan je afspraak
           </Link>
         </div>

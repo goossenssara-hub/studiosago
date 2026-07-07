@@ -1,0 +1,137 @@
+/* =========================================================
+   Basisschool detailkaarten
+   ========================================================= */
+
+.basisschool-page .aanbod-detail-grid {
+  width: min(1180px, 92%);
+  margin: 52px auto 80px;
+
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 30px;
+  align-items: stretch;
+}
+
+.basisschool-page .aanbod-detail-card {
+  min-height: 310px;
+  padding: 38px 42px;
+  border-radius: 34px;
+
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.78);
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  box-shadow: 0 18px 44px rgba(3, 54, 99, 0.1);
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  transition: 0.25s ease;
+}
+
+.basisschool-page .aanbod-detail-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 26px 64px rgba(3, 54, 99, 0.15);
+}
+
+.basisschool-page .aanbod-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: fit-content;
+
+  padding: 0.45rem 1.15rem;
+  margin-bottom: 22px;
+
+  border-radius: 999px;
+
+  background: #dff5f1;
+  border: 1px solid rgba(40, 185, 170, 0.25);
+
+  color: #033663;
+
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.basisschool-page .aanbod-card-top .eyebrow {
+  margin: 0 0 12px;
+
+  color: #28b9aa;
+
+  font-size: 0.95rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.basisschool-page .aanbod-detail-card h2 {
+  margin: 0 0 18px;
+
+  color: #033663;
+
+  font-size: clamp(2rem, 3vw, 3rem);
+  line-height: 1.08;
+}
+
+.basisschool-page .aanbod-detail-card .price {
+  margin: 0;
+
+  color: #033663;
+
+  font-size: clamp(1.65rem, 2.4vw, 2.35rem);
+  line-height: 1.1;
+}
+
+.basisschool-page .extra-content {
+  margin-top: 26px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.basisschool-page .extra-content p {
+  margin: 0;
+
+  color: #244b6e;
+
+  font-size: 1.08rem;
+  line-height: 1.55;
+}
+
+.basisschool-page .extra-content .primary-action {
+  margin-top: 14px;
+
+  width: fit-content;
+  min-width: 230px;
+  min-height: 58px;
+
+  padding: 16px 30px;
+
+  border-radius: 999px;
+}
+
+.basisschool-page .basisschool-cta {
+  width: min(900px, 92%);
+  margin: 0 auto 90px;
+}
+
+@media (max-width: 900px) {
+  .basisschool-page .aanbod-detail-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .basisschool-page .aanbod-detail-card {
+    min-height: auto;
+    padding: 32px 26px;
+  }
+
+  .basisschool-page .extra-content .primary-action {
+    width: 100%;
+  }
+}

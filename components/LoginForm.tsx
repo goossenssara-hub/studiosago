@@ -29,7 +29,7 @@ export default function LoginForm() {
       return;
     }
 
-    router.replace("/klantendashboard");
+    router.replace("/dashboard");
   }
 
   async function resetPassword() {

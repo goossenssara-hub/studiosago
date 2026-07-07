@@ -33,11 +33,10 @@ export default function Footer() {
 
         <nav className="footer-links">
           <Link href="/">Home</Link>
-          <Link href="/aanbod">Aanbod</Link>
           <Link href="/webshop">Webshop</Link>
           <Link href="/contact">Contact</Link>
           <Link href="/algemene-voorwaarden">Algemene voorwaarden</Link>
-          <Link href="/privacybeleid">Privacybeleid</Link>
+          <Link href="/algemene-voorwaarden#privacy">Privacybeleid</Link>
         </nav>
 
         <p className="footer-copy">

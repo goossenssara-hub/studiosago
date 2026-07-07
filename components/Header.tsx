@@ -12,27 +12,34 @@ export default function Header() {
 
   const [loggedIn, setLoggedIn] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [checkedAuth, setCheckedAuth] = useState(false);
+
+  async function checkServerSession() {
+    try {
+      const response = await fetch("/api/auth/status", {
+        cache: "no-store",
+      });
+
+      const data = await response.json();
+
+      setLoggedIn(Boolean(data.loggedIn));
+    } catch (error) {
+      console.error("AUTH STATUS ERROR:", error);
+      setLoggedIn(false);
+    } finally {
+      setCheckedAuth(true);
+    }
+  }
 
   useEffect(() => {
-    if (!supabase) {
-      setLoggedIn(false);
-      return;
-    }
+    checkServerSession();
 
-    async function checkSession() {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      setLoggedIn(Boolean(session));
-    }
-
-    checkSession();
+    if (!supabase) return;
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setLoggedIn(Boolean(session));
+    } = supabase.auth.onAuthStateChange(() => {
+      checkServerSession();
       setMenuOpen(false);
     });
 
@@ -64,17 +71,6 @@ export default function Header() {
     };
   }, []);
 
-  async function handleLogout() {
-    if (supabase) {
-      await supabase.auth.signOut();
-    }
-
-    setLoggedIn(false);
-    setMenuOpen(false);
-
-    router.push("/");
-    router.refresh();
-  }
 
   function closeMenu() {
     setMenuOpen(false);
@@ -82,11 +78,7 @@ export default function Header() {
 
   return (
     <header className="site-header">
-      <Link
-        href="/"
-        aria-label="Studio SaGo home"
-        onClick={closeMenu}
-      >
+      <Link href="/" aria-label="Studio SaGo home" onClick={closeMenu}>
         <Image
           className="logo"
           src="/assets/logo-studio-sago.svg"
@@ -123,11 +115,13 @@ export default function Header() {
         </Link>
       </nav>
 
-      {!loggedIn ? (
-        <Link className="login-button" href="/login">
+      {checkedAuth && !loggedIn && (
+        <Link className="login-button" href="/login" onClick={closeMenu}>
           👤 Inloggen
         </Link>
-      ) : (
+      )}
+
+      {checkedAuth && loggedIn && (
         <div className="account-menu" ref={menuRef}>
           <button
             type="button"
@@ -136,39 +130,26 @@ export default function Header() {
             aria-expanded={menuOpen}
             aria-haspopup="menu"
           >
-            👤 Mijn account
+            👤 Dashboard
           </button>
 
           {menuOpen && (
             <div className="account-dropdown" role="menu">
-              <Link
-                href="/klantendashboard"
-                onClick={closeMenu}
-              >
+              <Link href="/dashboard" onClick={closeMenu}>
                 🏠 Mijn dashboard
               </Link>
 
-              <Link
-                href="/klantendashboard"
-                onClick={closeMenu}
-              >
-                📅 Mijn afspraken
-              </Link>
-
-              <Link
-                href="/afspraak"
-                onClick={closeMenu}
-              >
+              <Link href="/afspraak" onClick={closeMenu}>
                 ➕ Nieuwe afspraak
               </Link>
 
-              <button
-                type="button"
-                onClick={handleLogout}
-              >
-                🚪 Uitloggen
-              </button>
-            </div>
+              <Link href="/webshop" onClick={closeMenu}>
+                🛒 Webshop
+              </Link>
+
+<Link href="/logout" onClick={closeMenu}>
+  🚪 Uitloggen
+</Link>            </div>
           )}
         </div>
       )}

@@ -11,11 +11,23 @@ export async function POST(request: Request) {
     const email = String(formData.get("email") || "").trim();
     const phone = String(formData.get("phone") || "").trim();
     const question = String(formData.get("question") || "").trim();
-    const privacyConsent = formData.get("privacyConsent");
 
-    if (!name || !email || !phone || !question || !privacyConsent) {
+    const privacyConsent = formData.get("privacyConsent");
+    const termsConsent = formData.get("termsConsent");
+
+    if (!name || !email || !phone || !question) {
       return NextResponse.json(
-        { error: "Vul alle velden in en geef toestemming." },
+        { error: "Vul alle verplichte velden in." },
+        { status: 400 }
+      );
+    }
+
+    if (!privacyConsent || !termsConsent) {
+      return NextResponse.json(
+        {
+          error:
+            "Je moet akkoord gaan met de Privacyverklaring en Algemene Voorwaarden.",
+        },
         { status: 400 }
       );
     }
@@ -37,7 +49,7 @@ export async function POST(request: Request) {
       },
       body: JSON.stringify({
         from: "Studio SaGo <onboarding@resend.dev>",
-        to: "goossens.saraa@gmail.com",
+        to: "creativestudiosago@gmail.com",
         subject: `Nieuwe contactvraag van ${name}`,
         reply_to: email,
         text: `
@@ -50,8 +62,10 @@ Telefoon: ${phone}
 Vraag:
 ${question}
 
-Toestemming gegevensbewaring: ja
-        `,
+Toestemmingen:
+- Privacyverklaring gelezen: ja
+- Akkoord met Algemene Voorwaarden: ja
+        `.trim(),
       }),
     });
 

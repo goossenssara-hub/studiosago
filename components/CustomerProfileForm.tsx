@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 type StudentForm = {
@@ -64,13 +65,19 @@ const secondaryGrades = [
 
 type Props = {
   onSaved?: () => void;
+  redirectAfterSave?: string;
+  initialEmail?: string;
 };
-
 function RequiredStar() {
   return <span className="required">*</span>;
 }
 
-export default function CustomerProfileForm({ onSaved }: Props) {
+export default function CustomerProfileForm({
+  onSaved,
+  redirectAfterSave,
+  initialEmail,
+}: Props) {  const router = useRouter();
+
   const [email, setEmail] = useState("");
   const [newEmail, setNewEmail] = useState("");
 
@@ -100,22 +107,29 @@ export default function CustomerProfileForm({ onSaved }: Props) {
 
   const [students, setStudents] = useState<StudentForm[]>([{ ...emptyStudent }]);
   const [message, setMessage] = useState("");
+  const [saving, setSaving] = useState(false);
 
   async function loadProfile() {
+    if (!supabase) return;
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user?.email) return;
+const accountEmail = user?.email || initialEmail || "";
 
-    setEmail(user.email);
-    setNewEmail(user.email);
+if (!accountEmail) {
+  setMessage("Geen account gevonden. Log opnieuw in.");
+  return;
+}
 
-    const response = await fetch(
-      `/api/customer/profile?email=${encodeURIComponent(user.email)}`,
-      { cache: "no-store" }
-    );
+setEmail(accountEmail);
+setNewEmail(accountEmail);
 
+const response = await fetch(
+  `/api/customer/profile?email=${encodeURIComponent(accountEmail)}`,
+  { cache: "no-store" }
+);
     const data = await response.json();
 
     if (data.profile) {
@@ -196,7 +210,7 @@ export default function CustomerProfileForm({ onSaved }: Props) {
   }
 
   async function uploadProfilePhoto() {
-    if (!profilePhotoFile || !email) return profilePhotoUrl;
+    if (!profilePhotoFile || !email || !supabase) return profilePhotoUrl;
 
     const extension = profilePhotoFile.name.split(".").pop();
     const filePath = `${email}/profile-${Date.now()}.${extension}`;
@@ -206,6 +220,7 @@ export default function CustomerProfileForm({ onSaved }: Props) {
       .upload(filePath, profilePhotoFile, { upsert: true });
 
     if (error) {
+      console.error("PROFILE PHOTO UPLOAD ERROR:", error);
       setMessage("Profielfoto kon niet opgeladen worden.");
       return profilePhotoUrl;
     }
@@ -218,7 +233,7 @@ export default function CustomerProfileForm({ onSaved }: Props) {
   }
 
   async function resetPassword() {
-    if (!email) return;
+    if (!email || !supabase) return;
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
@@ -232,7 +247,7 @@ export default function CustomerProfileForm({ onSaved }: Props) {
   }
 
   async function changeEmail() {
-    if (!newEmail || newEmail === email) {
+    if (!newEmail || newEmail === email || !supabase) {
       setMessage("Vul een nieuw e-mailadres in.");
       return;
     }
@@ -272,64 +287,81 @@ export default function CustomerProfileForm({ onSaved }: Props) {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage("");
+    setSaving(true);
 
-    if (!validateStudents()) {
-      setMessage("Vul alle verplichte leerlinggegevens in.");
-      return;
+    try {
+      if (!email) {
+        setMessage("Geen account gevonden. Log opnieuw in.");
+        return;
+      }
+
+      if (!validateStudents()) {
+        setMessage("Vul alle verplichte leerlinggegevens in.");
+        return;
+      }
+
+      if (!privacyConsent) {
+        setMessage("Je moet akkoord gaan met de GDPR-toestemming.");
+        return;
+      }
+
+      const uploadedPhotoUrl = await uploadProfilePhoto();
+
+      const response = await fetch("/api/customer/profile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          profilePhotoUrl: uploadedPhotoUrl,
+
+          parent1FirstName,
+          parent1LastName,
+          parent1Phone,
+
+          parent2FirstName,
+          parent2LastName,
+          parent2Phone,
+          parent2Email,
+
+          address,
+          postcode,
+          city,
+
+          emergencyContact,
+          preferredFormat,
+          availabilityNotes,
+          notes,
+
+          privacyConsent,
+          photoConsent,
+
+          students,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setMessage(data.error || "Gegevens konden niet opgeslagen worden.");
+        return;
+      }
+
+      setProfilePhotoUrl(uploadedPhotoUrl);
+      setMessage("Gegevens opgeslagen.");
+
+      await loadProfile();
+      onSaved?.();
+
+if (redirectAfterSave) {
+  window.location.href = redirectAfterSave;
+}    } catch (error) {
+      console.error("PROFILE SAVE ERROR:", error);
+      setMessage("Er ging iets mis bij het opslaan van je gegevens.");
+    } finally {
+      setSaving(false);
     }
-
-    if (!privacyConsent) {
-      setMessage("Je moet akkoord gaan met de GDPR-toestemming.");
-      return;
-    }
-
-    const uploadedPhotoUrl = await uploadProfilePhoto();
-
-    const response = await fetch("/api/customer/profile", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email,
-        profilePhotoUrl: uploadedPhotoUrl,
-
-        parent1FirstName,
-        parent1LastName,
-        parent1Phone,
-
-        parent2FirstName,
-        parent2LastName,
-        parent2Phone,
-        parent2Email,
-
-        address,
-        postcode,
-        city,
-
-        emergencyContact,
-        preferredFormat,
-        availabilityNotes,
-        notes,
-
-        privacyConsent,
-        photoConsent,
-
-        students,
-      }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      setMessage(data.error || "Gegevens konden niet opgeslagen worden.");
-      return;
-    }
-
-    setProfilePhotoUrl(uploadedPhotoUrl);
-    setMessage("Gegevens opgeslagen.");
-    await loadProfile();
-    onSaved?.();
   }
 
   return (
@@ -337,14 +369,14 @@ export default function CustomerProfileForm({ onSaved }: Props) {
       <h2>👤 Mijn gegevens</h2>
       <p>
         Velden met <RequiredStar /> zijn verplicht. Je kunt je gegevens later
-        altijd aanpassen via je klantendashboard.
+        altijd aanpassen via je dashboard.
       </p>
 
       <form onSubmit={handleSubmit} className="booking-form-with-calendar">
         <h3>Profielfoto</h3>
         <p className="small-note">
           Optioneel. Deze foto wordt enkel gebruikt om je sneller te herkennen in
-          het klantendashboard en de administratie.
+          het dashboard en de administratie.
         </p>
 
         {profilePhotoUrl && (
@@ -695,11 +727,14 @@ export default function CustomerProfileForm({ onSaved }: Props) {
                 </label>
               </div>
 
-              <p className="privacy-note">
-                Medische gegevens zijn bijzondere persoonsgegevens. Vul dit
-                alleen in als het nodig is voor een veilige en passende
-                begeleiding.
-              </p>
+              <div className="privacy-note">
+                <strong>🔒 Bijzondere persoonsgegevens</strong>
+                Medische gegevens behoren tot de bijzondere persoonsgegevens
+                volgens de GDPR. Vul deze informatie enkel in wanneer dit nodig
+                is om een veilige, passende en kwaliteitsvolle begeleiding te
+                kunnen voorzien. Deze gegevens worden vertrouwelijk behandeld en
+                uitsluitend gebruikt binnen Studio SaGo.
+              </div>
 
               <label style={{ display: "block", marginTop: 20 }}>
                 Medische gegevens / medicatie
@@ -819,14 +854,19 @@ export default function CustomerProfileForm({ onSaved }: Props) {
         </p>
 
         <div className="dashboard-buttons" style={{ marginTop: 28 }}>
-          <button className="primary-action small-action" type="submit">
-            Gegevens opslaan
+          <button
+            className="primary-action small-action"
+            type="submit"
+            disabled={saving}
+          >
+            {saving ? "Gegevens opslaan..." : "Gegevens opslaan"}
           </button>
 
           <button
             className="secondary-action small-action"
             type="button"
             onClick={resetPassword}
+            disabled={saving}
           >
             Wachtwoord aanpassen
           </button>
@@ -846,6 +886,7 @@ export default function CustomerProfileForm({ onSaved }: Props) {
             className="secondary-action small-action"
             type="button"
             onClick={changeEmail}
+            disabled={saving}
           >
             E-mailadres wijzigen
           </button>

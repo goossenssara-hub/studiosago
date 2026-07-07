@@ -12,7 +12,13 @@
 @import "./styles/animations.css";
 @import "./styles/responsive.css";
 @import "./styles/constructie.css";
+@import "./styles/prijskaarten.css";
+@import "./styles/legal.css";
+@import "./styles/contact.css";
+@import "./styles/dashboard.css";
+@import "./styles/header-links.css";
 
+@import "./styles/over-mij.css";
 
 @font-face {
   font-family: "StudioFont";
@@ -302,7 +308,7 @@ h3,
   text-decoration: none;
 }
 
-/* KLANTENDASHBOARD */
+/* DASHBOARD */
 
 .dashboard-grid {
   width: min(1340px, 92%);

@@ -1,135 +1,135 @@
 import Image from "next/image";
-import PageShell from "@/components/PageShell";
 import Link from "next/link";
+import PageShell from "@/components/PageShell";
 
 export default function OverMijPage() {
   return (
     <PageShell>
-      <section className="about-hero">
-        <div className="about-copy">
+      <main className="about-page">
+        {/* Hero */}
+
+        <section className="subpage-hero">
           <p className="eyebrow">Over mij</p>
+
           <h1>Ik ben Sara.</h1>
+
           <p>
-            Mama van drie, fotograaf, auteur en voormalig leerkracht die haar
-            horizonten ging verruimen buiten het onderwijs.
+            Mama van drie, fotograaf, auteur en leerkracht die haar
+            horizonten verruimde buiten het onderwijs.
           </p>
-        </div>
+        </section>
 
-        <div className="about-photo-main">
-          <Image
-            src="/assets/sara.jpg"
-            alt="Sara Goossens"
-            width={520}
-            height={640}
-            priority
-          />
-        </div>
-      </section>
+        {/* Intro */}
 
-      <section className="about-grid">
-        <article className="about-card orange">
-          <h2>Mama van 3</h2>
-          <p>
-            Mijn gezin is mijn basis. Als mama weet ik hoe belangrijk rust,
-            structuur, vertrouwen en verbinding zijn.
-          </p>
-        </article>
-
-        <article className="about-card teal">
-          <h2>Leerkracht met nieuwe horizonten</h2>
-          <p>
-            Na jaren in het onderwijs koos ik ervoor om mijn ervaring op een
-            nieuwe manier in te zetten: warmer, vrijer en dichter bij wie ik ben.
-          </p>
-        </article>
-
-        <article className="about-card purple">
-          <h2>Fotograaf</h2>
-          <p>
-            Ik leg graag echte momenten vast: puur, spontaan en vol gevoel.
-            Beelden die later herinneringen worden.
-          </p>
-        </article>
-
-        <article className="about-card green">
-          <h2>Auteur</h2>
-          <p>
-            Ik schrijf vanuit ervaring, gevoel en verbeelding. Met woorden wil
-            ik raken, ondersteunen en herkenning brengen.
-          </p>
-        </article>
-      </section>
-
-     <section className="about-photo-strip">
-
-
-
-</section>
-
-<section className="speelweelde-section">
-<div className="speelweelde-image">
-  <Link
-    href="https://www.speelweelde.be"
-    target="_blank"
-    rel="noopener noreferrer"
-  >
-    <Image
-      src="/assets/logosw.png"
-      alt="Speelweelde"
-      width={100}
-      height={100}
-    />
-  </Link>
-</div>
-  <div className="speelweelde-content">
-    <p className="eyebrow">Speelweelde</p>
-
-    <h2>Spelend leren staat centraal.</h2>
-
-    <p>
-      Naast Studio SaGo zet ik me met veel enthousiasme in voor Speelweelde.
-      Daar werk ik mee aan de ontwikkeling van educatieve pakketten,
-      lesmaterialen en interactieve activiteiten die kinderen uitdagen om
-      spelenderwijs te leren.
-    </p>
-
-    <p>
-      Daarnaast begeleid en ontwikkel ik educatieve kleuterkampen waarin
-      verwondering, creativiteit, beweging en ontdekken centraal staan. Mijn
-      ervaring als leerkracht vormt daarbij de basis voor activiteiten die
-      zowel leerzaam als plezierig zijn.
-    </p>
-  </div>
-</section>
-
-      <section className="testimonials-section">
-        <p className="eyebrow">Ervaringen</p>
-        <h2>Wat anderen over Sara zeggen</h2>
-
-        <div className="testimonial-grid">
-          <article className="testimonial-card">
+        <section className="about-hero">
+          <div className="about-text">
             <p>
-              “Sara straalt rust uit en ziet heel snel wat iemand nodig heeft.”
+              Met Studio SaGo combineer ik mijn liefde voor kinderen,
+              onderwijs, creativiteit en fotografie. Ik geloof dat leren warm,
+              persoonlijk en haalbaar mag zijn.
             </p>
-            <strong>— Naam</strong>
+
+            <p>
+              Vanuit mijn ervaring als leerkracht lager en secundair onderwijs
+              help ik kinderen en jongeren groeien in zelfvertrouwen,
+              studievaardigheden en motivatie.
+            </p>
+
+            <p>
+              Studio SaGo ontstond vanuit mijn passie om gezinnen, leerlingen
+              en scholen te ondersteunen met educatie, fotografie en creatieve
+              projecten die een blijvende indruk nalaten.
+            </p>
+            <p>
+              Foto: © Julie Mas
+            </p>
+          </div>
+
+          <div className="about-image-card">
+            <Image
+              src="/assets/sara.jpg"
+              alt="Sara van Studio SaGo"
+              width={650}
+              height={800}
+              className="about-image"
+              priority
+            />
+          </div>
+        </section>
+
+        {/* Speelweelde */}
+
+        <section className="about-speelweelde">
+          <div className="about-speelweelde-logo">
+            <Image
+              src="/assets/logosw.png"
+              alt="Speelweelde"
+              width={180}
+              height={180}
+            />
+          </div>
+
+          <div className="about-speelweelde-content">
+            <p className="eyebrow">Speelweelde</p>
+
+            <h2>Spelend leren staat centraal.</h2>
+
+            <p>
+              Naast Studio SaGo zet ik me met veel enthousiasme in voor
+              Speelweelde. Daar werk ik mee aan de ontwikkeling van educatieve
+              pakketten, lesmaterialen en interactieve activiteiten die
+              kinderen uitdagen om spelenderwijs te leren.
+            </p>
+
+            <p>
+              Daarnaast begeleid en ontwikkel ik educatieve kleuterkampen
+              waarin verwondering, creativiteit, beweging en ontdekken centraal
+              staan. Mijn ervaring als leerkracht vormt daarbij de basis voor
+              activiteiten die zowel leerzaam als plezierig zijn.
+            </p>
+
+            <Link
+              href="https://www.speelweelde.be"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="primary-action"
+            >
+              Ontdek Speelweelde
+            </Link>
+          </div>
+        </section>
+
+        {/* Expertises */}
+
+        <section className="about-cards">
+          <article>
+            <h2>Onderwijs</h2>
+
+            <p>
+              Ik begeleid leerlingen met aandacht voor planning, leren leren,
+              zelfvertrouwen en persoonlijke groei.
+            </p>
           </article>
 
-          <article className="testimonial-card">
+          <article>
+            <h2>Fotografie</h2>
+
             <p>
-              “Warm, betrokken en professioneel. Je voelt meteen dat ze dit met
-              haar hart doet.”
+              Met SaGo Photography leg ik warme, echte momenten vast voor
+              gezinnen, newborns, branding, huwelijken en bijzondere verhalen.
             </p>
-            <strong>— Naam</strong>
           </article>
 
-          <article className="testimonial-card">
+          <article>
+            <h2>Creativiteit</h2>
+
             <p>
-              “Een fijne combinatie van ervaring, creativiteit en oprechte zorg.”
+              Studio SaGo is de plek waar educatie, fotografie, workshops,
+              boeken en creatieve projecten samenkomen.
             </p>
-            <strong>— Naam</strong>
           </article>
-        </div>
-      </section>
+        </section>
+      </main>
     </PageShell>
   );
 }

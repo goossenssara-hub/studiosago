@@ -112,7 +112,7 @@ export default function BedanktPagina() {
 
           <p style={{ color: "#425466", lineHeight: 1.7, margin: 0 }}>
             Je ontvangt binnenkort een bevestiging. Je beurtenkaart wordt aan je
-            klantendashboard toegevoegd. Van daaruit kun je zelf je afspraken
+            dashboard toegevoegd. Van daaruit kun je zelf je afspraken
             inplannen.
           </p>
         </div>
@@ -126,7 +126,7 @@ export default function BedanktPagina() {
           }}
         >
           <Link
-            href="/klantendashboard"
+            href="/dashboard"
             style={{
               background: "#fea020",
               color: "white",

@@ -26,7 +26,7 @@ export default function AuthCallbackPage() {
           return;
         }
 
-        router.replace("/klantendashboard");
+        router.replace("/dashboard");
       } catch (err) {
         console.error(err);
         router.replace("/login");

@@ -43,7 +43,7 @@ export default function ResetPasswordPage() {
     setMessage("Je wachtwoord is aangepast. Je wordt doorgestuurd...");
 
     setTimeout(() => {
-      router.replace("/klantendashboard");
+      router.replace("/dashboard");
     }, 1200);
   }
 

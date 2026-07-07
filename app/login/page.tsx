@@ -45,7 +45,7 @@ if (error) {
         <h1>Welkom terug</h1>
 
         <p className="login-subtitle">
-          Meld je aan om je klantendashboard te openen.
+          Meld je aan om je dashboard te openen.
         </p>
 
         <form onSubmit={handleLogin}>

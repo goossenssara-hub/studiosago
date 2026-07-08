@@ -4,21 +4,8 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function isWithin15KmOfPeer(address: string) {
-  const normalized = address.toLowerCase();
-
-  return (
-    normalized.includes("peer") ||
-    normalized.includes("3990") ||
-    normalized.includes("wijchmaal") ||
-    normalized.includes("grote-brogel") ||
-    normalized.includes("kleine-brogel") ||
-    normalized.includes("hechtel") ||
-    normalized.includes("eksel") ||
-    normalized.includes("bocholt") ||
-    normalized.includes("meeuwen") ||
-    normalized.includes("bree")
-  );
+function toBrusselsDateTime(date: string, time: string) {
+  return new Date(`${date}T${time}:00+02:00`).toISOString();
 }
 
 export async function POST(request: Request) {
@@ -30,80 +17,22 @@ export async function POST(request: Request) {
       email,
       date,
       time,
-      notes,
       appointmentType,
       customerAddress,
+      notes,
       cancellationPolicyAccepted,
     } = await request.json();
 
-    const cleanNotes = String(notes || "").trim();
-
-    if (!passId || !email || !date || !time || !cleanNotes) {
+    if (!passId || !email || !date || !time || !appointmentType || !notes) {
       return NextResponse.json(
-        { error: "Niet alle verplichte velden zijn ingevuld." },
-        { status: 400 }
-      );
-    }
-
-    if (!appointmentType) {
-      return NextResponse.json(
-        { error: "Kies of je een digitale of fysieke afspraak wilt." },
+        { error: "Niet alle verplichte gegevens zijn ingevuld." },
         { status: 400 }
       );
     }
 
     if (!cancellationPolicyAccepted) {
       return NextResponse.json(
-        { error: "Je moet akkoord gaan met de annulatievoorwaarden." },
-        { status: 400 }
-      );
-    }
-
-    if (appointmentType === "home") {
-      if (!customerAddress) {
-        return NextResponse.json(
-          { error: "Vul je adres in voor een afspraak aan huis." },
-          { status: 400 }
-        );
-      }
-
-      if (!isWithin15KmOfPeer(customerAddress)) {
-        return NextResponse.json(
-          {
-            error:
-              "Een afspraak aan huis kan enkel binnen een straal van 15 km rond Peer.",
-          },
-          { status: 400 }
-        );
-      }
-    }
-
-    const { data: availability, error: availabilityError } =
-      await supabaseAdmin
-        .from("availability")
-        .select(
-          "id, date, start_time, end_time, max_places, booked_places, active"
-        )
-        .eq("date", date)
-        .eq("start_time", time)
-        .eq("active", true)
-        .single();
-
-    if (availabilityError || !availability) {
-      console.error("APPOINTMENT AVAILABILITY ERROR:", availabilityError);
-
-      return NextResponse.json(
-        { error: "Dit tijdstip is niet beschikbaar." },
-        { status: 400 }
-      );
-    }
-
-    const maxPlaces = availability.max_places ?? 1;
-    const bookedPlaces = availability.booked_places ?? 0;
-
-    if (bookedPlaces >= maxPlaces) {
-      return NextResponse.json(
-        { error: "Dit tijdstip is ondertussen volzet." },
+        { error: "Je moet akkoord gaan met de annuleringsvoorwaarden." },
         { status: 400 }
       );
     }
@@ -114,139 +43,76 @@ export async function POST(request: Request) {
       .eq("id", passId)
       .eq("customer_email", email)
       .eq("status", "active")
-      .single();
+      .maybeSingle();
 
     if (passError || !pass) {
-      console.error("APPOINTMENT PASS ERROR:", passError);
-
       return NextResponse.json(
-        { error: "Geen geldige actieve beurtenkaart gevonden." },
-        { status: 400 }
+        { error: "Geen geldige beurtenkaart gevonden." },
+        { status: 404 }
       );
     }
 
-    const remaining = pass.remaining_credits ?? pass.remaining_sessions ?? 0;
+    const remaining = pass.remaining_sessions ?? pass.remaining_credits ?? 0;
 
     if (remaining <= 0) {
       return NextResponse.json(
-        { error: "Deze beurtenkaart heeft geen beschikbare beurten meer." },
+        { error: "Er zijn geen beurten meer beschikbaar." },
         { status: 400 }
       );
     }
 
-    const appointmentTitle =
-      pass.title ?? pass.product ?? "Afspraak Studio SaGo";
+    const startTime = toBrusselsDateTime(date, time);
+    const endDate = new Date(startTime);
+    endDate.setMinutes(endDate.getMinutes() + 60);
 
-    const newRemaining = remaining - 1;
-    const newBookedPlaces = bookedPlaces + 1;
+    const appointmentTypeLabel =
+      appointmentType === "home" ? "Fysiek aan huis" : "Digitaal";
 
-    const location =
-      appointmentType === "home" ? customerAddress : "Digitale afspraak";
+    const { error: bookingError } = await supabaseAdmin.from("bookings").insert({
+      pass_id: passId,
+      customer_email: email,
+      customer_name: null,
 
-    const { data: booking, error: bookingError } = await supabaseAdmin
-      .from("bookings")
-const { data: booking, error: bookingError } = await supabaseAdmin
-  .from("bookings")
-  .insert({
-    title: "Afspraak Studio SaGo",
-    pass_id: pass.id,
-    customer_email: email,
-    appointment_date: date,
-    appointment_time: time,
-    appointment_type: appointmentType,
-    customer_address: appointmentType === "home" ? customerAddress : null,
-    location,
-    cancellation_policy_accepted: cancellationPolicyAccepted,
+      title: "Afspraak Studio SaGo",
+      service_type: "begeleiding",
 
-    status: "confirmed",
-    payment_status: "paid",
-    amount: 0,
+      appointment_date: date,
+      appointment_time: time,
+      start_time: startTime,
+      end_time: endDate.toISOString(),
 
-    deducted: true,
-    restored_lesson: false,
+      appointment_type: appointmentTypeLabel,
+      customer_address: customerAddress || null,
 
-    notes: [
-      "Afspraak ingepland via beurtenkaart",
-      `Beurtenkaart: ${appointmentTitle}`,
-      `Type afspraak: ${
-        appointmentType === "home" ? "Fysiek aan huis" : "Digitaal"
-      }`,
-      appointmentType === "home" && customerAddress
-        ? `Adres: ${customerAddress}`
-        : "",
-      `Datum: ${date}`,
-      `Tijdstip: ${time}`,
-      `Inhoud bijles: ${cleanNotes}`,
-      `Beurt automatisch afgeschreven bij inplannen.`,
-      `Resterende beurten na boeking: ${newRemaining}`,
-    ]
-      .filter(Boolean)
-      .join("\n"),
-  })
-  .select("id")
-  .single();      .select("id")
-      .single();
+      notes: `Type afspraak: ${appointmentTypeLabel}
+Adres: ${customerAddress || "-"}
+Inhoud bijles: ${notes}
+Annuleringsvoorwaarden geaccepteerd: ja`,
 
-    if (bookingError || !booking) {
-      console.error("APPOINTMENT BOOKING ERROR:", bookingError);
-
-      return NextResponse.json(
-        { error: "Afspraak kon niet opgeslagen worden." },
-        { status: 500 }
-      );
-    }
-
-    const { error: availabilityUpdateError } = await supabaseAdmin
-      .from("availability")
-      .update({
-        booked_places: newBookedPlaces,
-        active: newBookedPlaces < maxPlaces,
-      })
-      .eq("id", availability.id);
-
-    if (availabilityUpdateError) {
-      console.error(
-        "APPOINTMENT AVAILABILITY UPDATE ERROR:",
-        availabilityUpdateError
-      );
-
-      return NextResponse.json(
-        {
-          error:
-            "Afspraak opgeslagen, maar beschikbaarheid kon niet aangepast worden.",
-        },
-        { status: 500 }
-      );
-    }
-
-    const { error: passUpdateError } = await supabaseAdmin
-      .from("passes")
-      .update({
-        remaining_credits: newRemaining,
-        remaining_sessions: newRemaining,
-        status: newRemaining === 0 ? "used" : "active",
-      })
-      .eq("id", pass.id);
-
-    if (passUpdateError) {
-      console.error("APPOINTMENT PASS UPDATE ERROR:", passUpdateError);
-
-      return NextResponse.json(
-        { error: "Beurtenkaart kon niet aangepast worden." },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      bookingId: booking.id,
-      remaining_credits: newRemaining,
+      status: "confirmed",
+      payment_status: "paid",
+      amount: 0,
+      cancellation_policy_accepted: true,
+      deducted: false,
+      confirmed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     });
+
+    if (bookingError) {
+      console.error("PASS BOOKING ERROR:", bookingError);
+
+      return NextResponse.json(
+        { error: bookingError.message || "Afspraak kon niet opgeslagen worden." },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("APPOINTMENT SERVER ERROR:", error);
+    console.error("PASS BOOKING SERVER ERROR:", error);
 
     return NextResponse.json(
-      { error: "Er ging iets mis bij het inplannen van de afspraak." },
+      { error: "Serverfout bij afspraak boeken." },
       { status: 500 }
     );
   }

@@ -6,6 +6,24 @@ export const dynamic = "force-dynamic";
 
 const syncSecret = process.env.GOOGLE_CALENDAR_SYNC_SECRET;
 
+function detectServiceType(title?: string | null, notes?: string | null) {
+  const text = `${title || ""} ${notes || ""}`.toLowerCase();
+
+  if (text.includes("kennismaking")) return "kennismaking";
+
+  if (
+    text.includes("huiswerk") ||
+    text.includes("studiecoaching") ||
+    text.includes("coaching") ||
+    text.includes("bijles") ||
+    text.includes("begeleiding")
+  ) {
+    return "begeleiding";
+  }
+
+  return "andere";
+}
+
 export async function POST(request: Request) {
   try {
     if (!syncSecret) {
@@ -55,6 +73,8 @@ export async function POST(request: Request) {
       timeZone: "Europe/Brussels",
     });
 
+    const serviceType = detectServiceType(title, notes);
+
     const { error } = await supabaseAdmin.from("bookings").upsert(
       {
         google_event_id,
@@ -63,32 +83,28 @@ export async function POST(request: Request) {
         end_time,
         appointment_date: appointmentDate,
         appointment_time: appointmentTime,
-        customer_email,
-        customer_name,
-        location,
-        notes,
+        customer_email: customer_email || null,
+        customer_name: customer_name || null,
+        location: location || null,
+        notes: notes || null,
+        service_type: serviceType,
         status: status ?? "confirmed",
         payment_status: "unpaid",
         confirmed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       },
-      {
-        onConflict: "google_event_id",
-      }
+      { onConflict: "google_event_id" }
     );
 
     if (error) {
-      console.error("GOOGLE CALENDAR SYNC UPSERT ERROR:", error);
-
-      return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({
       success: true,
       appointment_date: appointmentDate,
       appointment_time: appointmentTime,
+      service_type: serviceType,
     });
   } catch (error) {
     console.error("GOOGLE CALENDAR SYNC SERVER ERROR:", error);

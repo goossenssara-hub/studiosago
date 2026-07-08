@@ -148,13 +148,12 @@ export default async function DashboardPage() {
                           <span style={{ width: `${percentage}%` }} />
                         </div>
 
-                        <Link
-                          href={`/afspraak?passId=${pass.id}`}
-                          className="primary-action"
-                        >
-                          Afspraak plannen
-                        </Link>
-                      </div>
+<Link
+  href={`/afspraak-maken?passId=${pass.id}`}
+  className="primary-action"
+>
+  Afspraak plannen
+</Link>                      </div>
                     );
                   })}
                 </div>

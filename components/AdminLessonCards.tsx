@@ -1,265 +1,258 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 type Pass = {
   id: string;
   customer_email: string;
-  title: string;
+  title: string | null;
+  product: string | null;
+  status: string | null;
   total_credits: number | null;
   remaining_credits: number | null;
-  total_sessions?: number | null;
-  remaining_sessions?: number | null;
-  status: string | null;
-  created_at?: string;
+  total_sessions: number | null;
+  remaining_sessions: number | null;
+  created_at: string | null;
 };
 
 export default function AdminLessonCards() {
   const [passes, setPasses] = useState<Pass[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState("");
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [message, setMessage] = useState("Laden...");
+  const [savingId, setSavingId] = useState<string | null>(null);
 
   async function loadPasses() {
-    setLoading(true);
+    setMessage("Laden...");
 
-    const response = await fetch("/api/admin/lesson-cards", {
-      cache: "no-store",
-    });
+    try {
+      const response = await fetch("/api/admin/lesson-cards", {
+        cache: "no-store",
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (response.ok) {
+      if (!response.ok) {
+        setMessage(data.error || "Beurtenkaarten konden niet geladen worden.");
+        return;
+      }
+
       setPasses(data.passes ?? []);
-    } else {
-      setMessage(data.error || "Beurtenkaarten konden niet geladen worden.");
+      setMessage(data.passes?.length ? "" : "Nog geen beurtenkaarten.");
+    } catch {
+      setMessage("Beurtenkaarten konden niet geladen worden.");
     }
-
-    setLoading(false);
   }
 
   useEffect(() => {
     loadPasses();
   }, []);
 
-  const groupedPasses = useMemo(() => {
-    const sorted = [...passes].sort((a, b) =>
-      String(a.customer_email || "").localeCompare(
-        String(b.customer_email || ""),
-        "nl-BE"
+  function updateLocalPass(id: string, field: keyof Pass, value: string) {
+    setPasses((current) =>
+      current.map((pass) =>
+        pass.id === id
+          ? {
+              ...pass,
+              [field]:
+                field.includes("credits") || field.includes("sessions")
+                  ? Number(value)
+                  : value,
+            }
+          : pass
       )
     );
+  }
 
-    return sorted.reduce<Record<string, Pass[]>>((groups, pass) => {
-      const email = pass.customer_email || "Onbekende klant";
+  async function savePass(pass: Pass) {
+    setSavingId(pass.id);
 
-      if (!groups[email]) {
-        groups[email] = [];
+    try {
+      const response = await fetch("/api/admin/lesson-cards/update", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(pass),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.error || "Beurtenkaart kon niet opgeslagen worden.");
+        return;
       }
 
-      groups[email].push(pass);
-      return groups;
-    }, {});
-  }, [passes]);
-
-  async function handleUpdate(event: FormEvent<HTMLFormElement>, passId: string) {
-    event.preventDefault();
-    setMessage("");
-
-    const formData = new FormData(event.currentTarget);
-
-    const response = await fetch("/api/admin/lesson-cards", {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        id: passId,
-        title: formData.get("title"),
-        totalCredits: formData.get("totalCredits"),
-        remainingCredits: formData.get("remainingCredits"),
-        status: formData.get("status"),
-      }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      setMessage(data.error || "Beurtenkaart kon niet aangepast worden.");
-      return;
+      await loadPasses();
+    } finally {
+      setSavingId(null);
     }
-
-    setEditingId(null);
-    setMessage("Beurtenkaart aangepast.");
-    await loadPasses();
   }
 
-  async function deletePass(passId: string) {
-    const confirmDelete = window.confirm(
-      "Ben je zeker dat je deze beurtenkaart wilt verwijderen?"
+  async function deletePass(id: string) {
+    const confirmed = confirm(
+      "Ben je zeker dat je deze beurtenkaart wil verwijderen?"
     );
 
-    if (!confirmDelete) return;
+    if (!confirmed) return;
 
-    const response = await fetch(`/api/admin/lesson-cards?id=${passId}`, {
-      method: "DELETE",
-    });
+    setSavingId(id);
 
-    const data = await response.json();
+    try {
+      const response = await fetch("/api/admin/lesson-cards/delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id }),
+      });
 
-    if (!response.ok) {
-      setMessage(data.error || "Beurtenkaart kon niet verwijderd worden.");
-      return;
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.error || "Beurtenkaart kon niet verwijderd worden.");
+        return;
+      }
+
+      await loadPasses();
+    } finally {
+      setSavingId(null);
     }
-
-    setMessage("Beurtenkaart verwijderd.");
-    await loadPasses();
-  }
-
-  if (loading) {
-    return (
-      <div className="admin-request-card">
-        <h2>Beurtenkaarten</h2>
-        <p>Laden...</p>
-      </div>
-    );
   }
 
   return (
-    <div className="admin-request-list">
-      <div className="admin-request-card">
-        <h2>Beurtenkaarten</h2>
-        <p>
-          Overzicht per klant, alfabetisch gesorteerd. Je kunt kaarten aanpassen
-          of verwijderen.
-        </p>
+    <section className="table-card">
+      <div className="admin-section-header">
+        <div>
+          <p className="eyebrow">Beheer</p>
+          <h2>Beurtenkaarten</h2>
+          <p>
+            Overzicht per klant. Je kunt beurtenkaarten handmatig aanpassen of
+            verwijderen.
+          </p>
+        </div>
 
-        {message && <p className="form-message">{message}</p>}
-
-        {passes.length === 0 && <p>Nog geen beurtenkaarten.</p>}
+        <button
+          type="button"
+          className="secondary-action small-action"
+          onClick={loadPasses}
+        >
+          Vernieuwen
+        </button>
       </div>
 
-      {Object.entries(groupedPasses).map(([email, customerPasses]) => (
-        <div key={email} className="admin-request-card">
-          <h3>👤 {email}</h3>
+      {message && <p>{message}</p>}
 
-          <div className="lesson-card-list">
-            {customerPasses.map((pass) => {
-              const total =
-                pass.total_credits ?? pass.total_sessions ?? 10;
+      <div className="admin-request-list">
+        {passes.map((pass) => {
+          const title = pass.product || pass.title || "Beurtenkaart";
 
-              const remaining =
-                pass.remaining_credits ?? pass.remaining_sessions ?? 0;
+          return (
+            <article className="admin-request-card" key={pass.id}>
+              <h3>{title}</h3>
 
-              const used = total - remaining;
+              <p>
+                <strong>Klant:</strong> {pass.customer_email}
+              </p>
 
-              return (
-                <div key={pass.id} className="lesson-card-admin">
-                  {editingId === pass.id ? (
-                    <form
-                      onSubmit={(event) => handleUpdate(event, pass.id)}
-                      className="form-grid"
-                    >
-                      <label>
-                        Titel
-                        <input
-                          name="title"
-                          defaultValue={pass.title || ""}
-                          required
-                        />
-                      </label>
+              <div className="form-grid">
+                <label>
+                  Titel
+                  <input
+                    value={pass.title ?? ""}
+                    onChange={(e) =>
+                      updateLocalPass(pass.id, "title", e.target.value)
+                    }
+                  />
+                </label>
 
-                      <label>
-                        Totaal beurten
-                        <input
-                          name="totalCredits"
-                          type="number"
-                          min="1"
-                          defaultValue={total}
-                          required
-                        />
-                      </label>
+                <label>
+                  Product
+                  <input
+                    value={pass.product ?? ""}
+                    onChange={(e) =>
+                      updateLocalPass(pass.id, "product", e.target.value)
+                    }
+                  />
+                </label>
 
-                      <label>
-                        Resterende beurten
-                        <input
-                          name="remainingCredits"
-                          type="number"
-                          min="0"
-                          defaultValue={remaining}
-                          required
-                        />
-                      </label>
+                <label>
+                  Totaal beurten
+                  <input
+                    type="number"
+                    value={pass.total_sessions ?? pass.total_credits ?? 0}
+                    onChange={(e) => {
+                      updateLocalPass(
+                        pass.id,
+                        "total_sessions",
+                        e.target.value
+                      );
+                      updateLocalPass(
+                        pass.id,
+                        "total_credits",
+                        e.target.value
+                      );
+                    }}
+                  />
+                </label>
 
-                      <label>
-                        Status
-                        <select name="status" defaultValue={pass.status || "active"}>
-                          <option value="active">Actief</option>
-                          <option value="used">Opgebruikt</option>
-                          <option value="cancelled">Geannuleerd</option>
-                        </select>
-                      </label>
+                <label>
+                  Resterende beurten
+                  <input
+                    type="number"
+                    value={
+                      pass.remaining_sessions ?? pass.remaining_credits ?? 0
+                    }
+                    onChange={(e) => {
+                      updateLocalPass(
+                        pass.id,
+                        "remaining_sessions",
+                        e.target.value
+                      );
+                      updateLocalPass(
+                        pass.id,
+                        "remaining_credits",
+                        e.target.value
+                      );
+                    }}
+                  />
+                </label>
 
-                      <button className="primary-action" type="submit">
-                        Opslaan
-                      </button>
+                <label>
+                  Status
+                  <select
+                    value={pass.status ?? "active"}
+                    onChange={(e) =>
+                      updateLocalPass(pass.id, "status", e.target.value)
+                    }
+                  >
+                    <option value="active">Actief</option>
+                    <option value="inactive">Inactief</option>
+                    <option value="expired">Verlopen</option>
+                    <option value="cancelled">Geannuleerd</option>
+                  </select>
+                </label>
+              </div>
 
-                      <button
-                        className="secondary-action"
-                        type="button"
-                        onClick={() => setEditingId(null)}
-                      >
-                        Annuleren
-                      </button>
-                    </form>
-                  ) : (
-                    <>
-                      <h3>🎟️ {pass.title}</h3>
+              <div className="admin-request-actions">
+                <button
+                  type="button"
+                  onClick={() => savePass(pass)}
+                  disabled={savingId === pass.id}
+                >
+                  💾 {savingId === pass.id ? "Opslaan..." : "Opslaan"}
+                </button>
 
-                      <p>
-                        Nog <strong>{remaining}</strong> van de{" "}
-                        <strong>{total}</strong> beurten beschikbaar.
-                      </p>
-
-                      <div className="pass-progress">
-                        <span
-                          style={{
-                            width: `${Math.max(
-                              0,
-                              Math.min(100, (remaining / total) * 100)
-                            )}%`,
-                          }}
-                        />
-                      </div>
-
-                      <p>Gebruikt: {used}</p>
-                      <p>Status: {pass.status || "active"}</p>
-
-                      <div className="admin-actions">
-                        <button
-                          className="secondary-action"
-                          type="button"
-                          onClick={() => setEditingId(pass.id)}
-                        >
-                          Aanpassen
-                        </button>
-
-                        <button
-                          className="availability-delete"
-                          type="button"
-                          onClick={() => deletePass(pass.id)}
-                        >
-                          Verwijderen
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ))}
-    </div>
+                <button
+                  type="button"
+                  onClick={() => deletePass(pass.id)}
+                  disabled={savingId === pass.id}
+                >
+                  🗑️ Verwijderen
+                </button>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </section>
   );
 }

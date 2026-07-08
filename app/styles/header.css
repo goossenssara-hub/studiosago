@@ -1,0 +1,40 @@
+.header-login-buttons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.student-login-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 11px 18px;
+  border-radius: 999px;
+  background: #28b9aa;
+  color: white;
+  font-weight: 800;
+  text-decoration: none;
+  box-shadow: 0 12px 28px rgba(40, 185, 170, 0.24);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  white-space: nowrap;
+}
+
+.student-login-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px rgba(40, 185, 170, 0.3);
+}
+
+@media (max-width: 900px) {
+  .header-login-buttons {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .student-login-button,
+  .login-button {
+    width: 100%;
+    max-width: 260px;
+  }
+}

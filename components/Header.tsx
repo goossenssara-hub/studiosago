@@ -3,11 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 export default function Header() {
-  const router = useRouter();
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   const [loggedIn, setLoggedIn] = useState(false);
@@ -21,7 +19,6 @@ export default function Header() {
       });
 
       const data = await response.json();
-
       setLoggedIn(Boolean(data.loggedIn));
     } catch (error) {
       console.error("AUTH STATUS ERROR:", error);
@@ -48,10 +45,7 @@ export default function Header() {
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (
-        menuRef.current &&
-        !menuRef.current.contains(event.target as Node)
-      ) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setMenuOpen(false);
       }
     }
@@ -70,7 +64,6 @@ export default function Header() {
       document.removeEventListener("keydown", handleEscape);
     };
   }, []);
-
 
   function closeMenu() {
     setMenuOpen(false);
@@ -116,9 +109,19 @@ export default function Header() {
       </nav>
 
       {checkedAuth && !loggedIn && (
-        <Link className="login-button" href="/login" onClick={closeMenu}>
-          👤 Inloggen
-        </Link>
+        <div className="header-login-buttons">
+          <Link
+            className="student-login-button"
+            href="/leerling-login"
+            onClick={closeMenu}
+          >
+            🎓 Leerlingportaal
+          </Link>
+
+          <Link className="login-button" href="/login" onClick={closeMenu}>
+            👤 Ouderportaal
+          </Link>
+        </div>
       )}
 
       {checkedAuth && loggedIn && (
@@ -139,6 +142,10 @@ export default function Header() {
                 🏠 Mijn dashboard
               </Link>
 
+              <Link href="/dashboard/oefenen" onClick={closeMenu}>
+                🎓 Oefenen
+              </Link>
+
               <Link href="/afspraak" onClick={closeMenu}>
                 ➕ Nieuwe afspraak
               </Link>
@@ -147,9 +154,10 @@ export default function Header() {
                 🛒 Webshop
               </Link>
 
-<Link href="/logout" onClick={closeMenu}>
-  🚪 Uitloggen
-</Link>            </div>
+              <Link href="/logout" onClick={closeMenu}>
+                🚪 Uitloggen
+              </Link>
+            </div>
           )}
         </div>
       )}

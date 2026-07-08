@@ -1,0 +1,120 @@
+.mountain-card {
+  margin: 34px 0;
+  padding: 26px;
+  border-radius: 42px;
+  background:
+    radial-gradient(circle at 12% 20%, rgba(254, 160, 32, 0.18), transparent 24%),
+    radial-gradient(circle at 86% 14%, rgba(155, 129, 184, 0.16), transparent 24%),
+    rgba(255, 255, 255, 0.9);
+  box-shadow: 0 26px 70px rgba(3, 54, 99, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+}
+
+.mountain {
+  position: relative;
+  height: 390px;
+  border-radius: 34px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 8%, rgba(254, 224, 32, 0.34), transparent 10%),
+    linear-gradient(to bottom, #fdfcf7 0%, #eaf8f6 43%, #cdeee8 100%);
+}
+
+.mountain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    url("data:image/svg+xml,%3Csvg width='1200' height='420' viewBox='0 0 1200 420' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 420 L260 185 L390 285 L650 45 L880 315 L1015 195 L1200 420 Z' fill='%23033663' fill-opacity='.16'/%3E%3Cpath d='M140 420 L570 90 L960 420 Z' fill='%2328B9AA' fill-opacity='.28'/%3E%3Cpath d='M430 420 L720 145 L1050 420 Z' fill='%239B81B8' fill-opacity='.18'/%3E%3Cpath d='M0 420 C210 360 360 370 540 410 C720 450 915 360 1200 400 L1200 420 Z' fill='%2354955C' fill-opacity='.22'/%3E%3Cpath d='M190 190 q18 -30 36 0' stroke='%23ffffff' stroke-width='9' fill='none' opacity='.45'/%3E%3Cpath d='M590 80 q25 -38 50 0' stroke='%23ffffff' stroke-width='12' fill='none' opacity='.5'/%3E%3C/svg%3E");
+  background-size: cover;
+  background-position: center bottom;
+}
+
+.mountain::after {
+  content: "";
+  position: absolute;
+  inset: 28px;
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  pointer-events: none;
+}
+
+.mountain-flag {
+  position: absolute;
+  z-index: 3;
+  transform: translate(-50%, 0);
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.78);
+  color: #033663;
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 14px 30px rgba(3, 54, 99, 0.16);
+  opacity: 0.72;
+  backdrop-filter: blur(14px);
+  transition: 0.22s ease;
+}
+
+.mountain-flag:hover {
+  transform: translate(-50%, -5px) scale(1.06);
+  opacity: 1;
+}
+
+.mountain-flag span {
+  margin-left: 4px;
+}
+
+.mountain-flag.reached {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.mountain-flag.active {
+  background: linear-gradient(135deg, #fea020, #fb6730);
+  color: white;
+  transform: translate(-50%, -8px) scale(1.16);
+  box-shadow: 0 20px 40px rgba(254, 160, 32, 0.38);
+}
+
+.level-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  margin-top: 20px;
+  padding: 0 8px;
+  color: #033663;
+}
+
+.level-info strong {
+  font-size: clamp(1.5rem, 2.4vw, 2.2rem);
+  font-weight: 900;
+}
+
+.level-info span {
+  font-size: clamp(1.1rem, 2vw, 1.55rem);
+  font-weight: 800;
+}
+
+@media (max-width: 800px) {
+  .mountain-card {
+    padding: 16px;
+    border-radius: 30px;
+  }
+
+  .mountain {
+    height: 270px;
+    border-radius: 24px;
+  }
+
+  .mountain-flag {
+    padding: 7px 9px;
+    font-size: 0.85rem;
+  }
+
+  .level-info {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

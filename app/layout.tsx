@@ -6,14 +6,12 @@ import SeasonEngine from "@/components/SeasonEngine";
 export const metadata: Metadata = {
   title: "Studio SaGo",
   description: "Educatieve begeleiding, zorgaanbod en fotografie.",
-
   icons: {
     icon: "/favicon.ico",
     shortcut: "/favicon.ico",
     apple: "/apple-touch-icon.png",
   },
 };
-
 
 export default function RootLayout({
   children,
@@ -23,9 +21,7 @@ export default function RootLayout({
   return (
     <html lang="nl">
       <body>
-                <SeasonEngine effects={true}>
-          {children}
-        </SeasonEngine>
+        <SeasonEngine effects={true}>{children}</SeasonEngine>
       </body>
     </html>
   );

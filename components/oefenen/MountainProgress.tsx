@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { levels } from "@/lib/oefeningen/data";
 
 type Props = {
@@ -31,6 +34,8 @@ export default function MountainProgress({
   onNext,
   onReset,
 }: Props) {
+  const [showLevels, setShowLevels] = useState(false);
+
   function canOpenLevel(targetLevel: number) {
     return reachedLevels.includes(targetLevel);
   }
@@ -39,7 +44,18 @@ export default function MountainProgress({
     <section className="learning-journey-card">
       <div className="journey-header">
         <div>
-          <h2>Jouw oefenreis 🏔️</h2>
+          <div className="mountain-header">
+            <h2>Jouw oefenreis 🏔️</h2>
+
+            <button
+              type="button"
+              className="level-selector-button"
+              onClick={() => setShowLevels((previous) => !previous)}
+            >
+              Kies niveau
+            </button>
+          </div>
+
           <p>Klim naar de top en word een kei in leren! 💪</p>
         </div>
 
@@ -47,6 +63,32 @@ export default function MountainProgress({
           ⭐ <span>Bereik niveau 10</span>
         </div>
       </div>
+
+      {showLevels && (
+        <div className="level-grid">
+          {Array.from({ length: 10 }, (_, i) => {
+            const lvl = i + 1;
+            const unlocked = reachedLevels.includes(lvl);
+
+            return (
+              <button
+                key={lvl}
+                type="button"
+                disabled={!unlocked}
+                className={`level-card ${
+                  level === lvl ? "active" : unlocked ? "" : "locked"
+                }`}
+                onClick={() => {
+                  onGoToLevel(lvl);
+                  setShowLevels(false);
+                }}
+              >
+                {unlocked ? `Niveau ${lvl}` : `🔒 Niveau ${lvl}`}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       <div className="journey-mountain">
         {levels.map((item) => (

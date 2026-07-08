@@ -430,3 +430,193 @@
     min-height: 56px;
   }
 }
+
+.mountain-header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:25px;
+gap:20px;
+flex-wrap:wrap;
+}
+
+.level-selector-button{
+background:#033663;
+color:white;
+border:none;
+padding:12px 22px;
+border-radius:14px;
+font-weight:700;
+cursor:pointer;
+transition:.2s;
+}
+
+.level-selector-button:hover{
+transform:translateY(-2px);
+background:#0b4b84;
+}
+
+.level-grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+gap:16px;
+margin-bottom:35px;
+}
+
+.level-card{
+padding:16px;
+border-radius:18px;
+border:none;
+cursor:pointer;
+background:white;
+box-shadow:0 8px 24px rgba(0,0,0,.08);
+font-weight:700;
+transition:.2s;
+}
+
+.level-card:hover{
+transform:translateY(-3px);
+}
+
+.level-card.active{
+background:#033663;
+color:white;
+}
+
+.level-card.locked{
+opacity:.35;
+cursor:not-allowed;
+}
+.exercise-back {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto 20px;
+  padding: 0 20px;
+}
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #033663;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 10px 30px rgba(3, 54, 99, 0.08);
+  transition: 0.2s;
+}
+
+.back-button:hover {
+  transform: translateX(-3px);
+  background: #033663;
+  color: #fff;
+}
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 16px;
+  border: none;
+  background: #ffffff;
+  color: #033663;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 10px 30px rgba(3, 54, 99, 0.08);
+  transition: 0.2s;
+  cursor: pointer;
+}
+
+.back-button:hover {
+  transform: translateX(-3px);
+  background: #033663;
+  color: #fff;
+}
+.oefenen-overzicht-page {
+  width: 100%;
+}
+
+.leerjaar-section {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto 80px;
+  padding: 0 48px;
+}
+
+.leerjaar-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 32px;
+}
+
+.leerjaar-card,
+.secundair-card {
+  min-height: 210px;
+  padding: 48px 32px;
+  border-radius: 36px;
+  text-decoration: none;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 26px;
+  box-shadow: 0 18px 45px rgba(3, 54, 99, 0.08);
+}
+
+.leerjaar-card.active {
+  background: linear-gradient(135deg, #28b9aa, #033663);
+  color: white;
+}
+
+.leerjaar-card.disabled,
+.secundair-card {
+  background: rgba(255, 255, 255, 0.72);
+  color: rgba(3, 54, 99, 0.45);
+  cursor: not-allowed;
+}
+
+.leerjaar-card h2,
+.secundair-card h2 {
+  margin: 0;
+  font-size: clamp(2rem, 3vw, 3rem);
+}
+
+.leerjaar-card p,
+.secundair-card p {
+  margin: 0;
+  font-size: clamp(1.1rem, 1.7vw, 1.5rem);
+}
+
+.secundair-card {
+  margin-top: 32px;
+}
+
+@media (max-width: 1000px) {
+  .leerjaar-section {
+    padding: 0 28px;
+  }
+
+  .leerjaar-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .leerjaar-section {
+    padding: 0 18px;
+  }
+
+  .leerjaar-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .leerjaar-card,
+  .secundair-card {
+    min-height: 170px;
+    padding: 36px 24px;
+    border-radius: 28px;
+  }
+}

@@ -12,7 +12,6 @@ const leerlingAccounts: Record<string, string> = {
 
 export default function LeerlingLoginClient() {
   const router = useRouter();
-  const supabase = createClient();
 
   const [gebruikersnaam, setGebruikersnaam] = useState("");
   const [wachtwoord, setWachtwoord] = useState("");
@@ -21,6 +20,7 @@ export default function LeerlingLoginClient() {
 
   async function handleLogin(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
     setError("");
     setLoading(true);
 
@@ -32,6 +32,8 @@ export default function LeerlingLoginClient() {
       setLoading(false);
       return;
     }
+
+    const supabase = createClient();
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -45,6 +47,7 @@ export default function LeerlingLoginClient() {
     }
 
     router.push("/dashboard/oefenen");
+    router.refresh();
   }
 
   return (

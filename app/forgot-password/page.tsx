@@ -5,19 +5,19 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 export default function ForgotPasswordPage() {
-  const supabase = createClient();
-
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function handleReset(e: React.FormEvent) {
+  async function handleReset(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     setLoading(true);
     setMessage("");
     setErrorMessage("");
+
+    const supabase = createClient();
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
@@ -37,8 +37,10 @@ export default function ForgotPasswordPage() {
     <main className="login-page">
       <div className="login-card">
         <h1>Wachtwoord vergeten?</h1>
+
         <p className="login-subtitle">
-          Vul je e-mailadres in. Je krijgt een link om een nieuw wachtwoord in te stellen.
+          Vul je e-mailadres in. Je krijgt een link om een nieuw wachtwoord in
+          te stellen.
         </p>
 
         <form onSubmit={handleReset}>

@@ -1,89 +1,82 @@
 .header-login-buttons {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 10px;
+  flex-shrink: 0;
 }
 
-.student-login-button {
+.login-dropdown {
+  position: relative;
+}
+
+.login-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 11px 18px;
+  padding: 11px 20px;
   border-radius: 999px;
-  background: #28b9aa;
+  border: none;
+  background: #fea020;
   color: white;
   font-weight: 800;
   text-decoration: none;
-  box-shadow: 0 12px 28px rgba(40, 185, 170, 0.24);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 12px 28px rgba(254, 160, 32, 0.24);
+  cursor: pointer;
   white-space: nowrap;
 }
 
-.student-login-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 16px 34px rgba(40, 185, 170, 0.3);
+.login-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 9999;
+  min-width: 230px;
+  padding: 10px;
+  border-radius: 22px;
+  background: white;
+  box-shadow: 0 18px 44px rgba(3, 54, 99, 0.18);
+  display: none;
+}
+
+.login-dropdown:hover .login-menu,
+.login-dropdown:focus-within .login-menu {
+  display: grid;
+  gap: 8px;
+}
+
+.login-menu a {
+  padding: 12px 14px;
+  border-radius: 14px;
+  color: #033663;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.login-menu a:hover {
+  background: rgba(40, 185, 170, 0.12);
+}
+
+.student-login-button {
+  display: none;
 }
 
 @media (max-width: 900px) {
   .header-login-buttons {
     width: 100%;
     justify-content: center;
-    flex-wrap: wrap;
   }
 
-  .student-login-button,
+  .login-dropdown,
   .login-button {
     width: 100%;
     max-width: 260px;
   }
-}
-.nav-actions,
-.header-actions,
-.nav-buttons {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  max-width: 100%;
-}
 
-.nav-actions a,
-.header-actions a,
-.nav-buttons a {
-  white-space: nowrap;
-}
-
-@media (max-width: 1100px) {
-  .nav-actions,
-  .header-actions,
-  .nav-buttons {
-    justify-content: center;
-    width: 100%;
-  }
-
-  .nav-actions a,
-  .header-actions a,
-  .nav-buttons a {
-    font-size: 0.95rem;
-    padding: 12px 18px;
-  }
-}
-
-@media (max-width: 700px) {
-  .nav-actions,
-  .header-actions,
-  .nav-buttons {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .nav-actions a,
-  .header-actions a,
-  .nav-buttons a {
-    width: 100%;
-    text-align: center;
-    justify-content: center;
+  .login-menu {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
   }
 }

@@ -108,21 +108,25 @@ export default function Header() {
         </Link>
       </nav>
 
-      {checkedAuth && !loggedIn && (
-        <div className="header-login-buttons">
-          <Link
-            className="student-login-button"
-            href="/leerling-login"
-            onClick={closeMenu}
-          >
-            🎓 Leerlingportaal
-          </Link>
+{checkedAuth && !loggedIn && (
+  <div className="header-login-buttons">
+    <div className="login-dropdown">
+      <button type="button" className="login-button">
+        👤 Inloggen
+      </button>
 
-          <Link className="login-button" href="/login" onClick={closeMenu}>
-            👤 Ouderportaal
-          </Link>
-        </div>
-      )}
+      <div className="login-menu">
+        <Link href="/leerling-login" onClick={closeMenu}>
+          🎓 Leerlingportaal
+        </Link>
+
+        <Link href="/login" onClick={closeMenu}>
+          👤 Ouderportaal
+        </Link>
+      </div>
+    </div>
+  </div>
+)}          
 
       {checkedAuth && loggedIn && (
         <div className="account-menu" ref={menuRef}>

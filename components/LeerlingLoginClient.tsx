@@ -5,11 +5,12 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
 const leerlingAccounts: Record<string, string> = {
-  "victor.koolen": "victor.koolen@leerlingen.studiosago.local",
-  "victor.koolen@leerlingen.studiosago.local":
-    "victor.koolen@leerlingen.studiosago.local",
-};
+  "victor.koolen": "victor.koolen@studiosago.be",
+  "victor.koolen@studiosago.be": "victor.koolen@studiosago.be",
 
+  "lou.koolen": "lou.koolen@studiosago.be",
+  "lou.koolen@studiosago.be": "lou.koolen@studiosago.be",
+};
 export default function LeerlingLoginClient() {
   const router = useRouter();
 

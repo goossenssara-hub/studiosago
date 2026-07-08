@@ -23,9 +23,9 @@
 @import "./styles/oefenpagina2.css";
 @import "./styles/knoppenheader.css";
 @import "./styles/dashboardoefenen.css";
-@import "./styles/leerlingportaal.css";
-@import "./styles/leerlingplanner.css";
 @import "./styles/leerlingmailbox.css";
+@import "./styles/leerlingplannerpagina.css";
+@import "./styles/leerlingportaal.css";
 
 @font-face {
   font-family: "StudioFont";

@@ -1,86 +1,53 @@
 .leerling-planner-page {
   min-height: 100vh;
-  background: #f8fbfb;
+  background:
+    radial-gradient(circle at 10% 8%, rgba(40, 185, 170, 0.16), transparent 28%),
+    radial-gradient(circle at 90% 12%, rgba(254, 160, 32, 0.16), transparent 26%),
+    #f8fbfb;
   color: #033663;
 }
 
 .planner-main {
-  width: 100%;
-  padding: 24px 28px 50px;
+  width: min(1500px, calc(100% - 36px));
+  margin: 0 auto;
+  padding: 34px 0 70px;
   overflow-x: auto;
 }
 
 .planner-topbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
   margin-bottom: 22px;
 }
 
 .planner-topbar p {
-  margin: 0 0 12px;
+  margin: 0 0 8px;
   color: #28b9aa;
-  font-weight: 800;
+  font-weight: 900;
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
 .planner-topbar h1 {
   margin: 0;
-  font-size: clamp(34px, 5vw, 56px);
+  font-size: clamp(38px, 6vw, 74px);
+  line-height: 0.95;
 }
 
-.planner-topbar > div:last-child {
-  margin-top: 16px;
-}
-
-.planner-sidebar {
-  width: 100%;
-  margin: 0 0 24px;
-  padding: 0;
-  background: transparent;
-  border: 0;
-}
-
-.planner-profile {
-  display: none;
-}
-
-.planner-sidebar h2 {
-  display: none;
-}
-
-.planner-sidebar nav {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(150px, 1fr));
-  gap: 14px;
-  padding: 18px;
-  border-radius: 28px;
-  background: rgba(255, 255, 255, 0.86);
-  box-shadow: 0 18px 42px rgba(3, 54, 99, 0.08);
-}
-
-.planner-sidebar a {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 62px;
-  padding: 14px 18px;
-  border-radius: 18px;
-  color: #033663;
-  text-decoration: none;
-  font-weight: 800;
-  background: rgba(155, 129, 184, 0.12);
-}
-
-.planner-sidebar a.active,
-.planner-sidebar a:hover {
-  background: rgba(40, 185, 170, 0.16);
-  color: #28b9aa;
+.planner-topbar span {
+  display: block;
+  margin-top: 12px;
+  color: rgba(3, 54, 99, 0.68);
+  font-size: 18px;
 }
 
 .planner-week-selector {
   display: flex;
   align-items: center;
   gap: 10px;
-  width: fit-content;
+  flex-shrink: 0;
   background: white;
   border-radius: 999px;
   padding: 8px;
@@ -103,11 +70,83 @@
   padding: 0 10px;
 }
 
-.planner-actions {
+.planner-sidebar {
+  margin-bottom: 20px;
+}
+
+.planner-sidebar nav {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(140px, 1fr));
+  gap: 14px;
+  padding: 16px;
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 18px 42px rgba(3, 54, 99, 0.08);
+}
+
+.planner-sidebar a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 58px;
+  padding: 14px 18px;
+  border-radius: 20px;
+  background: rgba(3, 54, 99, 0.05);
+  color: #033663;
+  text-decoration: none;
+  font-weight: 900;
+}
+
+.planner-sidebar a.active,
+.planner-sidebar a:hover {
+  background: #28b9aa;
+  color: white;
+}
+
+.planner-overview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(140px, 1fr)) auto;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.planner-overview article,
+.planner-overview button {
+  min-height: 86px;
+  border: 0;
+  border-radius: 26px;
+  padding: 18px 22px;
   background: white;
-  border-radius: 28px;
+  box-shadow: 0 16px 36px rgba(3, 54, 99, 0.08);
+}
+
+.planner-overview article {
+  display: grid;
+  align-content: center;
+}
+
+.planner-overview strong {
+  font-size: 30px;
+  line-height: 1;
+}
+
+.planner-overview span {
+  color: rgba(3, 54, 99, 0.62);
+  font-weight: 800;
+}
+
+.planner-overview button {
+  background: linear-gradient(135deg, #fea020, #fb6730);
+  color: white;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.planner-actions {
+  margin-bottom: 22px;
   padding: 18px;
-  margin-bottom: 24px;
+  border-radius: 30px;
+  background: white;
   box-shadow: 0 18px 42px rgba(3, 54, 99, 0.08);
 }
 
@@ -132,7 +171,7 @@
   border: 0;
   border-radius: 999px;
   padding: 13px 18px;
-  background: linear-gradient(135deg, #fea020, #fb6730);
+  background: #033663;
   color: white;
   font-weight: 900;
   cursor: pointer;
@@ -140,9 +179,9 @@
 
 .planner-board {
   display: grid;
-  grid-template-columns: 70px minmax(1100px, 1fr);
+  grid-template-columns: 70px minmax(1120px, 1fr);
   background: white;
-  border-radius: 32px;
+  border-radius: 34px;
   box-shadow: 0 24px 70px rgba(3, 54, 99, 0.1);
   overflow: hidden;
 }
@@ -164,7 +203,7 @@
 
 .planner-days {
   display: grid;
-  grid-template-columns: repeat(5, minmax(190px, 1fr));
+  grid-template-columns: repeat(5, minmax(210px, 1fr));
 }
 
 .planner-day-column {
@@ -179,6 +218,7 @@
   color: #033663;
   font-size: 20px;
   border-bottom: 1px solid rgba(3, 54, 99, 0.08);
+  text-transform: capitalize;
 }
 
 .planner-day-grid {
@@ -195,12 +235,12 @@
 
 .planner-block {
   position: relative;
+  min-height: 106px;
+  margin-bottom: 12px;
   padding: 14px;
   border-radius: 18px;
   color: #033663;
   box-shadow: 0 14px 26px rgba(3, 54, 99, 0.12);
-  margin-bottom: 12px;
-  min-height: 106px;
 }
 
 .planner-block button {
@@ -211,7 +251,7 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.68);
   color: #033663;
   font-weight: 900;
   cursor: pointer;
@@ -235,8 +275,17 @@
 }
 
 @media (max-width: 1100px) {
+  .planner-topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .planner-sidebar nav {
     grid-template-columns: repeat(3, 1fr);
+  }
+
+  .planner-overview {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .planner-create-form {
@@ -246,10 +295,12 @@
 
 @media (max-width: 700px) {
   .planner-main {
-    padding: 18px;
+    width: min(100% - 24px, 1500px);
+    padding-top: 22px;
   }
 
   .planner-sidebar nav,
+  .planner-overview,
   .planner-create-form {
     grid-template-columns: 1fr;
   }

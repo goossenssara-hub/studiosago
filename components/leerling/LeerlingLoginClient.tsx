@@ -1,10 +1,59 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 export default function LeerlingLoginClient() {
-  const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
 
+  const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [wachtwoord, setWachtwoord] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+async function handleLogin(event: React.FormEvent<HTMLFormElement>) {
+  event.preventDefault();
+
+  setError("");
+  setLoading(true);
+
+  try {
+    const supabase = createClient();
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password: wachtwoord,
+    });
+
+    console.log("LEERLING LOGIN DATA:", data);
+    console.log("LEERLING LOGIN ERROR:", error);
+
+    if (error) {
+      setError(error.message || "Gebruikersnaam of wachtwoord is niet juist.");
+      setLoading(false);
+      return;
+    }
+
+    if (!data.session) {
+      setError("Geen geldige sessie ontvangen.");
+      setLoading(false);
+      return;
+    }
+
+    if (rememberMe) {
+      localStorage.setItem("studio-sago-remember-leerling", email);
+    }
+
+window.location.href = "/leerling-portaal";  } catch (err) {
+    console.error("LEERLING LOGIN CATCH:", err);
+    setError("Er ging iets mis bij het aanmelden.");
+    setLoading(false);
+  }
+}
   return (
     <main className="leerling-login-page">
       <section className="leerling-login-card">
@@ -17,7 +66,7 @@ export default function LeerlingLoginClient() {
             Meld je aan om je planner, huistaken en to-do’s te bekijken.
           </p>
 
-          <form className="leerling-login-form">
+          <form className="leerling-login-form" onSubmit={handleLogin}>
             <label>
               Gebruikersnaam
               <div className="leerling-input">
@@ -25,6 +74,9 @@ export default function LeerlingLoginClient() {
                 <input
                   type="email"
                   placeholder="voornaam.achternaam@studiosago.be"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
                 />
               </div>
             </label>
@@ -36,8 +88,14 @@ export default function LeerlingLoginClient() {
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="Wachtwoord"
+                  value={wachtwoord}
+                  onChange={(e) => setWachtwoord(e.target.value)}
+                  required
                 />
-                <button type="button" onClick={() => setShowPassword(!showPassword)}>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
                   {showPassword ? "Verberg" : "Toon"}
                 </button>
               </div>
@@ -45,15 +103,21 @@ export default function LeerlingLoginClient() {
 
             <div className="leerling-options">
               <label>
-                <input type="checkbox" />
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
                 Onthoud mij
               </label>
 
               <a href="/forgot-password">Wachtwoord vergeten?</a>
             </div>
 
-            <button className="leerling-submit" type="submit">
-              Aanmelden →
+            {error && <p className="login-error">{error}</p>}
+
+            <button className="leerling-submit" type="submit" disabled={loading}>
+              {loading ? "Aanmelden..." : "Aanmelden →"}
             </button>
           </form>
 
@@ -63,7 +127,15 @@ export default function LeerlingLoginClient() {
         </div>
 
         <div className="leerling-login-right">
-          <div className="leerling-icon">📚</div>
+          <div className="leerling-logo">
+            <Image
+              src="/Assets/LLportaal.png"
+              alt="Studio SaGo Leerlingportaal"
+              width={260}
+              height={260}
+              priority
+            />
+          </div>
 
           <div className="leerling-mini-card">
             <strong>Vandaag</strong>

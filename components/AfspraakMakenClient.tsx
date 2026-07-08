@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 
 type Pass = {
   id: string;
-  user_id: string;
+  user_id?: string | null;
   type?: string | null;
   title?: string | null;
   remaining_sessions?: number | null;
@@ -14,16 +14,24 @@ type Pass = {
   status?: string | null;
 };
 
-export default function AfspraakMakenClient() {
+type AfspraakMakenClientProps = {
+  pass?: Pass | null;
+  email?: string | null;
+};
+
+export default function AfspraakMakenClient({
+  pass,
+  email,
+}: AfspraakMakenClientProps) {
   const searchParams = useSearchParams();
   const supabase = useMemo(() => createClient(), []);
 
   const service = searchParams.get("service") || "";
-  const passIdFromUrl = searchParams.get("pass") || "";
+  const passIdFromUrl = searchParams.get("pass") || pass?.id || "";
 
-  const [loading, setLoading] = useState(true);
-  const [userEmail, setUserEmail] = useState("");
-  const [passes, setPasses] = useState<Pass[]>([]);
+  const [loading, setLoading] = useState(!pass);
+  const [userEmail, setUserEmail] = useState(email || "");
+  const [passes, setPasses] = useState<Pass[]>(pass ? [pass] : []);
   const [selectedPassId, setSelectedPassId] = useState(passIdFromUrl);
   const [error, setError] = useState("");
 
@@ -58,7 +66,7 @@ export default function AfspraakMakenClient() {
       return;
     }
 
-    setUserEmail(user.email || "");
+    setUserEmail(user.email || email || "");
 
     const { data, error: passError } = await supabase
       .from("passes")
@@ -72,17 +80,20 @@ export default function AfspraakMakenClient() {
       return;
     }
 
-    setPasses(data || []);
+    const loadedPasses = data || [];
+    setPasses(loadedPasses);
 
-    if (!selectedPassId && data && data.length > 0) {
-      setSelectedPassId(data[0].id);
+    if (!selectedPassId && loadedPasses.length > 0) {
+      setSelectedPassId(loadedPasses[0].id);
     }
 
     setLoading(false);
   }
 
   useEffect(() => {
-    loadPass();
+    if (!pass) {
+      loadPass();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -124,10 +135,11 @@ export default function AfspraakMakenClient() {
             value={selectedPassId}
             onChange={(event) => setSelectedPassId(event.target.value)}
           >
-            {passes.map((pass) => (
-              <option key={pass.id} value={pass.id}>
-                {pass.title || pass.type || "Beurtenkaart"} —{" "}
-                {pass.remaining_sessions ?? 0}/{pass.total_sessions ?? 10} beurten
+            {passes.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.title || item.type || "Beurtenkaart"} —{" "}
+                {item.remaining_sessions ?? 0}/{item.total_sessions ?? 10}{" "}
+                beurten
               </option>
             ))}
           </select>

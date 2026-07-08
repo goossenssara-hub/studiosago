@@ -21,6 +21,8 @@
 @import "./styles/header.css";
 @import "./styles/over-mij.css";
 @import "./styles/oefenpagina2.css";
+@import "./styles/knoppenheader.css";
+
 @font-face {
   font-family: "StudioFont";
   src: url("/fonts/Comfortaa-Light.ttf") format("truetype");

@@ -1,0 +1,33 @@
+.portal-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 900px;
+  margin: 40px auto;
+}
+.portal-button {
+  flex: 1 1 320px;
+  max-width: 420px;
+  min-width: 260px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+
+  padding: 22px 30px;
+  border-radius: 999px;
+
+  font-size: clamp(1.2rem, 2vw, 2rem);
+  font-weight: 600;
+  text-decoration: none;
+
+  transition: all .25s ease;
+}
+
+.portal-button:hover {
+  transform: translateY(-3px);
+}

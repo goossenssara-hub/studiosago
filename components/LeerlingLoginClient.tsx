@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 
 const leerlingAccounts: Record<string, string> = {
   "victor.koolen": "victor.koolen@leerlingen.studiosago.local",
+  "victor.koolen@leerlingen.studiosago.local":
+    "victor.koolen@leerlingen.studiosago.local",
 };
 
 export default function LeerlingLoginClient() {
@@ -15,16 +17,19 @@ export default function LeerlingLoginClient() {
   const [gebruikersnaam, setGebruikersnaam] = useState("");
   const [wachtwoord, setWachtwoord] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  async function handleLogin(event: React.FormEvent) {
+  async function handleLogin(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+    setLoading(true);
 
     const key = gebruikersnaam.toLowerCase().trim();
     const email = leerlingAccounts[key];
 
     if (!email) {
       setError("Deze gebruikersnaam bestaat niet.");
+      setLoading(false);
       return;
     }
 
@@ -35,6 +40,7 @@ export default function LeerlingLoginClient() {
 
     if (error) {
       setError("Gebruikersnaam of wachtwoord is niet juist.");
+      setLoading(false);
       return;
     }
 
@@ -68,7 +74,9 @@ export default function LeerlingLoginClient() {
 
       {error && <p className="login-error">{error}</p>}
 
-      <button type="submit">Aanmelden</button>
+      <button type="submit" disabled={loading}>
+        {loading ? "Aanmelden..." : "Aanmelden"}
+      </button>
     </form>
   );
 }

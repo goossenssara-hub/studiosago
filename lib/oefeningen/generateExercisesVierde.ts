@@ -29,7 +29,7 @@ function createExercise(
   };
 }
 
-export function generateExercisesVierde(level: number, seed: number): Exercise[] {
+export function generateExercisesVierde(level: number, seed = 1): Exercise[] {
   const random = seededRandom(seed + level * 1000);
   const exercises: Exercise[] = [];
 
@@ -40,7 +40,13 @@ export function generateExercisesVierde(level: number, seed: number): Exercise[]
     const b = Math.floor(random() * maxNumber) + 100;
 
     exercises.push(
-      createExercise(level, `optellen-${i}`, "Wiskunde", `${a} + ${b} =`, String(a + b))
+      createExercise(
+        level,
+        `optellen-${i}`,
+        "Wiskunde",
+        `${a} + ${b} =`,
+        String(a + b)
+      )
     );
   }
 
@@ -49,7 +55,13 @@ export function generateExercisesVierde(level: number, seed: number): Exercise[]
     const b = Math.floor(random() * a);
 
     exercises.push(
-      createExercise(level, `aftrekken-${i}`, "Wiskunde", `${a} - ${b} =`, String(a - b))
+      createExercise(
+        level,
+        `aftrekken-${i}`,
+        "Wiskunde",
+        `${a} - ${b} =`,
+        String(a - b)
+      )
     );
   }
 
@@ -58,7 +70,13 @@ export function generateExercisesVierde(level: number, seed: number): Exercise[]
     const b = Math.floor(random() * (8 + level)) + 2;
 
     exercises.push(
-      createExercise(level, `maal-${i}`, "Wiskunde", `${a} × ${b} =`, String(a * b))
+      createExercise(
+        level,
+        `maal-${i}`,
+        "Wiskunde",
+        `${a} × ${b} =`,
+        String(a * b)
+      )
     );
   }
 
@@ -68,11 +86,17 @@ export function generateExercisesVierde(level: number, seed: number): Exercise[]
     const total = divisor * quotient;
 
     exercises.push(
-      createExercise(level, `delen-${i}`, "Wiskunde", `${total} : ${divisor} =`, String(quotient))
+      createExercise(
+        level,
+        `delen-${i}`,
+        "Wiskunde",
+        `${total} : ${divisor} =`,
+        String(quotient)
+      )
     );
   }
 
-  const breuken = [
+  const breuken: [string, string][] = [
     ["1/2 van 48", "24"],
     ["1/4 van 80", "20"],
     ["1/3 van 60", "20"],
@@ -89,11 +113,17 @@ export function generateExercisesVierde(level: number, seed: number): Exercise[]
     .slice(0, 6)
     .forEach(([vraag, antwoord], index) => {
       exercises.push(
-        createExercise(level, `breuken-${index + 1}`, "Wiskunde", `Bereken: ${vraag} =`, antwoord)
+        createExercise(
+          level,
+          `breuken-${index + 1}`,
+          "Wiskunde",
+          `Bereken: ${vraag} =`,
+          antwoord
+        )
       );
     });
 
-  const meten = [
+  const meten: [string, string][] = [
     ["Hoeveel cm is 1 m?", "100"],
     ["Hoeveel m is 1 km?", "1000"],
     ["Hoeveel ml is 1 l?", "1000"],
@@ -107,28 +137,48 @@ export function generateExercisesVierde(level: number, seed: number): Exercise[]
   shuffle(meten, random)
     .slice(0, 5)
     .forEach(([vraag, antwoord], index) => {
-      exercises.push(createExercise(level, `meten-${index + 1}`, "Wiskunde", vraag, antwoord));
+      exercises.push(
+        createExercise(level, `meten-${index + 1}`, "Wiskunde", vraag, antwoord)
+      );
     });
 
-  const vraagstukken = [
-    ["Lina heeft 4 dozen met telkens 12 potloden. Hoeveel potloden heeft ze samen?", "48"],
-    ["Een boek telt 96 pagina's. Noor leest elke dag 12 pagina's. Na hoeveel dagen is het boek uit?", "8"],
-    ["Er zitten 125 stickers in een doos. Er worden 38 stickers uitgedeeld. Hoeveel blijven er over?", "87"],
-    ["Een klas spaart 6 weken lang telkens 15 euro. Hoeveel euro sparen ze samen?", "90"],
-    ["Een treinrit duurt 45 minuten. De rit start om 10:00. Hoe laat kom je aan?", ["10:45", "10u45"]],
+  const vraagstukken: [string, string | string[]][] = [
+    [
+      "Lina heeft 4 dozen met telkens 12 potloden. Hoeveel potloden heeft ze samen?",
+      "48",
+    ],
+    [
+      "Een boek telt 96 pagina's. Noor leest elke dag 12 pagina's. Na hoeveel dagen is het boek uit?",
+      "8",
+    ],
+    [
+      "Er zitten 125 stickers in een doos. Er worden 38 stickers uitgedeeld. Hoeveel blijven er over?",
+      "87",
+    ],
+    [
+      "Een klas spaart 6 weken lang telkens 15 euro. Hoeveel euro sparen ze samen?",
+      "90",
+    ],
+    [
+      "Een treinrit duurt 45 minuten. De rit start om 10:00. Hoe laat kom je aan?",
+      ["10:45", "10u45"],
+    ],
     ["Een brood kost €3. Je koopt 4 broden. Hoeveel betaal je?", "12"],
-    ["In een doos zitten 8 zakjes met 6 knikkers. Hoeveel knikkers zijn dat samen?", "48"],
+    [
+      "In een doos zitten 8 zakjes met 6 knikkers. Hoeveel knikkers zijn dat samen?",
+      "48",
+    ],
   ];
 
   shuffle(vraagstukken, random)
     .slice(0, 5)
     .forEach(([vraag, antwoord], index) => {
       exercises.push(
-        createExercise(level, `vraagstuk-${index + 1}`, "Wiskunde", vraag as string, antwoord as string | string[])
+        createExercise(level, `vraagstuk-${index + 1}`, "Wiskunde", vraag, antwoord)
       );
     });
 
-  const taal = [
+  const taal: [string, string][] = [
     ["Ik ___ naar school. Kies: fiets / fietst", "fiets"],
     ["Hij ___ een brief. Kies: schrijf / schrijft", "schrijft"],
     ["Wij ___ buiten. Kies: spelen / speelt", "spelen"],
@@ -144,13 +194,18 @@ export function generateExercisesVierde(level: number, seed: number): Exercise[]
   shuffle(taal, random)
     .slice(0, 8)
     .forEach(([vraag, antwoord], index) => {
-      exercises.push(createExercise(level, `werkwoorden-${index + 1}`, "Taal", vraag, antwoord));
+      exercises.push(
+        createExercise(level, `werkwoorden-${index + 1}`, "Taal", vraag, antwoord)
+      );
     });
 
-  const woordsoorten = [
+  const woordsoorten: [string, string][] = [
     ["Duid het zelfstandig naamwoord aan: De juf schrijft op het bord.", "juf"],
     ["Duid het werkwoord aan: De jongen loopt snel.", "loopt"],
-    ["Duid het bijvoeglijk naamwoord aan: De groene jas hangt aan de kapstok.", "groene"],
+    [
+      "Duid het bijvoeglijk naamwoord aan: De groene jas hangt aan de kapstok.",
+      "groene",
+    ],
     ["Duid het zelfstandig naamwoord aan: De hond slaapt in de mand.", "hond"],
     ["Duid het werkwoord aan: Sara leest een spannend boek.", "leest"],
     ["Duid het bijvoeglijk naamwoord aan: Het kleine kind lacht.", "kleine"],
@@ -161,23 +216,41 @@ export function generateExercisesVierde(level: number, seed: number): Exercise[]
   shuffle(woordsoorten, random)
     .slice(0, 6)
     .forEach(([vraag, antwoord], index) => {
-      exercises.push(createExercise(level, `woordsoorten-${index + 1}`, "Taal", vraag, antwoord));
+      exercises.push(
+        createExercise(level, `woordsoorten-${index + 1}`, "Taal", vraag, antwoord)
+      );
     });
 
-  const begrijpendLezen = [
-    ["Lotte neemt haar regenjas mee, want de lucht is donker. Waarom neemt Lotte haar regenjas mee?", ["Omdat het waarschijnlijk gaat regenen.", "omdat het gaat regenen", "het gaat regenen"]],
-    ["Milan zet zijn wekker vroeger, want hij wil rustig ontbijten. Waarom zet Milan zijn wekker vroeger?", ["Omdat hij rustig wil ontbijten.", "rustig ontbijten"]],
-    ["De klas is stil, want de toets begint. Waarom is de klas stil?", ["Omdat de toets begint.", "de toets begint"]],
-    ["Noor doet haar jas uit, want ze heeft het warm. Waarom doet Noor haar jas uit?", ["Omdat ze het warm heeft.", "ze heeft het warm"]],
+  const begrijpendLezen: [string, string[]][] = [
+    [
+      "Lotte neemt haar regenjas mee, want de lucht is donker. Waarom neemt Lotte haar regenjas mee?",
+      [
+        "Omdat het waarschijnlijk gaat regenen.",
+        "omdat het gaat regenen",
+        "het gaat regenen",
+      ],
+    ],
+    [
+      "Milan zet zijn wekker vroeger, want hij wil rustig ontbijten. Waarom zet Milan zijn wekker vroeger?",
+      ["Omdat hij rustig wil ontbijten.", "rustig ontbijten"],
+    ],
+    [
+      "De klas is stil, want de toets begint. Waarom is de klas stil?",
+      ["Omdat de toets begint.", "de toets begint"],
+    ],
+    [
+      "Noor doet haar jas uit, want ze heeft het warm. Waarom doet Noor haar jas uit?",
+      ["Omdat ze het warm heeft.", "ze heeft het warm"],
+    ],
   ];
 
   begrijpendLezen.forEach(([vraag, antwoord], index) => {
     exercises.push(
-      createExercise(level, `begrijpend-lezen-${index + 1}`, "Taal", vraag as string, antwoord as string[])
+      createExercise(level, `begrijpend-lezen-${index + 1}`, "Taal", vraag, antwoord)
     );
   });
 
-  const wo = [
+  const wo: [string, string | string[]][] = [
     ["Hoeveel seizoenen zijn er?", "4"],
     ["Op welke planeet leven wij?", ["Aarde", "de aarde"]],
     ["Hoe heet water in vaste vorm?", "ijs"],
@@ -191,14 +264,23 @@ export function generateExercisesVierde(level: number, seed: number): Exercise[]
     ["Hoe noemen we iemand die in het verleden dingen onderzoekt?", "historicus"],
     ["Wat gebruik je om het noorden te vinden?", "kompas"],
     ["Welke energiebron komt van de zon?", ["zonne-energie", "zonneenergie"]],
-    ["Wat hebben planten nodig om te groeien? Noem één ding.", ["water", "zonlicht", "licht", "lucht", "grond"]],
+    [
+      "Wat hebben planten nodig om te groeien? Noem één ding.",
+      ["water", "zonlicht", "licht", "lucht", "grond"],
+    ],
   ];
 
   shuffle(wo, random)
     .slice(0, 8)
     .forEach(([vraag, antwoord], index) => {
       exercises.push(
-        createExercise(level, `wereldorientatie-${index + 1}`, "Wereldoriëntatie", vraag as string, antwoord as string | string[])
+        createExercise(
+          level,
+          `wereldorientatie-${index + 1}`,
+          "Wereldoriëntatie",
+          vraag,
+          antwoord
+        )
       );
     });
 

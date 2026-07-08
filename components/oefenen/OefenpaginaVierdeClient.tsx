@@ -85,6 +85,13 @@ export default function OefenpaginaVierdeClient() {
 
   const exercises = useMemo(() => savedExercises[level] || [], [level, savedExercises]);
 
+  const grouped = categories
+    .map((category) => ({
+      category,
+      items: exercises.filter((exercise) => exercise.category === category),
+    }))
+    .filter((group) => group.items.length > 0);
+
   const score = exercises.reduce((total, exercise) => {
     const given = normalize(answers[exercise.id] || "");
     const correctAnswers = Array.isArray(exercise.answer)
@@ -265,13 +272,6 @@ export default function OefenpaginaVierdeClient() {
       },
     }));
   }
-
-  const grouped = categories
-    .map((category) => ({
-      category,
-      items: exercises.filter((exercise) => exercise.category === category),
-    }))
-    .filter((group) => group.items.length > 0);
 
   if (!loaded || exercises.length === 0) {
     return (

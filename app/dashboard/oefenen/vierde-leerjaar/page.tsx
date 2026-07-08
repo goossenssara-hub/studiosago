@@ -1,10 +1,10 @@
 import PageShell from "@/components/PageShell";
-import OefenpaginaClient from "@/components/oefenen/OefenpaginaClient";
+import OefenpaginaVierdeClient from "@/components/oefenen/OefenpaginaVierdeClient";
 
 export default function VierdeLeerjaarPage() {
   return (
     <PageShell>
-      <OefenpaginaClient leerjaar="vierde" />
+      <OefenpaginaVierdeClient />
     </PageShell>
   );
 }

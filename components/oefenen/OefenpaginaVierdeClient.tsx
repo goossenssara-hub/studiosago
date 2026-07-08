@@ -51,22 +51,22 @@ export default function OefenpaginaVierdeClient() {
   useEffect(() => {
     if (!loaded) return;
 
-    const seed = exerciseSeeds[1] || Date.now();
+    setSavedExercises((previousExercises) => {
+      if (previousExercises[1]) return previousExercises;
 
-    setExerciseSeeds((previous) => ({
-      ...previous,
-      1: previous[1] || seed,
-    }));
+      const seed = Date.now();
 
-    setSavedExercises((previous) => {
-      if (previous[1]) return previous;
+      setExerciseSeeds((previousSeeds) => ({
+        ...previousSeeds,
+        1: previousSeeds[1] || seed,
+      }));
 
       return {
-        ...previous,
+        ...previousExercises,
         1: generateExercisesVierde(1, seed),
       };
     });
-  }, [loaded, exerciseSeeds]);
+  }, [loaded]);
 
   useEffect(() => {
     if (!loaded) return;

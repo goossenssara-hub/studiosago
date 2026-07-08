@@ -21,9 +21,10 @@ type SavedData = {
   reachedLevels?: number[];
   savedExercises?: Record<number, Exercise[]>;
   progress?: Record<number, LevelProgress>;
+  exerciseSeeds?: Record<number, number>;
 };
 
-const STORAGE_KEY = "sago-oefenklim-victor-v2";
+const STORAGE_KEY = "sago-oefenklim-victor-v3";
 
 const categories = [
   "Persoonsvorm",
@@ -44,15 +45,23 @@ function normalize(value: string | number) {
     .replace(/\s+/g, " ");
 }
 
-function rand(min: number, max: number) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+function seededRand(seed: number, min: number, max: number) {
+  const x = Math.sin(seed) * 10000;
+  const r = x - Math.floor(x);
+  return Math.floor(r * (max - min + 1)) + min;
 }
 
-function generateExercises(level: number): Exercise[] {
+function generateExercises(level: number, seed = Date.now()): Exercise[] {
   const exercises: Exercise[] = [];
   const levelIndex = Math.max(0, Math.min(level - 1, 9));
 
-  const spellingByLevel = [
+  let randomCounter = 1;
+
+  function random(min: number, max: number) {
+    randomCounter += 1;
+    return seededRand(seed + level * 1000 + randomCounter * 37, min, max);
+  }
+    const spellingByLevel = [
     [
       ["kat", "katten"],
       ["zon", "zonnen"],
@@ -157,76 +166,232 @@ function generateExercises(level: number): Exercise[] {
 
   const pvByLevel = [
     [
-      { question: "Duid de persoonsvorm aan: Morgen fietsen wij naar school.", answer: "fietsen" },
-      { question: "Vul aan: Hij ___ een boek. (lezen)", answer: "leest" },
-      { question: "Vul aan: Ik ___ naar de winkel. (lopen)", answer: "loop" },
-      { question: "Duid de persoonsvorm aan: De hond blaft luid.", answer: "blaft" },
-      { question: "Vul aan: Wij ___ buiten. (spelen)", answer: "spelen" },
+      {
+        question: "Duid de persoonsvorm aan: Morgen fietsen wij naar school.",
+        answer: "fietsen",
+      },
+      {
+        question: "Vul aan: Hij ___ een boek. (lezen)",
+        answer: "leest",
+      },
+      {
+        question: "Vul aan: Ik ___ naar de winkel. (lopen)",
+        answer: "loop",
+      },
+      {
+        question: "Duid de persoonsvorm aan: De hond blaft luid.",
+        answer: "blaft",
+      },
+      {
+        question: "Vul aan: Wij ___ buiten. (spelen)",
+        answer: "spelen",
+      },
     ],
     [
-      { question: "Vul aan: Wij ___ gisteren naar huis. (wandelen)", answer: "wandelden" },
-      { question: "Zet in de verleden tijd: Wij spelen buiten.", answer: "wij speelden buiten" },
-      { question: "Duid de persoonsvorm aan: De leerlingen maakten hun taak.", answer: "maakten" },
-      { question: "Vul aan: Jij ___ morgen naar oma. (gaan)", answer: "gaat" },
-      { question: "Duid de persoonsvorm aan: Na school zullen we oefenen.", answer: "zullen" },
+      {
+        question: "Vul aan: Wij ___ gisteren naar huis. (wandelen)",
+        answer: "wandelden",
+      },
+      {
+        question: "Zet in de verleden tijd: Wij spelen buiten.",
+        answer: "wij speelden buiten",
+      },
+      {
+        question: "Duid de persoonsvorm aan: De leerlingen maakten hun taak.",
+        answer: "maakten",
+      },
+      {
+        question: "Vul aan: Jij ___ morgen naar oma. (gaan)",
+        answer: "gaat",
+      },
+      {
+        question: "Duid de persoonsvorm aan: Na school zullen we oefenen.",
+        answer: "zullen",
+      },
     ],
     [
-      { question: "Zet in de verleden tijd: Ik fiets naar de winkel.", answer: "ik fietste naar de winkel" },
-      { question: "Vul aan: De juf ___ de opdracht uit. (leggen)", answer: "legt" },
-      { question: "Duid de persoonsvorm aan: Omdat het regende, bleven we binnen.", answer: "bleven" },
-      { question: "Vul aan: Hij ___ gisteren de bal. (gooien)", answer: "gooide" },
-      { question: "Duid de persoonsvorm aan: Zij heeft haar boek vergeten.", answer: "heeft" },
+      {
+        question: "Zet in de verleden tijd: Ik fiets naar de winkel.",
+        answer: "ik fietste naar de winkel",
+      },
+      {
+        question: "Vul aan: De juf ___ de opdracht uit. (leggen)",
+        answer: "legt",
+      },
+      {
+        question: "Duid de persoonsvorm aan: Omdat het regende, bleven we binnen.",
+        answer: "bleven",
+      },
+      {
+        question: "Vul aan: Hij ___ gisteren de bal. (gooien)",
+        answer: "gooide",
+      },
+      {
+        question: "Duid de persoonsvorm aan: Zij heeft haar boek vergeten.",
+        answer: "heeft",
+      },
     ],
     [
-      { question: "Duid de persoonsvorm aan: Als het straks stopt met regenen, gaan we fietsen.", answer: "stopt" },
-      { question: "Vul aan: De kinderen ___ gisteren lang buiten. (spelen)", answer: "speelden" },
-      { question: "Zet in de verleden tijd: Jij maakt je taak.", answer: "jij maakte je taak" },
-      { question: "Duid de persoonsvorm aan: Morgen zal ik vroeger vertrekken.", answer: "zal" },
-      { question: "Vul aan: Ik ___ de uitleg goed. (begrijpen)", answer: "begrijp" },
-    ],
-    [
-      { question: "Duid de persoonsvorm aan: De leerlingen die klaar waren, lazen verder.", answer: "lazen" },
-      { question: "Vul aan: Hij ___ zijn jas aan de kapstok. (hangen)", answer: "hangt" },
-      { question: "Zet in de verleden tijd: De meester vertelt een verhaal.", answer: "de meester vertelde een verhaal" },
-      { question: "Duid de persoonsvorm aan: Tijdens de pauze aten we onze boterhammen.", answer: "aten" },
-      { question: "Vul aan: Wij ___ morgen vroeger starten. (zullen)", answer: "zullen" },
-    ],
-    [
-      { question: "Duid de persoonsvorm aan: Toen de bel ging, stonden de leerlingen recht.", answer: "ging" },
-      { question: "Vul aan: Jij ___ gisteren te laat. (komen)", answer: "kwam" },
-      { question: "Zet in de verleden tijd: Ik schrijf een brief.", answer: "ik schreef een brief" },
-      { question: "Duid de persoonsvorm aan: Omdat hij ziek was, bleef hij thuis.", answer: "was" },
-      { question: "Vul aan: De hond ___ naar de postbode. (blaffen)", answer: "blaft" },
-    ],
-    [
-      { question: "Duid de persoonsvorm aan: De kinderen zouden morgen zwemmen.", answer: "zouden" },
-      { question: "Vul aan: Ik ___ gisteren mijn boek mee. (brengen)", answer: "bracht" },
-      { question: "Zet in de verleden tijd: Wij vinden een sleutel.", answer: "wij vonden een sleutel" },
-      { question: "Duid de persoonsvorm aan: Nadat hij gegeten had, vertrok hij.", answer: "had" },
-      { question: "Vul aan: Zij ___ vaak aan haar oma. (denken)", answer: "denkt" },
-    ],
-    [
-      { question: "Duid de persoonsvorm aan: Hoewel het moeilijk leek, lukte de opdracht.", answer: "leek" },
-      { question: "Vul aan: De leerlingen ___ hun antwoorden na. (kijken)", answer: "kijken" },
-      { question: "Zet in de verleden tijd: Jij neemt je boek.", answer: "jij nam je boek" },
-      { question: "Duid de persoonsvorm aan: Ik weet niet waarom hij lachte.", answer: "weet" },
-      { question: "Vul aan: Hij ___ gisteren hard. (lopen)", answer: "liep" },
-    ],
-    [
-      { question: "Duid de persoonsvorm aan: Wanneer de zon schijnt, spelen we buiten.", answer: "schijnt" },
-      { question: "Vul aan: Wij ___ het antwoord niet. (weten)", answer: "weten" },
-      { question: "Zet in de verleden tijd: De kinderen zingen een lied.", answer: "de kinderen zongen een lied" },
-      { question: "Duid de persoonsvorm aan: De jongen die daar staat, is mijn broer.", answer: "staat" },
-      { question: "Vul aan: Ik ___ gisteren vroeg op. (staan)", answer: "stond" },
-    ],
-    [
-      { question: "Duid de persoonsvorm aan: Als iedereen klaar is, mogen jullie vertrekken.", answer: "is" },
-      { question: "Vul aan: Jij ___ het antwoord gisteren al. (weten)", answer: "wist" },
-      { question: "Zet in de verleden tijd: Wij kiezen een boek.", answer: "wij kozen een boek" },
-      { question: "Duid de persoonsvorm aan: Omdat de toets moeilijk was, werkten ze traag.", answer: "was" },
-      { question: "Vul aan: Hij ___ zijn taak zorgvuldig. (doen)", answer: "doet" },
+      {
+        question:
+          "Duid de persoonsvorm aan: Als het straks stopt met regenen, gaan we fietsen.",
+        answer: "stopt",
+      },
+      {
+        question: "Vul aan: De kinderen ___ gisteren lang buiten. (spelen)",
+        answer: "speelden",
+      },
+      {
+        question: "Zet in de verleden tijd: Jij maakt je taak.",
+        answer: "jij maakte je taak",
+      },
+      {
+        question: "Duid de persoonsvorm aan: Morgen zal ik vroeger vertrekken.",
+        answer: "zal",
+      },
+      {
+        question: "Vul aan: Ik ___ de uitleg goed. (begrijpen)",
+        answer: "begrijp",
+      },
     ],
   ];
+    const extraPvByLevel = [
+    [
+      {
+        question:
+          "Duid de persoonsvorm aan: De leerlingen die klaar waren, lazen verder.",
+        answer: "lazen",
+      },
+      {
+        question: "Vul aan: Hij ___ zijn jas aan de kapstok. (hangen)",
+        answer: "hangt",
+      },
+      {
+        question: "Zet in de verleden tijd: De meester vertelt een verhaal.",
+        answer: "de meester vertelde een verhaal",
+      },
+      {
+        question: "Duid de persoonsvorm aan: Tijdens de pauze aten we onze boterhammen.",
+        answer: "aten",
+      },
+      {
+        question: "Vul aan: Wij ___ morgen vroeger starten. (zullen)",
+        answer: "zullen",
+      },
+    ],
+    [
+      {
+        question: "Duid de persoonsvorm aan: Toen de bel ging, stonden de leerlingen recht.",
+        answer: "ging",
+      },
+      {
+        question: "Vul aan: Jij ___ gisteren te laat. (komen)",
+        answer: "kwam",
+      },
+      {
+        question: "Zet in de verleden tijd: Ik schrijf een brief.",
+        answer: "ik schreef een brief",
+      },
+      {
+        question: "Duid de persoonsvorm aan: Omdat hij ziek was, bleef hij thuis.",
+        answer: "was",
+      },
+      {
+        question: "Vul aan: De hond ___ naar de postbode. (blaffen)",
+        answer: "blaft",
+      },
+    ],
+    [
+      {
+        question: "Duid de persoonsvorm aan: De kinderen zouden morgen zwemmen.",
+        answer: "zouden",
+      },
+      {
+        question: "Vul aan: Ik ___ gisteren mijn boek mee. (brengen)",
+        answer: "bracht",
+      },
+      {
+        question: "Zet in de verleden tijd: Wij vinden een sleutel.",
+        answer: "wij vonden een sleutel",
+      },
+      {
+        question: "Duid de persoonsvorm aan: Nadat hij gegeten had, vertrok hij.",
+        answer: "had",
+      },
+      {
+        question: "Vul aan: Zij ___ vaak aan haar oma. (denken)",
+        answer: "denkt",
+      },
+    ],
+    [
+      {
+        question: "Duid de persoonsvorm aan: Hoewel het moeilijk leek, lukte de opdracht.",
+        answer: "leek",
+      },
+      {
+        question: "Vul aan: De leerlingen ___ hun antwoorden na. (kijken)",
+        answer: "kijken",
+      },
+      {
+        question: "Zet in de verleden tijd: Jij neemt je boek.",
+        answer: "jij nam je boek",
+      },
+      {
+        question: "Duid de persoonsvorm aan: Ik weet niet waarom hij lachte.",
+        answer: "weet",
+      },
+      {
+        question: "Vul aan: Hij ___ gisteren hard. (lopen)",
+        answer: "liep",
+      },
+    ],
+    [
+      {
+        question: "Duid de persoonsvorm aan: Wanneer de zon schijnt, spelen we buiten.",
+        answer: "schijnt",
+      },
+      {
+        question: "Vul aan: Wij ___ het antwoord niet. (weten)",
+        answer: "weten",
+      },
+      {
+        question: "Zet in de verleden tijd: De kinderen zingen een lied.",
+        answer: "de kinderen zongen een lied",
+      },
+      {
+        question: "Duid de persoonsvorm aan: De jongen die daar staat, is mijn broer.",
+        answer: "staat",
+      },
+      {
+        question: "Vul aan: Ik ___ gisteren vroeg op. (staan)",
+        answer: "stond",
+      },
+    ],
+    [
+      {
+        question: "Duid de persoonsvorm aan: Als iedereen klaar is, mogen jullie vertrekken.",
+        answer: "is",
+      },
+      {
+        question: "Vul aan: Jij ___ het antwoord gisteren al. (weten)",
+        answer: "wist",
+      },
+      {
+        question: "Zet in de verleden tijd: Wij kiezen een boek.",
+        answer: "wij kozen een boek",
+      },
+      {
+        question: "Duid de persoonsvorm aan: Omdat de toets moeilijk was, werkten ze traag.",
+        answer: "was",
+      },
+      {
+        question: "Vul aan: Hij ___ zijn taak zorgvuldig. (doen)",
+        answer: "doet",
+      },
+    ],
+  ];
+
+  const allPvLevels = [...pvByLevel, ...extraPvByLevel];
 
   const frenchByLevel: [string, string[]][][] = [
     [
@@ -330,13 +495,12 @@ function generateExercises(level: number): Exercise[] {
       ["ik luister naar muziek", ["j'écoute de la musique", "j ecoute de la musique"]],
     ],
   ];
-
-  for (let i = 1; i <= 8; i++) {
-    const a = rand(4 + level * 2, 9 + level * 4);
-    const b = rand(3 + level, 10 + level * 2);
+    for (let i = 1; i <= 8; i++) {
+    const a = random(4 + level * 2, 9 + level * 4);
+    const b = random(3 + level, 10 + level * 2);
 
     exercises.push({
-      id: `maal-${level}-${i}`,
+      id: `maal-${level}-${seed}-${i}`,
       category: "Maaltafels",
       question: `${a} × ${b} =`,
       answer: String(a * b),
@@ -344,12 +508,12 @@ function generateExercises(level: number): Exercise[] {
   }
 
   for (let i = 1; i <= 8; i++) {
-    const deler = rand(3 + level, 8 + level * 2);
-    const uitkomst = rand(10 + level * 10, 60 + level * 35);
+    const deler = random(3 + level, 8 + level * 2);
+    const uitkomst = random(10 + level * 10, 60 + level * 35);
     const getal = deler * uitkomst;
 
     exercises.push({
-      id: `delen-${level}-${i}`,
+      id: `delen-${level}-${seed}-${i}`,
       category: "Automatisatie",
       question: `${getal} ÷ ${deler} =`,
       answer: String(uitkomst),
@@ -357,13 +521,13 @@ function generateExercises(level: number): Exercise[] {
   }
 
   for (let i = 1; i <= 6; i++) {
-    const a = rand(100 * level, 400 + level * 350);
-    const b = rand(80 * level, 300 + level * 250);
+    const a = random(100 * level, 400 + level * 350);
+    const b = random(80 * level, 300 + level * 250);
 
     const useMinus = level >= 4 && i % 2 === 0;
 
     exercises.push({
-      id: `auto-${level}-${i}`,
+      id: `auto-${level}-${seed}-${i}`,
       category: "Automatisatie",
       question: useMinus
         ? `${Math.max(a, b)} - ${Math.min(a, b)} =`
@@ -376,16 +540,16 @@ function generateExercises(level: number): Exercise[] {
 
   spellingByLevel[levelIndex].forEach(([word, correct], index) => {
     exercises.push({
-      id: `spel-${level}-${index}`,
+      id: `spel-${level}-${seed}-${index}`,
       category: "Verenkeling en verdubbeling",
       question: `Schrijf het meervoud van: ${word}`,
       answer: correct,
     });
   });
 
-  pvByLevel[levelIndex].forEach((item, index) => {
+  allPvLevels[levelIndex].forEach((item, index) => {
     exercises.push({
-      id: `pv-${level}-${index}`,
+      id: `pv-${level}-${seed}-${index}`,
       category: "Persoonsvorm",
       question: item.question,
       answer: item.answer,
@@ -393,14 +557,14 @@ function generateExercises(level: number): Exercise[] {
   });
 
   for (let i = 1; i <= 6; i++) {
-    const price = rand(5 + level * 2, 15 + level * 5);
-    const amount = rand(3 + level, 8 + level * 3);
+    const price = random(5 + level * 2, 15 + level * 5);
+    const amount = random(3 + level, 8 + level * 3);
     const discount = level * 3;
     const total = price * amount;
     const answer = level < 5 ? total : total - discount;
 
     exercises.push({
-      id: `vraag-${level}-${i}`,
+      id: `vraag-${level}-${seed}-${i}`,
       category: "Vraagstukken",
       question:
         level < 5
@@ -412,7 +576,7 @@ function generateExercises(level: number): Exercise[] {
 
   frenchByLevel[levelIndex].forEach(([nl, fr], index) => {
     exercises.push({
-      id: `fr-${level}-${index}`,
+      id: `fr-${level}-${seed}-${index}`,
       category: "Frans",
       question:
         level < 8
@@ -424,7 +588,6 @@ function generateExercises(level: number): Exercise[] {
 
   return exercises;
 }
-
 export default function OefenpaginaClient() {
   const [level, setLevel] = useState(1);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -434,6 +597,7 @@ export default function OefenpaginaClient() {
     Record<number, Exercise[]>
   >({});
   const [progress, setProgress] = useState<Record<number, LevelProgress>>({});
+  const [exerciseSeeds, setExerciseSeeds] = useState<Record<number, number>>({});
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -447,6 +611,7 @@ export default function OefenpaginaClient() {
         setReachedLevels(data.reachedLevels || [1]);
         setSavedExercises(data.savedExercises || {});
         setProgress(data.progress || {});
+        setExerciseSeeds(data.exerciseSeeds || {});
 
         const savedLevel = data.level || 1;
         const savedProgress = data.progress?.[savedLevel];
@@ -466,15 +631,22 @@ export default function OefenpaginaClient() {
   useEffect(() => {
     if (!loaded) return;
 
+    const seed = exerciseSeeds[1] || Date.now();
+
+    setExerciseSeeds((previous) => ({
+      ...previous,
+      1: previous[1] || seed,
+    }));
+
     setSavedExercises((previous) => {
       if (previous[1]) return previous;
 
       return {
         ...previous,
-        1: generateExercises(1),
+        1: generateExercises(1, seed),
       };
     });
-  }, [loaded]);
+  }, [loaded, exerciseSeeds]);
 
   useEffect(() => {
     if (!loaded) return;
@@ -486,9 +658,10 @@ export default function OefenpaginaClient() {
         reachedLevels,
         savedExercises,
         progress,
+        exerciseSeeds,
       })
     );
-  }, [level, reachedLevels, savedExercises, progress, loaded]);
+  }, [level, reachedLevels, savedExercises, progress, exerciseSeeds, loaded]);
 
   const exercises = useMemo(() => {
     return savedExercises[level] || [];
@@ -513,14 +686,15 @@ export default function OefenpaginaClient() {
   const savedProgress = progress[level];
 
   const displayedScore = savedProgress?.checked ? savedProgress.score : score;
+
   const displayedPercentage = savedProgress?.checked
     ? savedProgress.percentage
     : checked
       ? percentage
       : 0;
-
-  function isCorrect(exercise: Exercise) {
+        function isCorrect(exercise: Exercise) {
     const given = normalize(answers[exercise.id] || "");
+
     const correctAnswers = Array.isArray(exercise.answer)
       ? exercise.answer
       : [exercise.answer];
@@ -549,12 +723,19 @@ export default function OefenpaginaClient() {
 
     saveCurrentLevelProgress();
 
+    const seed = exerciseSeeds[newLevel] || Date.now();
+
+    setExerciseSeeds((previous) => ({
+      ...previous,
+      [newLevel]: previous[newLevel] || seed,
+    }));
+
     setSavedExercises((previous) => {
       if (previous[newLevel]) return previous;
 
       return {
         ...previous,
-        [newLevel]: generateExercises(newLevel),
+        [newLevel]: generateExercises(newLevel, seed),
       };
     });
 
@@ -586,17 +767,23 @@ export default function OefenpaginaClient() {
 
     if (percentage >= 75 && level < 10) {
       const next = level + 1;
+      const seed = exerciseSeeds[next] || Date.now() + next;
 
       setReachedLevels((previous) =>
         previous.includes(next) ? previous : [...previous, next]
       );
+
+      setExerciseSeeds((previous) => ({
+        ...previous,
+        [next]: previous[next] || seed,
+      }));
 
       setSavedExercises((previous) => {
         if (previous[next]) return previous;
 
         return {
           ...previous,
-          [next]: generateExercises(next),
+          [next]: generateExercises(next, seed),
         };
       });
     }
@@ -616,7 +803,14 @@ export default function OefenpaginaClient() {
   }
 
   function resetCurrentLevel() {
-    const fresh = generateExercises(level);
+    const seed = Date.now();
+
+    const fresh = generateExercises(level, seed);
+
+    setExerciseSeeds((previous) => ({
+      ...previous,
+      [level]: seed,
+    }));
 
     setSavedExercises((previous) => ({
       ...previous,
@@ -626,10 +820,19 @@ export default function OefenpaginaClient() {
     setAnswers({});
     setChecked(false);
 
-    setProgress((previous) => {
-      const next = { ...previous };
-      delete next[level];
-      return next;
+    setProgress((previous) => ({
+      ...previous,
+      [level]: {
+        answers: {},
+        checked: false,
+        percentage: 0,
+        score: 0,
+      },
+    }));
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
     });
   }
 
@@ -651,8 +854,7 @@ export default function OefenpaginaClient() {
       },
     }));
   }
-
-  const grouped = categories
+    const grouped = categories
     .map((category) => ({
       category,
       items: exercises.filter((exercise) => exercise.category === category),
@@ -760,8 +962,7 @@ export default function OefenpaginaClient() {
           </div>
         </div>
       </section>
-
-      {grouped.map((group) => (
+            {grouped.map((group) => (
         <section className="exercise-section" key={group.category}>
           <h2>{group.category}</h2>
 

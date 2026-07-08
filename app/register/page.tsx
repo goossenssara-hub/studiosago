@@ -7,7 +7,6 @@ import { createClient } from "@/lib/supabase/client";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const supabase = createClient();
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -19,12 +18,14 @@ export default function RegisterPage() {
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-  async function handleRegister(e: React.FormEvent) {
+  async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     setLoading(true);
     setMessage("");
     setErrorMessage("");
+
+    const supabase = createClient();
 
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -56,8 +57,10 @@ export default function RegisterPage() {
     <main className="login-page">
       <div className="login-card">
         <h1>Account aanmaken</h1>
+
         <p className="login-subtitle">
-          Maak een account aan om je lessen, afspraken en beurtenkaarten te beheren.
+          Maak een account aan om je lessen, afspraken en beurtenkaarten te
+          beheren.
         </p>
 
         <form onSubmit={handleRegister}>

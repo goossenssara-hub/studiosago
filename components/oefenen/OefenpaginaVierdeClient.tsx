@@ -4,12 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import BottomActions from "@/components/oefenen/BottomActions";
 import ExerciseCard from "@/components/oefenen/ExerciseCard";
 import MountainProgress from "@/components/oefenen/MountainProgress";
-import { categories } from "@/lib/oefeningen/data";
 import { generateExercisesVierde } from "@/lib/oefeningen/generateExercisesVierde";
 import type { Exercise, LevelProgress, SavedData } from "@/lib/oefeningen/types";
 import { normalize } from "@/lib/oefeningen/utils";
 
-const STORAGE_KEY = "sago-oefenklim-vierde-leerjaar-v1";
+const STORAGE_KEY = "sago-oefenklim-vierde-leerjaar-v2";
 
 export default function OefenpaginaVierdeClient() {
   const [level, setLevel] = useState(1);
@@ -85,13 +84,16 @@ export default function OefenpaginaVierdeClient() {
 
   const exercises = useMemo(() => savedExercises[level] || [], [level, savedExercises]);
 
-  const grouped = categories
-    .map((category) => ({
-      category,
-      items: exercises.filter((exercise) => exercise.category === category),
-    }))
-    .filter((group) => group.items.length > 0);
+const grouped = useMemo(() => {
+  const uniqueCategories = Array.from(
+    new Set(exercises.map((exercise) => exercise.category))
+  );
 
+  return uniqueCategories.map((category) => ({
+    category,
+    items: exercises.filter((exercise) => exercise.category === category),
+  }));
+}, [exercises]);
   const score = exercises.reduce((total, exercise) => {
     const given = normalize(answers[exercise.id] || "");
     const correctAnswers = Array.isArray(exercise.answer)

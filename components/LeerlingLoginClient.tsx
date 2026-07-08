@@ -60,7 +60,7 @@ export default function LeerlingLoginClient() {
         <input
           value={gebruikersnaam}
           onChange={(e) => setGebruikersnaam(e.target.value)}
-          placeholder="victor.koolen"
+          placeholder="voornaam.achternaam@studiosago.be"
           autoComplete="username"
         />
       </label>

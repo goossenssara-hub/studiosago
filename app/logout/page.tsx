@@ -8,16 +8,15 @@ export default function LogoutPage() {
   const router = useRouter();
 
   useEffect(() => {
-    async function logout() {
+    async function handleLogout() {
       const supabase = createClient();
-
       await supabase.auth.signOut();
 
-      router.push("/login");
+      router.replace("/login");
       router.refresh();
     }
 
-    logout();
+    handleLogout();
   }, [router]);
 
   return (

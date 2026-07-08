@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { redirect } from "next/navigation";
 import PageShell from "@/components/PageShell";
 import { createClient } from "@/lib/supabase/server";

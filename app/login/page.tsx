@@ -7,7 +7,6 @@ import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const router = useRouter();
-  const supabase = createClient();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -15,33 +14,35 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  async function handleLogin(e: React.FormEvent) {
+  async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     setLoading(true);
     setErrorMessage("");
 
-const { data, error } = await supabase.auth.signInWithPassword({
-  email,
-  password,
-});
+    const supabase = createClient();
 
-console.log("LOGIN DATA:", data);
-console.log("LOGIN ERROR:", error);
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-if (error) {
-  setErrorMessage(error.message);
-  setLoading(false);
-  return;
-}
-    router.refresh();
+    console.log("LOGIN DATA:", data);
+    console.log("LOGIN ERROR:", error);
+
+    if (error) {
+      setErrorMessage(error.message);
+      setLoading(false);
+      return;
+    }
+
     router.push("/dashboard");
+    router.refresh();
   }
 
   return (
     <main className="login-page">
       <div className="login-card">
-
         <h1>Welkom terug</h1>
 
         <p className="login-subtitle">
@@ -49,7 +50,6 @@ if (error) {
         </p>
 
         <form onSubmit={handleLogin}>
-
           <input
             type="email"
             placeholder="E-mailadres"
@@ -79,7 +79,6 @@ if (error) {
           >
             {loading ? "Bezig met aanmelden..." : "Inloggen"}
           </button>
-
         </form>
 
         <div className="login-divider">
@@ -90,13 +89,9 @@ if (error) {
           Account aanmaken
         </Link>
 
-        <Link
-          href="/forgot-password"
-          className="forgot-password"
-        >
+        <Link href="/forgot-password" className="forgot-password">
           Wachtwoord vergeten?
         </Link>
-
       </div>
     </main>
   );

@@ -4,8 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import "./leerling-login.css";
-
+import "@/app/styles/leerling-login.css";
 const leerlingAccounts: Record<string, string> = {
   "victor.koolen": "victor.koolen@studiosago.be",
   "victor.koolen@studiosago.be": "victor.koolen@studiosago.be",

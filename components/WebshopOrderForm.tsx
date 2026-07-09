@@ -130,7 +130,7 @@ export default function WebshopOrderForm({ product }: Props) {
               type="text"
               value={discountCode}
               onChange={(e) => setDiscountCode(e.target.value)}
-              placeholder="Bijvoorbeeld 4KX9-MP7Q-L2ZT-81NR"
+              placeholder="Bijvoorbeeld 1234-ABCD-5E6F-G7H8"
             />
           </label>
         )}

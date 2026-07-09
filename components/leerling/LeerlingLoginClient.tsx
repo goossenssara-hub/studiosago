@@ -129,7 +129,7 @@ window.location.href = "/leerling-portaal";  } catch (err) {
         <div className="leerling-login-right">
           <div className="leerling-logo">
             <Image
-              src="/Assets/LLportaal.png"
+              src="public/assets/LLportaal.png"
               alt="Studio SaGo Leerlingportaal"
               width={260}
               height={260}

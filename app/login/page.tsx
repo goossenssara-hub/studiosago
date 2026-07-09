@@ -38,7 +38,7 @@ export default function LoginPage() {
 
   return (
     <main className="login-page">
-      <Link href="/" className="back-home-button">
+      <Link href="/" className="login-back-button">
         ← Terug naar homepage
       </Link>
 
@@ -47,10 +47,10 @@ export default function LoginPage() {
           <img src="/logo.png" alt="Studio SaGo" />
         </div>
 
-        <h1>Welkom terug</h1>
+        <h1>Welkom terug!</h1>
 
         <p className="login-subtitle">
-          Meld je aan om je dashboard te openen.
+          Log in om verder te gaan met jouw leesavontuur.
         </p>
 
         <form onSubmit={handleLogin} className="login-form">
@@ -81,12 +81,14 @@ export default function LoginPage() {
           {errorMessage && <p className="login-error">{errorMessage}</p>}
 
           <button type="submit" className="login-button" disabled={loading}>
-            {loading ? "Bezig met aanmelden..." : "Inloggen"}
+            {loading ? "Bezig met aanmelden..." : "Inloggen →"}
           </button>
         </form>
 
         <div className="login-divider">
-          <span>OF</span>
+          <span></span>
+          <p>of</p>
+          <span></span>
         </div>
 
         <Link href="/register" className="register-button">

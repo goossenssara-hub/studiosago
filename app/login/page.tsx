@@ -57,7 +57,7 @@ export default function LoginPage() {
         <h1>Welkom terug!</h1>
 
         <p className="login-subtitle">
-          Log in om verder te gaan met jouw leesavontuur.
+          Log in om verder te gaan met jouw lesavontuur.
         </p>
 
         <form onSubmit={handleLogin} className="login-form">

@@ -8,52 +8,91 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const DISCOUNT_CODES = [
-  "4KX9-MP7Q-L2ZT-81NR",
-  "Q7LP-82XM-V4KT-9R31",
-];
-
 function normalize(value: string) {
   return value.trim().toLowerCase();
 }
 
-function applyDiscount({
+async function getDiscount({
+  supabaseAdmin,
   product,
   parentName,
   email,
   discountCode,
   amount,
 }: {
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
   product: string;
   parentName: string;
   email: string;
   discountCode: string;
   amount: number;
 }) {
-  const isTenBeurtenkaart =
-    product === "10-beurtenkaart-lager" ||
-    product === "10-beurtenkaart-secundair";
-
-  const codeOk = DISCOUNT_CODES.includes(discountCode.trim().toUpperCase());
-  const emailOk = normalize(email) === "markenvicky@outlook.be";
-
-  const name = normalize(parentName);
-  const nameOk = name === "vicky marken" || name === "joris koolen";
-
-  if (isTenBeurtenkaart && codeOk && emailOk && nameOk) {
+  if (!discountCode.trim()) {
     return {
-      hasDiscount: true,
-      originalAmount: amount,
-      discountAmount: 20,
-      finalAmount: Math.max(amount - 20, 0),
+      hasDiscount: false,
+      discountAmount: 0,
+      finalAmount: amount,
+      discountId: null as string | null,
+      discountCode: "",
     };
   }
 
+  const { data: code, error } = await supabaseAdmin
+    .from("discount_codes")
+    .select("*")
+    .eq("code", discountCode.trim().toUpperCase())
+    .eq("active", true)
+    .maybeSingle();
+
+  if (error || !code) {
+    return {
+      hasDiscount: false,
+      discountAmount: 0,
+      finalAmount: amount,
+      discountId: null as string | null,
+      discountCode: "",
+    };
+  }
+
+  const now = new Date();
+
+  const productOk = code.product === "all" || code.product === product;
+  const emailOk = !code.email || normalize(code.email) === normalize(email);
+  const nameOk =
+    !code.customer_name ||
+    normalize(code.customer_name) === normalize(parentName);
+
+  const dateOk =
+    (!code.valid_from || new Date(code.valid_from) <= now) &&
+    (!code.valid_until || new Date(code.valid_until) >= now);
+
+  const usesOk =
+    !code.max_uses || Number(code.used_count || 0) < Number(code.max_uses);
+
+  if (!productOk || !emailOk || !nameOk || !dateOk || !usesOk) {
+    return {
+      hasDiscount: false,
+      discountAmount: 0,
+      finalAmount: amount,
+      discountId: null as string | null,
+      discountCode: "",
+    };
+  }
+
+  let discountAmount = Number(code.discount_value || 0);
+
+  if (code.discount_type === "percentage") {
+    discountAmount = amount * (discountAmount / 100);
+  }
+
+  discountAmount = Math.min(discountAmount, amount);
+
   return {
-    hasDiscount: false,
-    originalAmount: amount,
-    discountAmount: 0,
-    finalAmount: amount,
+    hasDiscount: true,
+    discountAmount,
+    finalAmount: Math.max(amount - discountAmount, 0),
+    discountId: code.id as string,
+    discountCode: code.code as string,
   };
 }
 
@@ -106,7 +145,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const discount = applyDiscount({
+    const discount = await getDiscount({
+      supabaseAdmin,
       product,
       parentName,
       email,
@@ -119,19 +159,13 @@ export async function POST(request: Request) {
     const mollieApiKey = process.env.MOLLIE_API_KEY;
     const siteUrlEnv = process.env.NEXT_PUBLIC_SITE_URL;
 
-if (!mollieApiKey) {
-  return NextResponse.json(
-    {
-      error: "MOLLIE_API_KEY ontbreekt.",
-      env: process.env.VERCEL_ENV,
-      hasSiteUrl: !!process.env.NEXT_PUBLIC_SITE_URL,
-      allEnvKeys: Object.keys(process.env).filter((k) =>
-        k.includes("MOLLIE")
-      ),
-    },
-    { status: 500 }
-  );
-}
+    if (!mollieApiKey) {
+      return NextResponse.json(
+        { error: "MOLLIE_API_KEY ontbreekt." },
+        { status: 500 }
+      );
+    }
+
     if (!siteUrlEnv) {
       return NextResponse.json(
         { error: "NEXT_PUBLIC_SITE_URL ontbreekt." },
@@ -148,7 +182,7 @@ if (!mollieApiKey) {
         value: amount,
       },
       description: discount.hasDiscount
-        ? `${productName} - €20 korting`
+        ? `${productName} - €${discount.discountAmount.toFixed(0)} korting`
         : productName,
       method: "bancontact",
       redirectUrl: `${siteUrl}/betaling/status?checkoutId=${checkoutId}`,
@@ -158,9 +192,10 @@ if (!mollieApiKey) {
         product,
         productName,
         amount,
-        originalAmount: discount.originalAmount.toFixed(2),
+        originalAmount: amountNumber.toFixed(2),
+        discountId: discount.discountId,
+        discountCode: discount.discountCode,
         discountAmount: discount.discountAmount.toFixed(2),
-        discountCode: discount.hasDiscount ? discountCode : "",
         parentName,
         email,
         phone,

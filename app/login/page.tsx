@@ -22,13 +22,10 @@ export default function LoginPage() {
 
     const supabase = createClient();
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-
-    console.log("LOGIN DATA:", data);
-    console.log("LOGIN ERROR:", error);
 
     if (error) {
       setErrorMessage(error.message);
@@ -44,30 +41,34 @@ export default function LoginPage() {
     <main className="login-page">
       <div className="login-card">
 
-        <Link href="/" className="back-home-button">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="22"
-            height="22"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M19 12H5" />
-            <path d="M12 19l-7-7 7-7" />
-          </svg>
+        <div className="login-header">
 
-          <span>Terug naar homepage</span>
-        </Link>
+          <Link href="/" className="back-home-button">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M19 12H5" />
+              <path d="M12 19l-7-7 7-7" />
+            </svg>
 
-        <h1>Welkom terug</h1>
+            <span>Terug naar homepage</span>
+          </Link>
 
-        <p className="login-subtitle">
-          Meld je aan om je dashboard te openen.
-        </p>
+          <h1>Welkom terug</h1>
+
+          <p className="login-subtitle">
+            Meld je aan om je dashboard te openen.
+          </p>
+
+        </div>
 
         <form onSubmit={handleLogin}>
           <input
@@ -89,7 +90,9 @@ export default function LoginPage() {
           />
 
           {errorMessage && (
-            <p className="login-error">{errorMessage}</p>
+            <p className="login-error">
+              {errorMessage}
+            </p>
           )}
 
           <button
@@ -105,11 +108,17 @@ export default function LoginPage() {
           <span>OF</span>
         </div>
 
-        <Link href="/register" className="register-button">
+        <Link
+          href="/register"
+          className="register-button"
+        >
           Account aanmaken
         </Link>
 
-        <Link href="/forgot-password" className="forgot-password">
+        <Link
+          href="/forgot-password"
+          className="forgot-password"
+        >
           Wachtwoord vergeten?
         </Link>
 

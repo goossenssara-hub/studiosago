@@ -1,28 +1,18 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 type PlannerItem = {
-  id: number;
+  id: string;
   title: string;
   subject: string;
-  type: "les" | "taak" | "toets";
+  type: "les" | "taak" | "toets" | "oefening" | "huiswerk";
   day: string;
   start: string;
-  end: string;
-  room: string;
-  color: string;
-};
-
-type PlannerForm = {
-  title: string;
-  subject: string;
-  type: PlannerItem["type"];
-  day: string;
-  start: string;
-  end: string;
-  room: string;
+  duration: number;
+  notes: string;
+  done: boolean;
 };
 
 const days = ["maandag", "dinsdag", "woensdag", "donderdag", "vrijdag"];
@@ -38,248 +28,182 @@ const hours = [
   "15:00",
 ];
 
-const colors = {
-  Nederlands: "#9fe8a3",
-  Wiskunde: "#9fd8ff",
-  Frans: "#f4b4ee",
-  Studie: "#ffd99b",
-  Toets: "#ff9fbc",
-  Taak: "#cdb7f6",
+const typeLabels = {
+  les: "Les",
+  taak: "Taak",
+  toets: "Toets",
+  oefening: "Oefening",
+  huiswerk: "Huiswerk",
 };
 
-const initialItems: PlannerItem[] = [
-  {
-    id: 1,
-    title: "Lezen hoofdstuk 4",
-    subject: "Nederlands",
-    type: "taak",
-    day: "maandag",
-    start: "08:20",
-    end: "09:10",
-    room: "Studio SaGo",
-    color: colors.Nederlands,
-  },
-  {
-    id: 2,
-    title: "Breuken oefenen",
-    subject: "Wiskunde",
-    type: "les",
-    day: "woensdag",
-    start: "10:15",
-    end: "11:05",
-    room: "Online",
-    color: colors.Wiskunde,
-  },
-  {
-    id: 3,
-    title: "Franse woordjes",
-    subject: "Frans",
-    type: "toets",
-    day: "vrijdag",
-    start: "13:00",
-    end: "13:50",
-    room: "Thuis",
-    color: colors.Toets,
-  },
-];
-
-const emptyForm: PlannerForm = {
-  title: "",
-  subject: "Nederlands",
-  type: "les",
-  day: "maandag",
-  start: "08:20",
-  end: "09:10",
-  room: "",
+const typeColors = {
+  les: "#bdf4c0",
+  taak: "#ffd9a3",
+  toets: "#ffb4c9",
+  oefening: "#9ed7ff",
+  huiswerk: "#d7c3ff",
 };
 
 export default function LeerlingPlannerClient() {
-  const [items, setItems] = useState<PlannerItem[]>(initialItems);
-  const [form, setForm] = useState<PlannerForm>(emptyForm);
+  const [items, setItems] = useState<PlannerItem[]>([]);
   const [showForm, setShowForm] = useState(false);
 
-  const totalTasks = useMemo(
-    () => items.filter((item) => item.type === "taak").length,
-    [items]
-  );
+  useEffect(() => {
+    const saved = localStorage.getItem("leerling-planner-items");
+    if (saved) setItems(JSON.parse(saved));
+  }, []);
 
-  const totalTests = useMemo(
-    () => items.filter((item) => item.type === "toets").length,
-    [items]
-  );
+  useEffect(() => {
+    localStorage.setItem("leerling-planner-items", JSON.stringify(items));
+  }, [items]);
 
-  const totalLessons = useMemo(
-    () => items.filter((item) => item.type === "les").length,
-    [items]
-  );
+  const stats = useMemo(() => {
+    const total = items.length;
+    const done = items.filter((item) => item.done).length;
+    const open = total - done;
 
-  function getItemColor(item: PlannerForm) {
-    if (item.type === "toets") return colors.Toets;
-    if (item.type === "taak") return colors.Taak;
+    return { total, done, open };
+  }, [items]);
 
-    return (
-      colors[item.subject as keyof typeof colors] ||
-      colors.Studie
-    );
-  }
+  function handleCreate(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
 
-  function addItem(e: React.FormEvent) {
-    e.preventDefault();
-
-    if (!form.title.trim()) return;
+    const formData = new FormData(event.currentTarget);
 
     const newItem: PlannerItem = {
-      id: Date.now(),
-      ...form,
-      color: getItemColor(form),
+      id: crypto.randomUUID(),
+      title: String(formData.get("title") || ""),
+      subject: String(formData.get("subject") || ""),
+      type: String(formData.get("type") || "taak") as PlannerItem["type"],
+      day: String(formData.get("day") || "maandag"),
+      start: String(formData.get("start") || "08:00"),
+      duration: Number(formData.get("duration") || 30),
+      notes: String(formData.get("notes") || ""),
+      done: false,
     };
 
-    setItems((currentItems) => [...currentItems, newItem]);
-    setForm(emptyForm);
+    if (!newItem.title.trim()) return;
+
+    setItems((current) => [...current, newItem]);
+    event.currentTarget.reset();
     setShowForm(false);
   }
 
-  function removeItem(id: number) {
-    setItems((currentItems) =>
-      currentItems.filter((item) => item.id !== id)
+  function toggleDone(id: string) {
+    setItems((current) =>
+      current.map((item) =>
+        item.id === id ? { ...item, done: !item.done } : item
+      )
     );
   }
-    return (
+
+  function deleteItem(id: string) {
+    setItems((current) => current.filter((item) => item.id !== id));
+  }
+
+  return (
     <main className="leerling-planner-page">
       <section className="planner-main">
-        <header className="planner-topbar">
+        <header className="planner-hero">
           <div>
-            <p>Studio SaGo Leerlingportaal</p>
-            <h1>Mijn weekplanner</h1>
-            <span>
-              Plan je lessen, taken en toetsen op één duidelijke plek.
-            </span>
-          </div>
-
-          <div className="planner-week-selector">
-            <button type="button">‹</button>
-            <span>Deze week</span>
-            <button type="button">›</button>
+            <h1>Mijn dashboard</h1>
+            <p>Plan je taken, bekijk je huiswerk en oefen op jouw tempo.</p>
           </div>
         </header>
 
-        <aside className="planner-sidebar">
-          <nav>
-            <Link href="/dashboard/leerling">Start</Link>
-
-            <Link href="/dashboard/leerling/planner" className="active">
-              Planner
-            </Link>
-
-            <Link href="/dashboard/leerling/taken">Taken</Link>
-
-            <Link href="/dashboard/leerling/oefenen">Oefenen</Link>
-
-            <Link href="/dashboard/leerling/platform">Mailbox</Link>
-          </nav>
-        </aside>
+        <nav className="leerling-menu-top">
+          <Link href="/dashboard/leerling">Start</Link>
+          <Link className="active" href="/dashboard/leerling/planner">
+            Planner
+          </Link>
+          <Link href="/dashboard/leerling/taken">Taken</Link>
+          <Link href="/dashboard/leerling/oefenen">Oefenen</Link>
+          <Link href="/logout">🚪 Uitloggen</Link>
+        </nav>
 
         <section className="planner-overview">
           <article>
-            <strong>{totalLessons}</strong>
-            <span>Lessen</span>
+            <strong>{stats.total}</strong>
+            <span>opdrachten</span>
           </article>
 
           <article>
-            <strong>{totalTasks}</strong>
-            <span>Taken</span>
+            <strong>{stats.open}</strong>
+            <span>nog te doen</span>
           </article>
 
           <article>
-            <strong>{totalTests}</strong>
-            <span>Toetsen</span>
+            <strong>{stats.done}</strong>
+            <span>afgerond</span>
           </article>
 
-          <button type="button" onClick={() => setShowForm(!showForm)}>
-            {showForm ? "Sluiten" : "+ Nieuwe planning"}
+          <button type="button" onClick={() => setShowForm((value) => !value)}>
+            + Nieuwe opdracht
           </button>
         </section>
 
         {showForm && (
           <section className="planner-actions">
-            <form onSubmit={addItem} className="planner-create-form">
+            <form className="planner-create-form" onSubmit={handleCreate}>
               <input
-                placeholder="Titel van les, taak of toets"
-                value={form.title}
-                onChange={(e) =>
-                  setForm({ ...form, title: e.target.value })
-                }
+                name="title"
+                placeholder="Titel opdracht"
+                required
               />
 
-              <select
-                value={form.subject}
-                onChange={(e) =>
-                  setForm({ ...form, subject: e.target.value })
-                }
-              >
-                <option>Nederlands</option>
-                <option>Wiskunde</option>
-                <option>Frans</option>
-                <option>Studie</option>
+              <input
+                name="subject"
+                placeholder="Vak / onderwerp"
+                required
+              />
+
+              <select name="type" defaultValue="taak">
+                <option value="taak">Taak</option>
+                <option value="huiswerk">Huiswerk</option>
+                <option value="toets">Toets</option>
+                <option value="oefening">Oefening</option>
+                <option value="les">Les</option>
               </select>
 
-              <select
-                value={form.type}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    type: e.target.value as PlannerItem["type"],
-                  })
-                }
-              >
-                <option value="les">Les</option>
-                <option value="taak">Taak</option>
-                <option value="toets">Toets</option>
-              </select>
-                            <select
-                value={form.day}
-                onChange={(e) =>
-                  setForm({ ...form, day: e.target.value })
-                }
-              >
+              <select name="day" defaultValue="maandag">
                 {days.map((day) => (
-                  <option key={day}>{day}</option>
+                  <option key={day} value={day}>
+                    {day}
+                  </option>
                 ))}
               </select>
 
-              <input
-                type="time"
-                value={form.start}
-                onChange={(e) =>
-                  setForm({ ...form, start: e.target.value })
-                }
+              <select name="start" defaultValue="08:00">
+                {hours.map((hour) => (
+                  <option key={hour} value={hour}>
+                    {hour}
+                  </option>
+                ))}
+              </select>
+
+              <select name="duration" defaultValue="30">
+                <option value="15">15 min.</option>
+                <option value="30">30 min.</option>
+                <option value="45">45 min.</option>
+                <option value="60">1 uur</option>
+                <option value="90">1,5 uur</option>
+                <option value="120">2 uur</option>
+              </select>
+
+              <textarea
+                name="notes"
+                placeholder="Opmerkingen"
+                rows={1}
               />
 
-              <input
-                type="time"
-                value={form.end}
-                onChange={(e) =>
-                  setForm({ ...form, end: e.target.value })
-                }
-              />
-
-              <input
-                placeholder="Locatie"
-                value={form.room}
-                onChange={(e) =>
-                  setForm({ ...form, room: e.target.value })
-                }
-              />
-
-              <button type="submit">Toevoegen</button>
+              <button type="submit">Plaats in kalender</button>
             </form>
           </section>
         )}
 
         <section className="planner-board">
           <div className="planner-hours">
-            <div></div>
-
+            <div />
             {hours.map((hour) => (
               <span key={hour}>{hour}</span>
             ))}
@@ -287,39 +211,53 @@ export default function LeerlingPlannerClient() {
 
           <div className="planner-days">
             {days.map((day) => (
-              <div className="planner-day-column" key={day}>
+              <article key={day} className="planner-day-column">
                 <h2>{day}</h2>
 
                 <div className="planner-day-grid">
-                  {items
-                    .filter((item) => item.day === day)
-                    .map((item) => (
-                      <article
-                        key={item.id}
-                        className="planner-block"
-                        style={{ background: item.color }}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => removeItem(item.id)}
-                          aria-label="Verwijderen"
-                        >
-                          ×
-                        </button>
+                  {hours.map((hour) => (
+                    <div key={hour} className="planner-hour-cell">
+                      {items
+                        .filter((item) => item.day === day && item.start === hour)
+                        .map((item) => (
+                          <div
+                            key={item.id}
+                            className={`planner-block ${
+                              item.done ? "is-done" : ""
+                            }`}
+                            style={{ background: typeColors[item.type] }}
+                          >
+                            <label className="planner-check">
+                              <input
+                                type="checkbox"
+                                checked={item.done}
+                                onChange={() => toggleDone(item.id)}
+                              />
+                              <span />
+                            </label>
 
-                        <strong>{item.subject}</strong>
+                            <button
+                              type="button"
+                              className="planner-delete"
+                              onClick={() => deleteItem(item.id)}
+                            >
+                              ×
+                            </button>
 
-                        <h3>{item.title}</h3>
+                            <strong>{typeLabels[item.type]}</strong>
+                            <h3>{item.title}</h3>
+                            <p>{item.subject}</p>
+                            <small>
+                              {item.start} · {item.duration} min.
+                            </small>
 
-                        <p>
-                          {item.start} - {item.end}
-                        </p>
-
-                        <span>{item.room || item.type}</span>
-                      </article>
-                    ))}
+                            {item.notes && <em>{item.notes}</em>}
+                          </div>
+                        ))}
+                    </div>
+                  ))}
                 </div>
-              </div>
+              </article>
             ))}
           </div>
         </section>

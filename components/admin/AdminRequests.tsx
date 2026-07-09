@@ -21,35 +21,36 @@ type RequestItem = {
 export default function AdminRequests() {
   const [requests, setRequests] = useState<RequestItem[]>([]);
   const [message, setMessage] = useState("Laden...");
+  const [refreshing, setRefreshing] = useState(false);
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
   async function loadRequests() {
+    setRefreshing(true);
     setMessage("Laden...");
 
     try {
-      const response = await fetch("/api/admin/requests", {
+      const response = await fetch(`/api/admin/requests?t=${Date.now()}`, {
+        method: "GET",
         cache: "no-store",
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        console.error("REQUESTS API ERROR:", data);
-
         setRequests([]);
         setMessage(data.error || "Kon aanvragen niet laden.");
         return;
       }
 
-      setRequests(data.requests ?? []);
-      setMessage(data.requests?.length ? "" : "Nog geen nieuwe aanvragen.");
-    } catch (error) {
-      console.error("REQUESTS LOAD ERROR:", error);
-
-      setRequests([]);
+      setRequests(data.requests || []);
       setMessage(
-        error instanceof Error ? error.message : "Kon aanvragen niet laden."
+        data.requests?.length ? "" : "Nog geen nieuwe aanvragen."
       );
+    } catch (error) {
+      setRequests([]);
+      setMessage("Kon aanvragen niet laden.");
+    } finally {
+      setRefreshing(false);
     }
   }
 
@@ -79,8 +80,7 @@ export default function AdminRequests() {
       }
 
       await loadRequests();
-    } catch (error) {
-      console.error("APPROVE REQUEST ERROR:", error);
+    } catch {
       alert("Er ging iets mis bij het goedkeuren.");
     } finally {
       setLoadingId(null);
@@ -99,8 +99,9 @@ export default function AdminRequests() {
           type="button"
           className="secondary-action small-action"
           onClick={loadRequests}
+          disabled={refreshing}
         >
-          Vernieuwen
+          {refreshing ? "Vernieuwen..." : "Vernieuwen"}
         </button>
       </div>
 
@@ -111,8 +112,8 @@ export default function AdminRequests() {
           <article className="admin-request-card" key={request.id}>
             <div>
               <h3>{request.customer_name || "Naam onbekend"}</h3>
-              <p>{request.customer_email}</p>
-              <p>{request.phone}</p>
+              <p>{request.customer_email || "Geen e-mailadres"}</p>
+              <p>{request.phone || "Geen telefoonnummer"}</p>
 
               {request.service && <p>Dienst: {request.service}</p>}
 

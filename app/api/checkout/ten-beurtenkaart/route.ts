@@ -1,5 +1,44 @@
 import { NextResponse } from "next/server";
 
+const DISCOUNT_CODES = [
+  "4KX9-MP7Q-L2ZT-81NR",
+  "Q7LP-82XM-V4KT-9R31",
+];
+
+function normalize(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function getFinalAmount({
+  discountCode,
+  parentName,
+  email,
+}: {
+  discountCode: string;
+  parentName: string;
+  email: string;
+}) {
+  const codeOk = DISCOUNT_CODES.includes(discountCode.trim().toUpperCase());
+  const emailOk = normalize(email) === "markenvicky@outlook.be";
+
+  const name = normalize(parentName);
+  const nameOk = name === "vicky marken" || name === "joris koolen";
+
+  if (codeOk && emailOk && nameOk) {
+    return {
+      hasDiscount: true,
+      discountAmount: 20,
+      finalAmount: 300,
+    };
+  }
+
+  return {
+    hasDiscount: false,
+    discountAmount: 0,
+    finalAmount: 320,
+  };
+}
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
@@ -11,6 +50,7 @@ export async function POST(request: Request) {
     const email = String(formData.get("email") || "");
     const phone = String(formData.get("phone") || "");
     const notes = String(formData.get("notes") || "");
+    const discountCode = String(formData.get("discount_code") || "");
 
     if (!studentName || !studentAge || !schoolYear || !parentName || !email) {
       return NextResponse.json(
@@ -18,6 +58,12 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+
+    const discount = getFinalAmount({
+      discountCode,
+      parentName,
+      email,
+    });
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
@@ -30,16 +76,21 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         amount: {
           currency: "EUR",
-          value: "320.00",
+          value: discount.finalAmount.toFixed(2),
         },
-        description: "10-beurtenkaart Studio SaGo",
+        description: discount.hasDiscount
+          ? "10-beurtenkaart Studio SaGo - €20 korting"
+          : "10-beurtenkaart Studio SaGo",
         method: "bancontact",
         redirectUrl: `${siteUrl}/bedankt?product=10-beurtenkaart`,
         webhookUrl: `${siteUrl}/api/mollie/webhook`,
         locale: "nl_BE",
         metadata: {
           product: "10-beurtenkaart",
-          amount: "320",
+          originalAmount: "320",
+          discountCode: discount.hasDiscount ? discountCode : "",
+          discountAmount: String(discount.discountAmount),
+          amount: String(discount.finalAmount),
           studentName,
           studentAge,
           schoolYear,

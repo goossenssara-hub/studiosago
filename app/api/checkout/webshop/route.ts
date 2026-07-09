@@ -8,6 +8,55 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const DISCOUNT_CODES = [
+  "4KX9-MP7Q-L2ZT-81NR",
+  "Q7LP-82XM-V4KT-9R31",
+];
+
+function normalize(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function applyDiscount({
+  product,
+  parentName,
+  email,
+  discountCode,
+  amount,
+}: {
+  product: string;
+  parentName: string;
+  email: string;
+  discountCode: string;
+  amount: number;
+}) {
+  const isTenBeurtenkaart =
+    product === "10-beurtenkaart-lager" ||
+    product === "10-beurtenkaart-secundair";
+
+  const codeOk = DISCOUNT_CODES.includes(discountCode.trim().toUpperCase());
+  const emailOk = normalize(email) === "markenvicky@outlook.be";
+
+  const name = normalize(parentName);
+  const nameOk = name === "vicky marken" || name === "joris koolen";
+
+  if (isTenBeurtenkaart && codeOk && emailOk && nameOk) {
+    return {
+      hasDiscount: true,
+      originalAmount: amount,
+      discountAmount: 20,
+      finalAmount: Math.max(amount - 20, 0),
+    };
+  }
+
+  return {
+    hasDiscount: false,
+    originalAmount: amount,
+    discountAmount: 0,
+    finalAmount: amount,
+  };
+}
+
 export async function POST(request: Request) {
   try {
     const supabaseAdmin = getSupabaseAdmin();
@@ -18,9 +67,10 @@ export async function POST(request: Request) {
     const email = String(formData.get("email") || "");
     const phone = String(formData.get("phone") || "");
     const notes = String(formData.get("notes") || "");
+    const discountCode = String(formData.get("discount_code") || "");
 
     let productName = "";
-    let amount = "";
+    let amountNumber = 0;
 
     if (product === "tekstcorrectie") {
       const wordCount = Number(formData.get("word_count") || 0);
@@ -33,7 +83,7 @@ export async function POST(request: Request) {
       }
 
       productName = `Tekstcorrectie Studio SaGo - ${wordCount} woorden`;
-      amount = calculateCorrectionPrice(wordCount).toFixed(2);
+      amountNumber = calculateCorrectionPrice(wordCount);
     } else {
       const productInfo =
         webshopProducts[product as keyof typeof webshopProducts];
@@ -46,7 +96,7 @@ export async function POST(request: Request) {
       }
 
       productName = productInfo.name;
-      amount = productInfo.amount;
+      amountNumber = Number(productInfo.amount);
     }
 
     if (!parentName || !email || !phone) {
@@ -55,6 +105,16 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+
+    const discount = applyDiscount({
+      product,
+      parentName,
+      email,
+      discountCode,
+      amount: amountNumber,
+    });
+
+    const amount = discount.finalAmount.toFixed(2);
 
     const mollieApiKey = process.env.MOLLIE_API_KEY;
     const siteUrlEnv = process.env.NEXT_PUBLIC_SITE_URL;
@@ -81,7 +141,9 @@ export async function POST(request: Request) {
         currency: "EUR",
         value: amount,
       },
-      description: productName,
+      description: discount.hasDiscount
+        ? `${productName} - €20 korting`
+        : productName,
       method: "bancontact",
       redirectUrl: `${siteUrl}/betaling/status?checkoutId=${checkoutId}`,
       locale: "nl_BE",
@@ -90,6 +152,9 @@ export async function POST(request: Request) {
         product,
         productName,
         amount,
+        originalAmount: discount.originalAmount.toFixed(2),
+        discountAmount: discount.discountAmount.toFixed(2),
+        discountCode: discount.hasDiscount ? discountCode : "",
         parentName,
         email,
         phone,

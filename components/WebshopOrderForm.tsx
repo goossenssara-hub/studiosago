@@ -10,12 +10,23 @@ type Props = {
   product: string;
 };
 
+const DISCOUNT_CODES = [
+  "4KX9-MP7Q-L2ZT-81NR",
+  "Q7LP-82XM-V4KT-9R31",
+  "ZX81-TQ7M-NP46-KL2R",
+];
+
 export default function WebshopOrderForm({ product }: Props) {
   const [loading, setLoading] = useState(false);
   const [wordCount, setWordCount] = useState("");
   const [error, setError] = useState("");
+  const [discountCode, setDiscountCode] = useState("");
 
   const isTextCorrection = product === "tekstcorrectie";
+
+  const isTenBeurtenkaart =
+    product === "10-beurtenkaart-lager" ||
+    product === "10-beurtenkaart-secundair";
 
   const correctionPrice = useMemo(() => {
     const words = Number(wordCount || 0);
@@ -27,6 +38,17 @@ export default function WebshopOrderForm({ product }: Props) {
     product in webshopProducts
       ? webshopProducts[product as keyof typeof webshopProducts]
       : null;
+
+  const basePrice = isTextCorrection
+    ? correctionPrice
+    : Number(productInfo?.amount || 0);
+
+  const discountCodeLooksValid =
+    isTenBeurtenkaart &&
+    DISCOUNT_CODES.includes(discountCode.trim().toUpperCase());
+
+  const visiblePrice =
+    discountCodeLooksValid ? Math.max(basePrice - 20, 0) : basePrice;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -58,9 +80,7 @@ export default function WebshopOrderForm({ product }: Props) {
       }
 
       if (!response.ok) {
-        throw new Error(
-          data.error || `Serverfout (${response.status}).`
-        );
+        throw new Error(data.error || `Serverfout (${response.status}).`);
       }
 
       if (!data.url) {
@@ -101,6 +121,19 @@ export default function WebshopOrderForm({ product }: Props) {
           Telefoon
           <input name="phone" type="tel" required />
         </label>
+
+        {isTenBeurtenkaart && (
+          <label>
+            Kortingscode
+            <input
+              name="discount_code"
+              type="text"
+              value={discountCode}
+              onChange={(e) => setDiscountCode(e.target.value)}
+              placeholder="Bijvoorbeeld 4KX9-MP7Q-L2ZT-81NR"
+            />
+          </label>
+        )}
 
         {!isTextCorrection && (
           <>
@@ -210,6 +243,19 @@ export default function WebshopOrderForm({ product }: Props) {
         )}
       </div>
 
+      {discountCodeLooksValid && (
+        <p
+          className="form-message"
+          style={{
+            color: "#54955c",
+            fontWeight: 800,
+          }}
+        >
+          Kortingscode herkend. De korting wordt definitief gecontroleerd bij
+          betaling.
+        </p>
+      )}
+
       <label style={{ marginTop: 20, display: "block" }}>
         Opmerkingen
         <textarea
@@ -222,10 +268,8 @@ export default function WebshopOrderForm({ product }: Props) {
       <p className="form-message">
         Te betalen:{" "}
         <strong>
-          €
-          {isTextCorrection
-            ? correctionPrice
-            : productInfo?.amount.replace(".00", "")}
+          €{visiblePrice.toFixed(0)}
+          {discountCodeLooksValid && " i.p.v. €" + basePrice.toFixed(0)}
         </strong>
       </p>
 
@@ -248,11 +292,7 @@ export default function WebshopOrderForm({ product }: Props) {
           marginTop: 24,
         }}
       >
-        <button
-          className="primary-action"
-          type="submit"
-          disabled={loading}
-        >
+        <button className="primary-action" type="submit" disabled={loading}>
           {loading ? "Betaling starten..." : "Betaal nu"}
         </button>
       </div>

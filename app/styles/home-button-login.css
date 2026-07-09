@@ -1,44 +1,89 @@
+/* ---------- Header ---------- */
+
+.login-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 22px;
+  margin-bottom: 42px;
+}
+
+.login-header h1 {
+  margin: 0;
+}
+
+.login-subtitle {
+  margin: 0;
+}
+
+/* ---------- Terug-knop ---------- */
+
 .back-home-button {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
 
-  margin-bottom: 28px;
-  padding: 12px 22px;
+  align-self: flex-start;
+
+  padding: 12px 24px;
 
   border-radius: 999px;
 
-  background: rgba(255,255,255,0.9);
-  border: 2px solid rgba(3,54,99,.12);
+  background: rgba(255, 255, 255, 0.92);
+  border: 2px solid rgba(40, 185, 170, 0.25);
 
   color: #033663;
-  font-weight: 700;
   font-size: 1rem;
-
+  font-weight: 700;
   text-decoration: none;
 
-  box-shadow: 0 8px 24px rgba(3,54,99,.08);
+  white-space: nowrap;
 
-  transition: all .25s ease;
+  box-shadow: 0 8px 24px rgba(3, 54, 99, 0.08);
+
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease,
+    background 0.25s ease;
 }
 
 .back-home-button:hover {
   transform: translateY(-2px);
-  border-color: #28b9aa;
+
+  background: #ffffff;
   color: #28b9aa;
-  box-shadow: 0 14px 34px rgba(40,185,170,.18);
+  border-color: #28b9aa;
+
+  box-shadow: 0 16px 36px rgba(40, 185, 170, 0.18);
+}
+
+.back-home-button:active {
+  transform: translateY(0);
 }
 
 .back-home-button svg {
   flex-shrink: 0;
+  width: 22px;
+  height: 22px;
 }
 
+/* ---------- Mobiel ---------- */
+
 @media (max-width: 768px) {
+  .login-header {
+    gap: 18px;
+    margin-bottom: 34px;
+  }
+
   .back-home-button {
     width: 100%;
     justify-content: center;
-    margin-bottom: 22px;
+
     padding: 14px 18px;
-    font-size: .95rem;
+
+    font-size: 0.95rem;
   }
 }

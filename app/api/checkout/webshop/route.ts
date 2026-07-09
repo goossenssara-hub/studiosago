@@ -20,7 +20,8 @@ async function getDiscount({
   discountCode,
   amount,
 }: {
-supabaseAdmin: any;  product: string;
+  supabaseAdmin: any;
+  product: string;
   parentName: string;
   email: string;
   discountCode: string;
@@ -258,6 +259,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       url: payment._links?.checkout?.href,
+      hasDiscount: discount.hasDiscount,
+      discountAmount: discount.discountAmount,
+      originalAmount: amountNumber,
+      finalAmount: discount.finalAmount,
     });
   } catch (error) {
     console.error("WEBSHOP CHECKOUT ERROR:", error);

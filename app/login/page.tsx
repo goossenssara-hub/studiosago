@@ -10,7 +10,6 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -39,67 +38,49 @@ export default function LoginPage() {
 
   return (
     <main className="login-page">
-      <div className="login-card">
+      <Link href="/" className="back-home-button">
+        ← Terug naar homepage
+      </Link>
 
-        <div className="login-header">
-
-          <Link href="/" className="back-home-button">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M19 12H5" />
-              <path d="M12 19l-7-7 7-7" />
-            </svg>
-
-            <span>Terug naar homepage</span>
-          </Link>
-
-          <h1>Welkom terug</h1>
-
-          <p className="login-subtitle">
-            Meld je aan om je dashboard te openen.
-          </p>
-
+      <section className="login-card">
+        <div className="login-brand">
+          <img src="/logo.png" alt="Studio SaGo" />
         </div>
 
-        <form onSubmit={handleLogin}>
-          <input
-            type="email"
-            placeholder="E-mailadres"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoComplete="email"
-            required
-          />
+        <h1>Welkom terug</h1>
 
-          <input
-            type="password"
-            placeholder="Wachtwoord"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="current-password"
-            required
-          />
+        <p className="login-subtitle">
+          Meld je aan om je dashboard te openen.
+        </p>
 
-          {errorMessage && (
-            <p className="login-error">
-              {errorMessage}
-            </p>
-          )}
+        <form onSubmit={handleLogin} className="login-form">
+          <label>
+            E-mailadres
+            <input
+              type="email"
+              placeholder="jouw@email.be"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+              required
+            />
+          </label>
 
-          <button
-            type="submit"
-            className="login-button"
-            disabled={loading}
-          >
+          <label>
+            Wachtwoord
+            <input
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+              required
+            />
+          </label>
+
+          {errorMessage && <p className="login-error">{errorMessage}</p>}
+
+          <button type="submit" className="login-button" disabled={loading}>
             {loading ? "Bezig met aanmelden..." : "Inloggen"}
           </button>
         </form>
@@ -108,21 +89,14 @@ export default function LoginPage() {
           <span>OF</span>
         </div>
 
-        <Link
-          href="/register"
-          className="register-button"
-        >
+        <Link href="/register" className="register-button">
           Account aanmaken
         </Link>
 
-        <Link
-          href="/forgot-password"
-          className="forgot-password"
-        >
+        <Link href="/forgot-password" className="forgot-password">
           Wachtwoord vergeten?
         </Link>
-
-      </div>
+      </section>
     </main>
   );
 }

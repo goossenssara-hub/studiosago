@@ -8,7 +8,6 @@ type RequestItem = {
   created_at: string;
   customer_name: string | null;
   customer_email: string | null;
-  phone: string | null;
   notes: string | null;
   service: string | null;
   date: string | null;
@@ -42,11 +41,15 @@ export default function AdminRequests() {
         return;
       }
 
-      setRequests(data.requests || []);
-      setMessage(
-        data.requests?.length ? "" : "Nog geen nieuwe aanvragen."
-      );
+      setRequests(data.requests ?? []);
+
+      if ((data.requests ?? []).length === 0) {
+        setMessage("Nog geen nieuwe aanvragen.");
+      } else {
+        setMessage("");
+      }
     } catch (error) {
+      console.error(error);
       setRequests([]);
       setMessage("Kon aanvragen niet laden.");
     } finally {
@@ -80,7 +83,8 @@ export default function AdminRequests() {
       }
 
       await loadRequests();
-    } catch {
+    } catch (error) {
+      console.error(error);
       alert("Er ging iets mis bij het goedkeuren.");
     } finally {
       setLoadingId(null);
@@ -109,25 +113,35 @@ export default function AdminRequests() {
 
       <div className="admin-request-list">
         {requests.map((request) => (
-          <article className="admin-request-card" key={request.id}>
+          <article
+            className="admin-request-card"
+            key={request.id}
+          >
             <div>
               <h3>{request.customer_name || "Naam onbekend"}</h3>
-              <p>{request.customer_email || "Geen e-mailadres"}</p>
-              <p>{request.phone || "Geen telefoonnummer"}</p>
 
-              {request.service && <p>Dienst: {request.service}</p>}
+              <p>
+                {request.customer_email || "Geen e-mailadres"}
+              </p>
+
+              {request.service && (
+                <p>
+                  <strong>Dienst:</strong> {request.service}
+                </p>
+              )}
 
               {request.date && (
                 <p>
-                  Afspraak: {request.date}
-                  {request.start_time ? ` om ${request.start_time}` : ""}
-                  {request.end_time ? ` - ${request.end_time}` : ""}
+                  <strong>Afspraak:</strong> {request.date}
+                  {request.start_time && ` om ${request.start_time}`}
+                  {request.end_time && ` - ${request.end_time}`}
                 </p>
               )}
             </div>
 
             {request.notes && (
               <div className="admin-request-notes">
+                <strong>Opmerking</strong>
                 <pre>{request.notes}</pre>
               </div>
             )}
@@ -138,14 +152,20 @@ export default function AdminRequests() {
                 onClick={() => approveRequest(request)}
                 disabled={loadingId === request.id}
               >
-                ✅ {loadingId === request.id ? "Goedkeuren..." : "Goedkeuren"}
+                {loadingId === request.id
+                  ? "⏳ Goedkeuren..."
+                  : "✅ Goedkeuren"}
               </button>
 
-              <Link href={`/admin/les-inplannen?appointmentId=${request.id}`}>
+              <Link
+                href={`/admin/les-inplannen?appointmentId=${request.id}`}
+              >
                 📅 Les inplannen
               </Link>
 
-              <Link href={`/admin/factuur?appointmentId=${request.id}`}>
+              <Link
+                href={`/admin/factuur?appointmentId=${request.id}`}
+              >
                 📄 Factuur
               </Link>
             </div>

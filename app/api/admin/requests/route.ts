@@ -15,7 +15,6 @@ export async function GET() {
         created_at,
         customer_name,
         customer_email,
-        phone,
         notes,
         service,
         date,

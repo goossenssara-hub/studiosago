@@ -40,7 +40,7 @@ export default function LoginPage() {
   return (
     <main className="login-page">
       <Link href="/" className="back-home-button">
-        ← Terug naar home
+        ← Home
       </Link>
 
       <section className="login-card">

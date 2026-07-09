@@ -20,8 +20,7 @@ async function getDiscount({
   discountCode,
   amount,
 }: {
-  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
-  product: string;
+supabaseAdmin: any;  product: string;
   parentName: string;
   email: string;
   discountCode: string;

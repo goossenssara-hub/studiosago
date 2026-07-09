@@ -1,152 +1,138 @@
 "use client";
 
-import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+import "./leerling-login.css";
+
+const leerlingAccounts: Record<string, string> = {
+  "victor.koolen": "victor.koolen@studiosago.be",
+  "victor.koolen@studiosago.be": "victor.koolen@studiosago.be",
+  "lou.koolen": "lou.koolen@studiosago.be",
+  "lou.koolen@studiosago.be": "lou.koolen@studiosago.be",
+};
 
 export default function LeerlingLoginClient() {
   const router = useRouter();
-
-  const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("");
+  const [gebruikersnaam, setGebruikersnaam] = useState("");
   const [wachtwoord, setWachtwoord] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
+  const [toonWachtwoord, setToonWachtwoord] = useState(false);
+  const [onthoudMij, setOnthoudMij] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-async function handleLogin(event: React.FormEvent<HTMLFormElement>) {
-  event.preventDefault();
+  async function handleLogin(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    setLoading(true);
 
-  setError("");
-  setLoading(true);
+    const key = gebruikersnaam.toLowerCase().trim();
+    const email = leerlingAccounts[key];
 
-  try {
+    if (!email) {
+      setError("Deze gebruikersnaam bestaat niet.");
+      setLoading(false);
+      return;
+    }
+
     const supabase = createClient();
-
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email.trim().toLowerCase(),
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
       password: wachtwoord,
     });
 
-    console.log("LEERLING LOGIN DATA:", data);
-    console.log("LEERLING LOGIN ERROR:", error);
-
     if (error) {
-      setError(error.message || "Gebruikersnaam of wachtwoord is niet juist.");
+      setError("Gebruikersnaam of wachtwoord is niet juist.");
       setLoading(false);
       return;
     }
 
-    if (!data.session) {
-      setError("Geen geldige sessie ontvangen.");
-      setLoading(false);
-      return;
-    }
-
-    if (rememberMe) {
-      localStorage.setItem("studio-sago-remember-leerling", email);
-    }
-
-window.location.href = "/leerling-portaal";  } catch (err) {
-    console.error("LEERLING LOGIN CATCH:", err);
-    setError("Er ging iets mis bij het aanmelden.");
-    setLoading(false);
+    if (onthoudMij) localStorage.setItem("studio-sago-leerling", key);
+    router.push("/dashboard/oefenen");
+    router.refresh();
   }
-}
+
   return (
     <main className="leerling-login-page">
-      <section className="leerling-login-card">
+      <img className="leerling-login-blobs" src="/assets/leerling-login/soft-corner-blobs.png" alt="" aria-hidden="true" />
+
+      <section className="leerling-login-shell" aria-label="Studio SaGo leerlingportaal">
         <div className="leerling-login-left">
-          <p className="leerling-login-badge">Studio SaGo leerlingportaal</p>
+          <Link href="/" className="back-home-button" aria-label="Terug naar homepagina">
+            ← Terug naar home
+          </Link>
 
-          <h1>Welkom terug!</h1>
+          <form onSubmit={handleLogin} className="leerling-login-form">
+            <p className="portal-pill">Studio SaGo leerlingportaal</p>
+            <h1>Welkom<br />terug!</h1>
+            <p className="login-subtitle">Meld je aan om je planner, huistaken en to-do’s te bekijken.</p>
 
-          <p className="leerling-login-text">
-            Meld je aan om je planner, huistaken en to-do’s te bekijken.
-          </p>
-
-          <form className="leerling-login-form" onSubmit={handleLogin}>
-            <label>
-              Gebruikersnaam
-              <div className="leerling-input">
-                <span>✉️</span>
+            <label className="login-field">
+              <span>Gebruikersnaam</span>
+              <div className="login-input-wrap">
+                <span aria-hidden="true" className="login-icon">♡</span>
                 <input
-                  type="email"
+                  value={gebruikersnaam}
+                  onChange={(e) => setGebruikersnaam(e.target.value)}
                   placeholder="voornaam.achternaam@studiosago.be"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
+                  autoComplete="username"
                 />
               </div>
             </label>
 
-            <label>
-              Wachtwoord
-              <div className="leerling-input">
-                <span>🔒</span>
+            <label className="login-field">
+              <span>Wachtwoord</span>
+              <div className="login-input-wrap">
+                <span aria-hidden="true" className="login-icon">⌘</span>
                 <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Wachtwoord"
+                  type={toonWachtwoord ? "text" : "password"}
                   value={wachtwoord}
                   onChange={(e) => setWachtwoord(e.target.value)}
-                  required
+                  placeholder="Wachtwoord"
+                  autoComplete="current-password"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? "Verberg" : "Toon"}
+                <button type="button" className="show-password" onClick={() => setToonWachtwoord((v) => !v)}>
+                  {toonWachtwoord ? "Verberg" : "Toon"}
                 </button>
               </div>
             </label>
 
-            <div className="leerling-options">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                />
-                Onthoud mij
+            <div className="login-options">
+              <label className="remember-me">
+                <input type="checkbox" checked={onthoudMij} onChange={(e) => setOnthoudMij(e.target.checked)} />
+                <span>Onthoud mij</span>
               </label>
-
-              <a href="/forgot-password">Wachtwoord vergeten?</a>
+              <Link href="/wachtwoord-vergeten" className="forgot-password">Wachtwoord vergeten?</Link>
             </div>
 
             {error && <p className="login-error">{error}</p>}
 
-            <button className="leerling-submit" type="submit" disabled={loading}>
-              {loading ? "Aanmelden..." : "Aanmelden →"}
+            <button type="submit" className="login-submit" disabled={loading}>
+              {loading ? "Aanmelden..." : "Aanmelden"}<span aria-hidden="true">→</span>
             </button>
+
+            <p className="account-note">Nog geen account? Vraag je account aan bij Studio SaGo.</p>
           </form>
-
-          <p className="leerling-help">
-            Nog geen account? Vraag je account aan bij Studio SaGo.
-          </p>
         </div>
 
-        <div className="leerling-login-right">
-          <div className="leerling-logo">
-            <Image
-              src="public/assets/LLportaal.png"
-              alt="Studio SaGo Leerlingportaal"
-              width={260}
-              height={260}
-              priority
-            />
+        <aside className="leerling-login-right" aria-label="Leerlingportaal illustratie">
+          <img className="portal-bg" src="/assets/leerling-login/portal-panel-bg.png" alt="" aria-hidden="true" />
+          <img className="portal-logo" src="/assets/leerling-login/studio-sago-logo.png" alt="Studio SaGo Leerlingportaal" />
+          <img className="student-circle" src="/assets/leerling-login/student-circle.png" alt="" aria-hidden="true" />
+
+          <div className="portal-card portal-card-today">
+            <img src="/assets/leerling-login/today-icon.png" alt="" aria-hidden="true" />
+            <div><strong>Vandaag</strong><span>3 taken klaar</span></div>
+            <span aria-hidden="true">→</span>
           </div>
 
-          <div className="leerling-mini-card">
-            <strong>Vandaag</strong>
-            <span>3 taken klaar</span>
+          <div className="portal-card portal-card-planner">
+            <img src="/assets/leerling-login/planner-icon.png" alt="" aria-hidden="true" />
+            <div><strong>Planner</strong><span>Weekoverzicht</span></div>
+            <span aria-hidden="true">→</span>
           </div>
-
-          <div className="leerling-mini-card second">
-            <strong>Planner</strong>
-            <span>Weekoverzicht</span>
-          </div>
-        </div>
+        </aside>
       </section>
     </main>
   );

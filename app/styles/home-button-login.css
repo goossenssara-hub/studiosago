@@ -1,0 +1,44 @@
+.back-home-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+
+  margin-bottom: 28px;
+  padding: 12px 22px;
+
+  border-radius: 999px;
+
+  background: rgba(255,255,255,0.9);
+  border: 2px solid rgba(3,54,99,.12);
+
+  color: #033663;
+  font-weight: 700;
+  font-size: 1rem;
+
+  text-decoration: none;
+
+  box-shadow: 0 8px 24px rgba(3,54,99,.08);
+
+  transition: all .25s ease;
+}
+
+.back-home-button:hover {
+  transform: translateY(-2px);
+  border-color: #28b9aa;
+  color: #28b9aa;
+  box-shadow: 0 14px 34px rgba(40,185,170,.18);
+}
+
+.back-home-button svg {
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .back-home-button {
+    width: 100%;
+    justify-content: center;
+    margin-bottom: 22px;
+    padding: 14px 18px;
+    font-size: .95rem;
+  }
+}

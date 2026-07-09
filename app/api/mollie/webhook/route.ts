@@ -20,13 +20,19 @@ export async function POST(request: Request) {
 
     const mollieApiKey = process.env.MOLLIE_API_KEY;
 
-    if (!mollieApiKey) {
-      return NextResponse.json(
-        { error: "MOLLIE_API_KEY ontbreekt." },
-        { status: 500 }
-      );
-    }
-
+if (!mollieApiKey) {
+  return NextResponse.json(
+    {
+      error: "MOLLIE_API_KEY ontbreekt.",
+      env: process.env.VERCEL_ENV,
+      hasSiteUrl: !!process.env.NEXT_PUBLIC_SITE_URL,
+      allEnvKeys: Object.keys(process.env).filter((k) =>
+        k.includes("MOLLIE")
+      ),
+    },
+    { status: 500 }
+  );
+}
     const response = await fetch(
       `https://api.mollie.com/v2/payments/${paymentId}`,
       {

@@ -12,9 +12,7 @@ export default async function AfspraakMakenPage({ searchParams }: Props) {
   const params = await searchParams;
   const passId = params.passId;
 
-  if (!passId) {
-    redirect("/dashboard");
-  }
+  if (!passId) redirect("/dashboard");
 
   const supabase = await createClient();
 
@@ -22,9 +20,7 @@ export default async function AfspraakMakenPage({ searchParams }: Props) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user?.email) {
-    redirect("/login");
-  }
+  if (!user?.email) redirect("/login");
 
   const email = user.email.trim().toLowerCase();
   const supabaseAdmin = getSupabaseAdmin();
@@ -37,9 +33,7 @@ export default async function AfspraakMakenPage({ searchParams }: Props) {
     .eq("status", "active")
     .maybeSingle();
 
-  if (!pass) {
-    redirect("/dashboard");
-  }
+  if (!pass) redirect("/dashboard");
 
   return (
     <PageShell>

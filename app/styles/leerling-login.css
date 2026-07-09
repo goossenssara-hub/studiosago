@@ -8,119 +8,108 @@
 
 .leerling-login-page {
   min-height: 100vh;
-  position: relative;
   display: grid;
   place-items: center;
-  overflow: hidden;
-  padding: 28px;
-  background:
-    radial-gradient(circle at 12% 10%, rgba(40, 185, 170, 0.18), transparent 28%),
-    radial-gradient(circle at 90% 95%, rgba(254, 160, 32, 0.13), transparent 28%),
-    linear-gradient(135deg, #f8fffc 0%, #fffdf4 45%, #f4fbfa 100%);
+  padding: 24px;
+  background: linear-gradient(135deg, #f8fffc 0%, #fffdf4 55%, #f4fbfa 100%);
   color: var(--sago-navy);
+  overflow: hidden;
 }
 
 .leerling-login-blobs {
   position: absolute;
   inset: 0 auto auto 0;
-  width: min(520px, 48vw);
+  width: min(360px, 36vw);
   pointer-events: none;
-  opacity: 0.9;
+  opacity: 0.75;
 }
 
 .leerling-login-shell {
-  position: relative;
-  z-index: 1;
-  width: min(1548px, 100%);
-  min-height: min(1016px, calc(100vh - 56px));
+  width: min(1180px, 100%);
+  height: min(760px, calc(100vh - 48px));
   display: grid;
   grid-template-columns: 1fr 1fr;
   overflow: hidden;
-  border-radius: 0 58px 58px 0;
-  background: rgba(255, 253, 244, 0.88);
-  box-shadow: 0 34px 90px rgba(3, 54, 99, 0.15);
-  backdrop-filter: blur(18px);
+  border-radius: 42px;
+  background: rgba(255, 253, 244, 0.92);
+  box-shadow: 0 24px 60px rgba(3, 54, 99, 0.14);
 }
 
 .leerling-login-left {
   position: relative;
   display: flex;
   align-items: center;
-  padding: clamp(36px, 6vw, 100px);
+  padding: 76px 72px 48px;
 }
 
 .back-home-button {
   position: absolute;
-  top: 34px;
-  left: clamp(28px, 5vw, 100px);
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 11px 18px;
+  top: 26px;
+  left: 72px;
+  padding: 9px 15px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.75);
-  border: 1px solid rgba(40, 185, 170, 0.22);
+  background: white;
+  border: 1px solid rgba(40, 185, 170, 0.24);
   color: var(--sago-navy);
+  font-size: 14px;
   font-weight: 800;
   text-decoration: none;
-  box-shadow: 0 14px 30px rgba(3, 54, 99, 0.08);
 }
 
 .leerling-login-form {
-  width: min(590px, 100%);
+  width: 100%;
+  max-width: 480px;
 }
 
 .portal-pill {
   width: fit-content;
-  margin: 0 0 28px;
-  padding: 13px 28px;
+  margin: 0 0 20px;
+  padding: 10px 22px;
   border-radius: 999px;
   background: rgba(40, 185, 170, 0.13);
   color: var(--sago-teal);
-  font-size: 17px;
+  font-size: 13px;
   font-weight: 800;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
 .leerling-login-form h1 {
   margin: 0;
   color: var(--sago-navy);
-  font-size: clamp(72px, 8vw, 118px);
-  line-height: 0.88;
+  font-size: clamp(56px, 5.4vw, 82px);
+  line-height: 0.9;
   letter-spacing: -0.055em;
 }
 
 .login-subtitle {
-  max-width: 620px;
-  margin: 34px 0 36px;
-  color: rgba(3, 54, 99, 0.64);
-  font-size: clamp(21px, 2vw, 28px);
-  line-height: 1.08;
+  margin: 24px 0 28px;
+  color: rgba(3, 54, 99, 0.62);
+  font-size: 19px;
+  line-height: 1.15;
 }
 
 .login-field {
   display: grid;
-  gap: 14px;
-  margin-top: 23px;
-  font-size: 20px;
+  gap: 10px;
+  margin-top: 18px;
+  font-size: 16px;
   font-weight: 700;
 }
 
 .login-input-wrap {
-  height: 74px;
+  height: 58px;
   display: flex;
   align-items: center;
-  gap: 18px;
-  padding: 0 20px;
-  border-radius: 28px;
+  gap: 14px;
+  padding: 0 18px;
+  border-radius: 22px;
   border: 1.5px solid rgba(40, 185, 170, 0.34);
-  background: rgba(255, 255, 255, 0.56);
-  box-shadow: inset 0 2px 10px rgba(3, 54, 99, 0.04);
+  background: rgba(255, 255, 255, 0.72);
 }
 
 .login-icon {
-  width: 28px;
+  width: 22px;
   text-align: center;
   color: var(--sago-teal);
   font-weight: 900;
@@ -128,23 +117,25 @@
 
 .login-input-wrap input {
   width: 100%;
+  min-width: 0;
   border: 0;
   outline: 0;
   background: transparent;
   color: var(--sago-navy);
   font: inherit;
-  font-size: 22px;
+  font-size: 17px;
   font-weight: 500;
 }
 
-.login-input-wrap input::placeholder { color: rgba(22, 38, 50, 0.42); }
+.login-input-wrap input::placeholder {
+  color: rgba(22, 38, 50, 0.42);
+}
 
 .show-password {
   border: 0;
   background: transparent;
   color: var(--sago-teal);
-  font: inherit;
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 700;
   cursor: pointer;
 }
@@ -153,21 +144,20 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
-  margin: 26px 0 26px;
-  font-size: 19px;
+  gap: 14px;
+  margin: 20px 0 22px;
+  font-size: 16px;
 }
 
 .remember-me {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
-  cursor: pointer;
+  gap: 10px;
 }
 
 .remember-me input {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   accent-color: var(--sago-teal);
 }
 
@@ -178,9 +168,9 @@
 }
 
 .login-error {
-  margin: 0 0 16px;
-  padding: 14px 18px;
-  border-radius: 18px;
+  margin: 0 0 14px;
+  padding: 12px 15px;
+  border-radius: 16px;
   background: rgba(254, 32, 32, 0.09);
   color: #b42318;
   font-weight: 700;
@@ -188,29 +178,37 @@
 
 .login-submit {
   width: 100%;
-  min-height: 74px;
+  min-height: 60px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 26px;
+  gap: 18px;
   border: 0;
   border-radius: 999px;
   background: linear-gradient(90deg, var(--sago-navy), var(--sago-teal));
   color: white;
-  font-size: 24px;
+  font-size: 19px;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 24px 42px rgba(3, 54, 99, 0.20);
+  box-shadow: 0 18px 34px rgba(3, 54, 99, 0.2);
 }
 
-.login-submit:disabled { opacity: 0.65; cursor: not-allowed; }
-.account-note { margin: 24px 0 0; color: rgba(3, 54, 99, 0.58); font-size: 22px; line-height: 1.08; }
+.login-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.account-note {
+  margin: 20px 0 0;
+  color: rgba(3, 54, 99, 0.58);
+  font-size: 18px;
+  line-height: 1.12;
+}
 
 .leerling-login-right {
   position: relative;
-  min-height: 100%;
   overflow: hidden;
-  border-radius: 0 58px 58px 0;
+  border-radius: 0 42px 42px 0;
 }
 
 .portal-bg {
@@ -223,55 +221,111 @@
 
 .portal-logo {
   position: absolute;
-  top: 102px;
+  top: 58px;
   left: 50%;
-  width: min(360px, 42%);
+  width: min(260px, 40%);
   transform: translateX(-50%);
-  filter: drop-shadow(0 12px 25px rgba(3, 54, 99, 0.12));
 }
 
 .student-circle {
   position: absolute;
-  top: 300px;
+  top: 220px;
   left: 50%;
-  width: min(480px, 58%);
+  width: min(340px, 54%);
   transform: translateX(-50%);
-  filter: drop-shadow(0 24px 38px rgba(3, 54, 99, 0.18));
+  filter: drop-shadow(0 18px 28px rgba(3, 54, 99, 0.16));
 }
 
 .portal-card {
   position: absolute;
-  bottom: 70px;
+  bottom: 42px;
   display: grid;
-  grid-template-columns: 78px 1fr auto;
+  grid-template-columns: 54px 1fr auto;
   align-items: center;
-  gap: 16px;
-  width: min(300px, 38%);
-  padding: 22px 26px;
-  border-radius: 28px;
-  background: rgba(255, 255, 255, 0.88);
-  box-shadow: 0 22px 45px rgba(3, 54, 99, 0.16);
+  gap: 12px;
+  width: min(240px, 40%);
+  padding: 16px 18px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 16px 34px rgba(3, 54, 99, 0.14);
   color: var(--sago-navy);
 }
 
-.portal-card-today { left: 44px; }
-.portal-card-planner { right: 44px; }
-.portal-card img { width: 70px; height: 70px; }
-.portal-card strong { display: block; font-size: 20px; }
-.portal-card span { display: block; color: rgba(3, 54, 99, 0.58); font-size: 18px; }
+.portal-card-today {
+  left: 34px;
+}
+
+.portal-card-planner {
+  right: 34px;
+}
+
+.portal-card img {
+  width: 50px;
+  height: 50px;
+}
+
+.portal-card strong {
+  display: block;
+  font-size: 16px;
+}
+
+.portal-card span {
+  display: block;
+  color: rgba(3, 54, 99, 0.58);
+  font-size: 14px;
+}
 
 @media (max-width: 1050px) {
-  .leerling-login-shell { grid-template-columns: 1fr; border-radius: 38px; }
-  .leerling-login-right { display: none; }
-  .leerling-login-left { padding-top: 96px; }
+  .leerling-login-shell {
+    width: min(620px, 100%);
+    height: auto;
+    min-height: auto;
+    grid-template-columns: 1fr;
+    border-radius: 34px;
+  }
+
+  .leerling-login-right {
+    display: none;
+  }
+
+  .leerling-login-left {
+    padding: 90px 38px 38px;
+  }
+
+  .back-home-button {
+    left: 38px;
+  }
 }
 
 @media (max-width: 640px) {
-  .leerling-login-page { padding: 14px; }
-  .leerling-login-left { padding: 90px 22px 32px; }
-  .portal-pill { font-size: 12px; letter-spacing: .12em; }
-  .leerling-login-form h1 { font-size: 64px; }
-  .login-options { align-items: flex-start; flex-direction: column; }
-  .login-input-wrap input { font-size: 17px; }
-  .account-note { font-size: 18px; }
+  .leerling-login-page {
+    padding: 14px;
+  }
+
+  .leerling-login-left {
+    padding: 82px 22px 30px;
+  }
+
+  .back-home-button {
+    left: 22px;
+    top: 22px;
+  }
+
+  .portal-pill {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+  }
+
+  .leerling-login-form h1 {
+    font-size: 52px;
+  }
+
+  .login-options {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .account-note {
+    font-size: 16px;
+  }
 }

@@ -15,14 +15,14 @@ function normalize(value: string) {
 async function getDiscount({
   supabaseAdmin,
   product,
-  parentName,
+  studentName,
   email,
   discountCode,
   amount,
 }: {
   supabaseAdmin: any;
   product: string;
-  parentName: string;
+  studentName: string;
   email: string;
   discountCode: string;
   amount: number;
@@ -58,9 +58,10 @@ async function getDiscount({
 
   const productOk = code.product === "all" || code.product === product;
   const emailOk = !code.email || normalize(code.email) === normalize(email);
+
   const nameOk =
     !code.customer_name ||
-    normalize(code.customer_name) === normalize(parentName);
+    normalize(code.customer_name) === normalize(studentName);
 
   const dateOk =
     (!code.valid_from || new Date(code.valid_from) <= now) &&
@@ -103,6 +104,7 @@ export async function POST(request: Request) {
 
     const product = String(formData.get("product") || "");
     const parentName = String(formData.get("parent_name") || "");
+    const studentName = String(formData.get("student_name") || "");
     const email = String(formData.get("email") || "");
     const phone = String(formData.get("phone") || "");
     const notes = String(formData.get("notes") || "");
@@ -148,7 +150,7 @@ export async function POST(request: Request) {
     const discount = await getDiscount({
       supabaseAdmin,
       product,
-      parentName,
+      studentName,
       email,
       discountCode,
       amount: amountNumber,
@@ -197,9 +199,9 @@ export async function POST(request: Request) {
         discountCode: discount.discountCode,
         discountAmount: discount.discountAmount.toFixed(2),
         parentName,
+        studentName,
         email,
         phone,
-        studentName: String(formData.get("student_name") || ""),
         studentAge: String(formData.get("student_age") || ""),
         schoolYear: String(formData.get("school_year") || ""),
         school: String(formData.get("school") || ""),
@@ -244,8 +246,6 @@ export async function POST(request: Request) {
       });
 
     if (saveError) {
-      console.error("SUPABASE SAVE ERROR:", saveError);
-
       return NextResponse.json(
         {
           error: saveError.message,

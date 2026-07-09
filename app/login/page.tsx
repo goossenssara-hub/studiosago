@@ -4,12 +4,15 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import "@/app/styles/loginpagina.css";
 
 export default function LoginPage() {
   const router = useRouter();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -27,7 +30,7 @@ export default function LoginPage() {
     });
 
     if (error) {
-      setErrorMessage(error.message);
+      setErrorMessage("E-mailadres of wachtwoord is niet juist.");
       setLoading(false);
       return;
     }
@@ -39,12 +42,16 @@ export default function LoginPage() {
   return (
     <main className="login-page">
       <Link href="/" className="login-back-button">
-        ← Terug naar homepage
+        <span>←</span>
+        Terug naar homepage
       </Link>
 
       <section className="login-card">
+        <div className="login-decoration login-decoration-top" />
+        <div className="login-decoration login-decoration-bottom" />
+
         <div className="login-brand">
-          <img src="/logo.png" alt="Studio SaGo" />
+          <img src="/assets/logo-studio-sago.svg" alt="Studio SaGo" />
         </div>
 
         <h1>Welkom terug!</h1>
@@ -56,47 +63,70 @@ export default function LoginPage() {
         <form onSubmit={handleLogin} className="login-form">
           <label>
             E-mailadres
-            <input
-              type="email"
-              placeholder="jouw@email.be"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
-              required
-            />
+            <div className="login-input-wrap">
+              <span className="login-icon">✉</span>
+              <input
+                type="email"
+                placeholder="jouw@email.be"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+                required
+              />
+            </div>
           </label>
 
           <label>
             Wachtwoord
-            <input
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-              required
-            />
+            <div className="login-input-wrap">
+              <span className="login-icon">🔒</span>
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                required
+              />
+              <button
+                type="button"
+                className="show-password-button"
+                onClick={() => setShowPassword((value) => !value)}
+              >
+                {showPassword ? "Verberg" : "Toon"}
+              </button>
+            </div>
           </label>
+
+          <div className="login-options">
+            <Link href="/forgot-password">Wachtwoord vergeten?</Link>
+
+            <label className="remember-row">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+              />
+              Onthoud mij
+            </label>
+          </div>
 
           {errorMessage && <p className="login-error">{errorMessage}</p>}
 
           <button type="submit" className="login-button" disabled={loading}>
-            {loading ? "Bezig met aanmelden..." : "Inloggen →"}
+            {loading ? "Bezig met aanmelden..." : "Inloggen"}
+            <span>→</span>
           </button>
         </form>
 
         <div className="login-divider">
-          <span></span>
+          <span />
           <p>of</p>
-          <span></span>
+          <span />
         </div>
 
         <Link href="/register" className="register-button">
           Account aanmaken
-        </Link>
-
-        <Link href="/forgot-password" className="forgot-password">
-          Wachtwoord vergeten?
         </Link>
       </section>
     </main>

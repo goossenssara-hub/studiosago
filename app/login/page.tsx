@@ -11,8 +11,10 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -30,7 +32,7 @@ export default function LoginPage() {
     });
 
     if (error) {
-      setErrorMessage("E-mailadres of wachtwoord is niet juist.");
+      setErrorMessage("E-mailadres of wachtwoord is niet correct.");
       setLoading(false);
       return;
     }
@@ -41,93 +43,121 @@ export default function LoginPage() {
 
   return (
     <main className="login-page">
-      <Link href="/" className="login-back-button">
+      <Link href="/" className="back-home-button">
         <span>←</span>
-        Terug naar homepage
+        Terug naar home
       </Link>
 
-      <section className="login-card">
-        <div className="login-decoration login-decoration-top" />
-        <div className="login-decoration login-decoration-bottom" />
+      <section className="login-shell">
+        <div className="login-left">
+          <div className="login-pill">Studio SaGo Leerlingportaal</div>
 
-        <div className="login-brand">
-          <img src="/assets/logo-studio-sago.svg" alt="Studio SaGo" />
+          <h1>
+            Welkom
+            <br />
+            terug!
+          </h1>
+
+          <p className="login-subtitle">
+            Meld je aan om je planner, huistaken en to-do’s te bekijken.
+          </p>
+
+          <form onSubmit={handleLogin} className="login-form">
+            <div className="form-group">
+              <label htmlFor="email">Gebruikersnaam</label>
+
+              <div className="input-shell">
+                <span className="input-icon">♡</span>
+
+                <input
+                  id="email"
+                  type="email"
+                  placeholder="voornaam.achternaam@studiosago.be"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="password">Wachtwoord</label>
+
+              <div className="input-shell">
+                <span className="input-icon">✣</span>
+
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Wachtwoord"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                  required
+                />
+
+                <button
+                  type="button"
+                  className="show-password-button"
+                  onClick={() => setShowPassword((value) => !value)}
+                >
+                  {showPassword ? "Verberg" : "Toon"}
+                </button>
+              </div>
+            </div>
+
+            <div className="login-options">
+              <label className="remember-check">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
+                <span>Onthoud mij</span>
+              </label>
+
+              <Link href="/forgot-password">Wachtwoord vergeten?</Link>
+            </div>
+
+            {errorMessage && <p className="login-error">{errorMessage}</p>}
+
+            <button type="submit" className="login-button" disabled={loading}>
+              {loading ? "Bezig met aanmelden..." : "Aanmelden →"}
+            </button>
+          </form>
+
+          <p className="login-help">
+            Nog geen account? Vraag je account aan bij Studio SaGo.
+          </p>
         </div>
 
-        <h1>Welkom terug!</h1>
-
-        <p className="login-subtitle">
-          Log in om verder te gaan met jouw lesavontuur.
-        </p>
-
-        <form onSubmit={handleLogin} className="login-form">
-          <label>
-            E-mailadres
-            <div className="login-input-wrap">
-              <span className="login-icon">✉</span>
-              <input
-                type="email"
-                placeholder="jouw@email.be"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                required
-              />
-            </div>
-          </label>
-
-          <label>
-            Wachtwoord
-            <div className="login-input-wrap">
-              <span className="login-icon">🔒</span>
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
-                required
-              />
-              <button
-                type="button"
-                className="show-password-button"
-                onClick={() => setShowPassword((value) => !value)}
-              >
-                {showPassword ? "Verberg" : "Toon"}
-              </button>
-            </div>
-          </label>
-
-          <div className="login-options">
-            <Link href="/forgot-password">Wachtwoord vergeten?</Link>
-
-            <label className="remember-row">
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-              />
-              Onthoud mij
-            </label>
+        <div className="login-right">
+          <div className="right-logo">
+            <div className="mountain-icon">⌃</div>
+            <span>Studio <strong>SaGo</strong></span>
+            <small>Leerlingportaal</small>
           </div>
 
-          {errorMessage && <p className="login-error">{errorMessage}</p>}
+          <div className="illustration-circle">
+            <div className="book-shape"></div>
+            <div className="star star-one">✦</div>
+            <div className="star star-two">✦</div>
+            <div className="star star-three">✦</div>
+            <div className="orbit orbit-one"></div>
+            <div className="orbit orbit-two"></div>
+          </div>
 
-          <button type="submit" className="login-button" disabled={loading}>
-            {loading ? "Bezig met aanmelden..." : "Inloggen"}
-            <span>→</span>
-          </button>
-        </form>
+          <div className="floating-card today-card">
+            <strong>Vandaag</strong>
+            <span>3 taken klaar</span>
+          </div>
 
-        <div className="login-divider">
-          <span />
-          <p>of</p>
-          <span />
+          <div className="floating-card planner-card">
+            <strong>Planner</strong>
+            <span>Weekoverzicht</span>
+          </div>
         </div>
-
-        <Link href="/register" className="register-button">
-          Account aanmaken
-        </Link>
       </section>
     </main>
   );

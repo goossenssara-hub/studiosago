@@ -1,0 +1,31 @@
+.year-switcher {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 26px;
+}
+
+.year-pill {
+  border: 2px solid rgba(3, 54, 99, 0.12);
+  border-radius: 999px;
+  padding: 12px 22px;
+  background: rgba(255, 255, 255, 0.86);
+  color: #033663;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(3, 54, 99, 0.08);
+  transition: 0.22s ease;
+}
+
+.year-pill:hover {
+  transform: translateY(-2px);
+  border-color: #28b9aa;
+  color: #28b9aa;
+}
+
+.year-pill.active {
+  background: linear-gradient(135deg, #28b9aa, #033663);
+  color: white;
+  border-color: transparent;
+}

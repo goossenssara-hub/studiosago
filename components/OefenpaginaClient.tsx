@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 import BottomActions from "@/components/oefenen/BottomActions";
 import ExerciseCard from "@/components/oefenen/ExerciseCard";
 import MountainProgress from "@/components/oefenen/MountainProgress";
@@ -9,9 +10,53 @@ import { generateExercises } from "@/lib/oefeningen/generateExercises";
 import type { Exercise, LevelProgress, SavedData } from "@/lib/oefeningen/types";
 import { normalize } from "@/lib/oefeningen/utils";
 
-const STORAGE_KEY = "sago-oefenklim-victor-v4";
+const supabase = createClient();
+
+const SCHOOL_YEARS = [
+  {
+    label: "1e leerjaar",
+    cloudLevel: "eerste-leerjaar",
+    storageKey: "sago-oefenklim-1e-leerjaar",
+    visible: false,
+  },
+  {
+    label: "2e leerjaar",
+    cloudLevel: "tweede-leerjaar",
+    storageKey: "sago-oefenklim-2e-leerjaar",
+    visible: false,
+  },
+  {
+    label: "3e leerjaar",
+    cloudLevel: "derde-leerjaar",
+    storageKey: "sago-oefenklim-3e-leerjaar",
+    visible: false,
+  },
+  {
+    label: "4e leerjaar",
+    cloudLevel: "vierde-leerjaar",
+    storageKey: "sago-oefenklim-4e-leerjaar",
+    visible: true,
+  },
+  {
+    label: "5e leerjaar",
+    cloudLevel: "vijfde-leerjaar",
+    storageKey: "sago-oefenklim-5e-leerjaar",
+    visible: false,
+  },
+  {
+    label: "6e leerjaar",
+    cloudLevel: "zesde-leerjaar",
+    storageKey: "sago-oefenklim-6e-leerjaar",
+    visible: true,
+  },
+] as const;
+
+type SchoolYear = (typeof SCHOOL_YEARS)[number];
 
 export default function OefenpaginaClient() {
+  const visibleYears = SCHOOL_YEARS.filter((item) => item.visible);
+  const [selectedYear, setSelectedYear] = useState<SchoolYear>(visibleYears[0]);
+
   const [level, setLevel] = useState(1);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [checked, setChecked] = useState(false);
@@ -20,33 +65,66 @@ export default function OefenpaginaClient() {
   const [progress, setProgress] = useState<Record<number, LevelProgress>>({});
   const [exerciseSeeds, setExerciseSeeds] = useState<Record<number, number>>({});
   const [loaded, setLoaded] = useState(false);
+  const [storageKey, setStorageKey] = useState(`${selectedYear.storageKey}-gast`);
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    async function loadLocalProgress() {
+      setLoaded(false);
 
-    if (stored) {
-      try {
-        const data: SavedData = JSON.parse(stored);
-        const savedLevel = data.level || 1;
-        const savedProgress = data.progress?.[savedLevel];
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-        setLevel(savedLevel);
-        setReachedLevels(data.reachedLevels || [1]);
-        setSavedExercises(data.savedExercises || {});
-        setProgress(data.progress || {});
-        setExerciseSeeds(data.exerciseSeeds || {});
+      const key = user
+        ? `${selectedYear.storageKey}-${user.id}`
+        : `${selectedYear.storageKey}-gast`;
 
-        if (savedProgress) {
-          setAnswers(savedProgress.answers || {});
-          setChecked(savedProgress.checked || false);
+      setStorageKey(key);
+
+      const stored = localStorage.getItem(key);
+
+      if (stored) {
+        try {
+          const data: SavedData = JSON.parse(stored);
+          const savedLevel = data.level || 1;
+          const savedProgress = data.progress?.[savedLevel];
+
+          setLevel(savedLevel);
+          setReachedLevels(data.reachedLevels || [1]);
+          setSavedExercises(data.savedExercises || {});
+          setProgress(data.progress || {});
+          setExerciseSeeds(data.exerciseSeeds || {});
+
+          if (savedProgress) {
+            setAnswers(savedProgress.answers || {});
+            setChecked(savedProgress.checked || false);
+          } else {
+            setAnswers({});
+            setChecked(false);
+          }
+        } catch {
+          localStorage.removeItem(key);
+          resetState();
         }
-      } catch {
-        localStorage.removeItem(STORAGE_KEY);
+      } else {
+        resetState();
       }
+
+      setLoaded(true);
     }
 
-    setLoaded(true);
-  }, []);
+    loadLocalProgress();
+  }, [selectedYear]);
+
+  function resetState() {
+    setLevel(1);
+    setAnswers({});
+    setChecked(false);
+    setReachedLevels([1]);
+    setSavedExercises({});
+    setProgress({});
+    setExerciseSeeds({});
+  }
 
   useEffect(() => {
     if (!loaded) return;
@@ -68,11 +146,72 @@ export default function OefenpaginaClient() {
     });
   }, [loaded, exerciseSeeds]);
 
+  const exercises = useMemo(
+    () => savedExercises[level] || [],
+    [level, savedExercises]
+  );
+
+  const score = exercises.reduce((total, exercise) => {
+    const given = normalize(answers[exercise.id] || "");
+    const correctAnswers = Array.isArray(exercise.answer)
+      ? exercise.answer
+      : [exercise.answer];
+
+    const correct = correctAnswers.some(
+      (answer) => normalize(answer) === given
+    );
+
+    return total + (correct ? 1 : 0);
+  }, 0);
+
+  const percentage =
+    exercises.length > 0 ? Math.round((score / exercises.length) * 100) : 0;
+
+  const savedProgress = progress[level];
+
+  const displayedScore = savedProgress?.checked ? savedProgress.score : score;
+
+  const displayedPercentage = savedProgress?.checked
+    ? savedProgress.percentage
+    : checked
+      ? percentage
+      : 0;
+
+  async function saveToCloud() {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) return;
+      if (exercises.length === 0) return;
+
+      await fetch("/api/exercises/progress", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          level: selectedYear.cloudLevel,
+          subject: "algemeen",
+          exerciseSlug: `${selectedYear.cloudLevel}-level-${level}`,
+          currentQuestion: Object.keys(answers).length,
+          totalQuestions: exercises.length,
+          correctAnswers: score,
+          wrongAnswers: exercises.length - score,
+          completed: checked,
+        }),
+      });
+    } catch (err) {
+      console.error("Voortgang opslaan mislukt:", err);
+    }
+  }
+
   useEffect(() => {
     if (!loaded) return;
 
     localStorage.setItem(
-      STORAGE_KEY,
+      storageKey,
       JSON.stringify({
         level,
         reachedLevels,
@@ -81,29 +220,29 @@ export default function OefenpaginaClient() {
         exerciseSeeds,
       })
     );
-  }, [level, reachedLevels, savedExercises, progress, exerciseSeeds, loaded]);
 
-  const exercises = useMemo(() => savedExercises[level] || [], [level, savedExercises]);
+    const timer = window.setTimeout(() => {
+      saveToCloud();
+    }, 600);
 
-  const score = exercises.reduce((total, exercise) => {
-    const given = normalize(answers[exercise.id] || "");
-    const correctAnswers = Array.isArray(exercise.answer) ? exercise.answer : [exercise.answer];
-    const correct = correctAnswers.some((answer) => normalize(answer) === given);
-    return total + (correct ? 1 : 0);
-  }, 0);
-
-  const percentage = exercises.length > 0 ? Math.round((score / exercises.length) * 100) : 0;
-  const savedProgress = progress[level];
-  const displayedScore = savedProgress?.checked ? savedProgress.score : score;
-  const displayedPercentage = savedProgress?.checked
-    ? savedProgress.percentage
-    : checked
-      ? percentage
-      : 0;
+    return () => window.clearTimeout(timer);
+  }, [
+    level,
+    reachedLevels,
+    savedExercises,
+    progress,
+    exerciseSeeds,
+    storageKey,
+    loaded,
+    selectedYear,
+  ]);
 
   function isCorrect(exercise: Exercise) {
     const given = normalize(answers[exercise.id] || "");
-    const correctAnswers = Array.isArray(exercise.answer) ? exercise.answer : [exercise.answer];
+    const correctAnswers = Array.isArray(exercise.answer)
+      ? exercise.answer
+      : [exercise.answer];
+
     return correctAnswers.some((answer) => normalize(answer) === given);
   }
 
@@ -127,6 +266,7 @@ export default function OefenpaginaClient() {
     if (!canOpenLevel(newLevel)) return;
 
     saveCurrentLevelProgress();
+
     const seed = exerciseSeeds[newLevel] || Date.now() + newLevel;
 
     setExerciseSeeds((previous) => ({
@@ -136,6 +276,7 @@ export default function OefenpaginaClient() {
 
     setSavedExercises((previous) => {
       if (previous[newLevel]) return previous;
+
       return {
         ...previous,
         [newLevel]: generateExercises(newLevel, seed),
@@ -183,6 +324,7 @@ export default function OefenpaginaClient() {
 
       setSavedExercises((previous) => {
         if (previous[next]) return previous;
+
         return {
           ...previous,
           [next]: generateExercises(next, seed),
@@ -275,11 +417,29 @@ export default function OefenpaginaClient() {
     <main className="oefenpagina">
       <section className="oefen-hero">
         <p className="eyebrow">Studio SaGo Leerlingportaal</p>
-        <h1>Oefenklim 6e leerjaar</h1>
+        <h1>Oefenklim</h1>
         <p>
-          Maak oefeningen, verbeter automatisch en klim telkens een niveau hoger.
-          Je hebt minstens 75% nodig om het volgende niveau vrij te spelen.
+          Kies je leerjaar, maak oefeningen, verbeter automatisch en klim telkens
+          een niveau hoger. Je hebt minstens 75% nodig om het volgende niveau
+          vrij te spelen.
         </p>
+
+        <div className="year-switcher">
+          {visibleYears.map((year) => (
+            <button
+              key={year.cloudLevel}
+              type="button"
+              className={
+                selectedYear.cloudLevel === year.cloudLevel
+                  ? "year-pill active"
+                  : "year-pill"
+              }
+              onClick={() => setSelectedYear(year)}
+            >
+              {year.label}
+            </button>
+          ))}
+        </div>
       </section>
 
       <MountainProgress
@@ -300,7 +460,9 @@ export default function OefenpaginaClient() {
 
       {grouped.map((group) => (
         <section className="exercise-section" key={group.category}>
-          <h2>{group.category}</h2>
+          <h2>
+            {group.category} — {selectedYear.label}
+          </h2>
 
           <div className="exercise-grid">
             {group.items.map((exercise, index) => (

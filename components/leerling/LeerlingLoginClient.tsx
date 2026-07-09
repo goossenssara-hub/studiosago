@@ -117,7 +117,6 @@ export default function LeerlingLoginClient() {
 
         <aside className="leerling-login-right" aria-label="Leerlingportaal illustratie">
           <img className="portal-bg" src="/assets/leerling-login/portal-panel-bg.png" alt="" aria-hidden="true" />
-          <img className="portal-logo" src="/assets/leerling-login/studio-sago-logo.png" alt="Studio SaGo Leerlingportaal" />
           <img className="student-circle" src="/assets/leerling-login/student-circle.png" alt="" aria-hidden="true" />
 
           <div className="portal-card portal-card-today">

@@ -1,75 +1,783 @@
 /* =========================================================
-   Admin
+   STUDIO SAGO ADMIN
+   Volledige stylesheet
    ========================================================= */
 
-.admin-layout {
-  width: min(1500px, 94%);
-  margin: 0 auto 90px;
+
+/* =========================================================
+   1. ADMIN HERO
+   ========================================================= */
+
+.admin-hero {
+  width: min(1480px, calc(100% - 64px));
+  margin: 0 auto;
+  padding: 42px 0 30px;
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 32px;
+}
+
+.admin-hero__content {
+  min-width: 0;
+}
+
+.admin-hero__eyebrow {
+  margin: 0 0 8px;
+
+  color: #28b9aa;
+
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.admin-hero h1 {
+  margin: 0;
+
+  color: #033663;
+
+  font-size: clamp(2.6rem, 5vw, 4.8rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.045em;
+}
+
+.admin-hero__description {
+  max-width: 760px;
+  margin: 16px 0 0;
+
+  color: rgba(3, 54, 99, 0.72);
+
+  font-size: clamp(1rem, 1.5vw, 1.28rem);
+  line-height: 1.5;
+}
+
+.admin-hero__actions {
+  flex: 0 0 auto;
+  padding-top: 4px;
+}
+
+
+/* =========================================================
+   2. ADMIN HOOFDLAYOUT
+   ========================================================= */
+
+.admin-shell {
+  width: min(1480px, calc(100% - 64px));
+  margin: 20px auto 90px;
 
   display: grid;
-  grid-template-columns: 290px minmax(0, 1fr);
-  gap: 32px;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 26px;
   align-items: start;
 }
 
-/* Sidebar */
-.admin-sidebar {
-  position: sticky;
-  top: 24px;
+.admin-sidebar-clean,
+.admin-content-clean {
+  border: 1px solid rgba(3, 54, 99, 0.09);
+  background: rgba(255, 255, 255, 0.9);
 
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-
-  height: fit-content;
-  padding: 24px;
-
-  border-radius: 30px;
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(255, 255, 255, 0.62);
-
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 20px 50px rgba(3, 54, 99, 0.09);
 
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
 }
 
-.admin-sidebar button {
-  width: 100%;
+.admin-content-clean {
+  min-width: 0;
+  min-height: 680px;
 
-  border: 0;
-  border-radius: 18px;
-  padding: 16px 18px;
+  padding: clamp(24px, 3vw, 38px);
+
+  border-radius: 34px;
+}
+
+
+/* =========================================================
+   3. ADMIN SIDEBAR
+   ========================================================= */
+
+.admin-sidebar-clean {
+  position: sticky;
+  top: 92px;
+
+  max-height: calc(100vh - 118px);
+  padding: 17px;
+
+  border-radius: 30px;
+
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(3, 54, 99, 0.18) transparent;
+}
+
+.admin-sidebar-clean::-webkit-scrollbar {
+  width: 7px;
+}
+
+.admin-sidebar-clean::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-sidebar-clean::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(3, 54, 99, 0.16);
+}
+
+.admin-sidebar-header {
+  padding: 8px 12px 13px;
+}
+
+.admin-sidebar-header span {
+  color: #7890a7;
+
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.admin-sidebar-nav {
+  display: grid;
+  gap: 5px;
+}
+
+.admin-sidebar-nav button {
+  width: 100%;
+  min-height: 48px;
+  padding: 11px 14px;
+
+  display: flex;
+  align-items: center;
+  gap: 11px;
+
+  border: 1px solid transparent;
+  border-radius: 16px;
 
   background: transparent;
-  color: var(--navy);
+  color: #033663;
 
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
   text-align: left;
-  font-size: 16px;
-  font-weight: 800;
+
+  cursor: pointer;
 
   transition:
-    background 0.25s ease,
-    color 0.25s ease,
-    transform 0.25s ease;
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-.admin-sidebar button:hover {
-  background: rgba(40, 185, 170, 0.12);
-  transform: translateX(3px);
+.admin-sidebar-nav button:hover {
+  border-color: rgba(40, 185, 170, 0.15);
+  background: rgba(40, 185, 170, 0.08);
+
+  transform: translateX(2px);
 }
 
-.admin-sidebar button.active {
-  background: linear-gradient(135deg, var(--social-start), var(--social-end));
-  color: #fff;
+.admin-sidebar-nav button.active {
+  border-color: rgba(251, 103, 48, 0.16);
+
+  background: linear-gradient(
+    135deg,
+    #fea020 0%,
+    #ffc34d 100%
+  );
+
+  color: #ffffff;
+
+  box-shadow: 0 11px 24px rgba(254, 160, 32, 0.24);
 }
 
-/* Layouts */
-.admin-dashboard-grid {
+.admin-menu-icon {
+  width: 24px;
+  flex: 0 0 24px;
+
+  display: grid;
+  place-items: center;
+}
+
+
+/* =========================================================
+   4. DASHBOARD ALGEMEEN
+   ========================================================= */
+
+.admin-dashboard {
+  width: 100%;
+}
+
+.admin-dashboard-header {
+  margin-bottom: 26px;
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.admin-section-eyebrow {
+  margin: 0 0 5px;
+
+  color: #28b9aa;
+
+  font-size: 0.73rem;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.admin-dashboard-header h2 {
+  margin: 0;
+
+  color: #033663;
+
+  font-size: clamp(2.1rem, 4vw, 3.1rem);
+  line-height: 1;
+  letter-spacing: -0.035em;
+}
+
+.admin-dashboard-header > div:first-child > p:last-child {
+  max-width: 650px;
+  margin: 10px 0 0;
+
+  color: rgba(3, 54, 99, 0.66);
+
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+
+/* =========================================================
+   5. DATUMKAART
+   ========================================================= */
+
+.admin-today {
+  flex: 0 0 auto;
+  min-width: 185px;
+  padding: 14px 18px;
+
+  border: 1px solid rgba(3, 54, 99, 0.08);
+  border-radius: 17px;
+
+  background: #f7fafc;
+
+  text-align: right;
+}
+
+.admin-today span {
+  display: block;
+  margin-bottom: 3px;
+
+  color: #7890a7;
+
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.admin-today strong {
+  color: #033663;
+
+  font-size: 0.9rem;
+  text-transform: capitalize;
+}
+
+
+/* =========================================================
+   6. DASHBOARD MELDINGEN EN LADEN
+   ========================================================= */
+
+.admin-dashboard-message {
+  margin-bottom: 20px;
+  padding: 14px 17px;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  border: 1px solid rgba(254, 160, 32, 0.14);
+  border-radius: 15px;
+
+  background: rgba(254, 160, 32, 0.13);
+  color: #805000;
+}
+
+.admin-dashboard-message p {
+  margin: 0;
+  font-weight: 700;
+}
+
+.admin-dashboard-loading {
+  min-height: 320px;
+
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 14px;
+
+  border-radius: 24px;
+
+  background: #f8fafc;
+  color: rgba(3, 54, 99, 0.68);
+}
+
+.admin-dashboard-loading p {
+  margin: 0;
+  font-weight: 700;
+}
+
+.admin-loading-spinner {
+  width: 36px;
+  height: 36px;
+
+  border: 4px solid rgba(3, 54, 99, 0.1);
+  border-top-color: #28b9aa;
+  border-radius: 50%;
+
+  animation: admin-spin 0.8s linear infinite;
+}
+
+@keyframes admin-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* =========================================================
+   7. STATISTIEKKAARTEN
+   ========================================================= */
+
+.admin-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.admin-stat-card {
+  min-width: 0;
+  min-height: 210px;
+  padding: 20px;
+
+  border: 1px solid rgba(3, 54, 99, 0.08);
+  border-radius: 23px;
+
+  background: #ffffff;
+  color: #033663;
+
+  text-align: left;
+
+  box-shadow: 0 13px 30px rgba(3, 54, 99, 0.07);
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.admin-stat-card:hover {
+  border-color: rgba(40, 185, 170, 0.24);
+
+  box-shadow: 0 20px 38px rgba(3, 54, 99, 0.12);
+
+  transform: translateY(-4px);
+}
+
+.admin-stat-card:focus-visible {
+  outline: 3px solid rgba(40, 185, 170, 0.28);
+  outline-offset: 3px;
+}
+
+.admin-stat-card__top {
+  margin-bottom: 23px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-stat-card__icon {
+  width: 44px;
+  height: 44px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 14px;
+
+  font-size: 1.1rem;
+}
+
+.admin-stat-card--orange .admin-stat-card__icon {
+  background: rgba(254, 160, 32, 0.14);
+}
+
+.admin-stat-card--teal .admin-stat-card__icon {
+  background: rgba(40, 185, 170, 0.13);
+}
+
+.admin-stat-card--purple .admin-stat-card__icon {
+  background: rgba(155, 129, 184, 0.15);
+}
+
+.admin-stat-card--blue .admin-stat-card__icon {
+  background: rgba(3, 54, 99, 0.09);
+}
+
+.admin-stat-card__arrow {
+  width: 30px;
+  height: 30px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 50%;
+
+  background: #f5f8fb;
+  color: #7890a7;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.admin-stat-card:hover .admin-stat-card__arrow {
+  background: #033663;
+  color: #ffffff;
+
+  transform: translateX(2px);
+}
+
+.admin-stat-card > strong {
+  display: block;
+  margin-bottom: 12px;
+
+  color: #033663;
+
+  font-size: clamp(2.5rem, 4vw, 3.6rem);
+  font-weight: 500;
+  line-height: 0.9;
+}
+
+.admin-stat-card h3 {
+  margin: 0 0 5px;
+
+  color: #033663;
+
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.admin-stat-card p {
+  margin: 0;
+
+  color: #7890a7;
+
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+
+/* =========================================================
+   8. ONDERSTE DASHBOARDPANELEN
+   ========================================================= */
+
+.admin-dashboard-panels {
+  margin-top: 18px;
+
+  display: grid;
+  grid-template-columns:
+    minmax(280px, 0.78fr)
+    minmax(520px, 1.22fr);
+  gap: 18px;
+}
+
+.admin-attention-card,
+.admin-quick-panel {
+  min-width: 0;
+  border-radius: 24px;
+}
+
+
+/* =========================================================
+   9. OPENSTAANDE BETALINGEN
+   ========================================================= */
+
+.admin-attention-card {
+  position: relative;
+
+  min-height: 294px;
+  padding: 24px;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+
+  color: #ffffff;
+}
+
+.admin-attention-card::after {
+  content: "€";
+
+  position: absolute;
+  right: -15px;
+  bottom: -70px;
+
+  color: rgba(255, 255, 255, 0.08);
+
+  font-size: 13rem;
+  font-weight: 900;
+  line-height: 1;
+
+  pointer-events: none;
+}
+
+.admin-attention-card--success {
+  background: linear-gradient(
+    145deg,
+    #033663 0%,
+    #075a8d 100%
+  );
+}
+
+.admin-attention-card--warning {
+  background: linear-gradient(
+    145deg,
+    #fb6730 0%,
+    #fea020 100%
+  );
+}
+
+.admin-attention-card__top {
+  position: relative;
+  z-index: 1;
+
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+}
+
+.admin-attention-card__icon {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 15px;
+
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.admin-attention-card__top p {
+  margin: 0 0 4px;
+
+  color: rgba(255, 255, 255, 0.8);
+
+  font-size: 0.83rem;
+  font-weight: 800;
+}
+
+.admin-attention-card__top strong {
+  display: block;
+
+  font-size: 3.1rem;
+  line-height: 1;
+}
+
+.admin-attention-card__description {
+  position: relative;
+  z-index: 1;
+
+  max-width: 330px;
+  margin: 20px 0;
+
+  color: rgba(255, 255, 255, 0.83);
+
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.admin-attention-card > button {
+  position: relative;
+  z-index: 1;
+
+  width: fit-content;
+  margin-top: auto;
+  padding: 11px 14px;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+
+  border: 0;
+  border-radius: 13px;
+
+  background: #ffffff;
+  color: #033663;
+
+  font: inherit;
+  font-size: 0.83rem;
+  font-weight: 900;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.admin-attention-card > button:hover {
+  box-shadow: 0 10px 24px rgba(3, 54, 99, 0.18);
+  transform: translateY(-2px);
+}
+
+
+/* =========================================================
+   10. SNELLE ACTIES
+   ========================================================= */
+
+.admin-quick-panel {
+  padding: 23px;
+
+  border: 1px solid rgba(3, 54, 99, 0.08);
+
+  background: #ffffff;
+
+  box-shadow: 0 13px 30px rgba(3, 54, 99, 0.06);
+}
+
+.admin-quick-panel__header {
+  margin-bottom: 15px;
+}
+
+.admin-quick-panel__header h3 {
+  margin: 0;
+
+  color: #033663;
+
+  font-size: 1.35rem;
+}
+
+.admin-quick-actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 22px;
+  gap: 9px;
 }
+
+.admin-quick-actions button {
+  min-width: 0;
+  min-height: 68px;
+  padding: 11px 12px;
+
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 27px;
+  align-items: center;
+  gap: 10px;
+
+  border: 1px solid rgba(3, 54, 99, 0.07);
+  border-radius: 15px;
+
+  background: #f8fafc;
+  color: #033663;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.admin-quick-actions button:hover {
+  border-color: rgba(40, 185, 170, 0.2);
+
+  background: rgba(40, 185, 170, 0.08);
+
+  transform: translateX(2px);
+}
+
+.admin-quick-actions button:focus-visible {
+  outline: 3px solid rgba(40, 185, 170, 0.25);
+  outline-offset: 2px;
+}
+
+.admin-quick-icon {
+  width: 40px;
+  height: 40px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 12px;
+
+  background: #ffffff;
+
+  box-shadow: 0 6px 15px rgba(3, 54, 99, 0.06);
+}
+
+.admin-quick-text {
+  min-width: 0;
+}
+
+.admin-quick-text strong {
+  display: block;
+  margin-bottom: 2px;
+
+  overflow: hidden;
+
+  font-size: 0.84rem;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-quick-text small {
+  display: block;
+
+  overflow: hidden;
+
+  color: #7890a7;
+
+  font-size: 0.7rem;
+  line-height: 1.25;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-quick-arrow {
+  width: 27px;
+  height: 27px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 50%;
+
+  background: #ffffff;
+  color: #7890a7;
+}
+
+
+/* =========================================================
+   11. ALGEMENE ADMINLIJSTEN
+   ========================================================= */
 
 .admin-request-list,
 .admin-agenda-list,
@@ -80,7 +788,11 @@
   gap: 18px;
 }
 
-/* Cards */
+
+/* =========================================================
+   12. ALGEMENE ADMIN KAARTEN
+   ========================================================= */
+
 .admin-request-card,
 .admin-agenda-item,
 .admin-workshop-card,
@@ -88,14 +800,14 @@
 .agenda-item {
   min-width: 0;
   height: auto;
-
   padding: 24px;
+
+  border: 1px solid rgba(3, 54, 99, 0.08);
   border-radius: 24px;
 
-  background: rgba(255, 255, 255, 0.76);
-  border: 1px solid rgba(3, 54, 99, 0.08);
+  background: rgba(255, 255, 255, 0.84);
 
-  box-shadow: var(--shadow-soft);
+  box-shadow: 0 14px 35px rgba(3, 54, 99, 0.08);
 
   overflow: visible;
 }
@@ -106,164 +818,82 @@
 .lesson-card-admin h3,
 .agenda-item h3 {
   margin-top: 0;
-  color: var(--navy);
+
+  color: #033663;
+
   line-height: 1.2;
   overflow-wrap: break-word;
 }
 
-/* Responsive */
-@media (max-width: 980px) {
-  .admin-layout {
-    grid-template-columns: 1fr;
-  }
 
-  .admin-sidebar {
-    position: relative;
-    top: auto;
-  }
-
-  .admin-dashboard-grid {
-    grid-template-columns: 1fr;
-  }
-}
+/* =========================================================
+   13. BESCHIKBAARHEDEN – WEEKDAGEN
+   ========================================================= */
 
 .weekday-button-row {
   display: flex;
   flex-wrap: wrap;
   gap: 14px;
-  margin-top: 10px;
-}
 
-.weekday-button {
-  width: 88px;
-  height: 88px;
-  border-radius: 999px;
-  border: 3px solid var(--orange-deep);
-  background: #ffffff;
-  color: var(--orange-deep);
-  font-weight: 800;
-  font-size: 1.2rem;
-  cursor: pointer;
-  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
-}
-
-.weekday-button.selected {
-  background: linear-gradient(135deg, var(--orange-deep), var(--orange));
-  color: #ffffff;
-}
-
-.weekday-button:hover {
-  transform: translateY(-2px);
-}
-
-.availability-toolbar {
-  display: grid;
-  grid-template-columns: 1fr 240px;
-  gap: 18px;
-  margin: 24px 0;
-}
-
-.availability-table {
-  display: grid;
-  gap: 10px;
-}
-
-.availability-row {
-  display: grid;
-  grid-template-columns: 1.4fr 1fr 1fr 1.5fr 0.7fr 0.8fr auto;
-  gap: 14px;
-  align-items: center;
-  padding: 18px 20px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(3, 54, 99, 0.08);
-}
-
-.availability-header {
-  background: rgba(3, 54, 99, 0.06);
-  font-weight: 900;
-}
-
-.availability-badge {
-  width: fit-content;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: rgba(254, 160, 32, 0.16);
-  color: var(--orange-deep);
-  font-weight: 800;
-}
-
-.status-pill {
-  width: fit-content;
-  padding: 6px 12px;
-  border-radius: 999px;
-  font-weight: 800;
-}
-
-.status-pill.active {
-  background: rgba(40, 185, 170, 0.16);
-  color: #168f82;
-}
-
-.status-pill.inactive {
-  background: rgba(254, 32, 32, 0.12);
-  color: var(--red);
-}
-
-.availability-delete {
-  border: none;
-  border-radius: 999px;
-  padding: 10px 18px;
-  background: linear-gradient(135deg, var(--orange-deep), var(--orange));
-  color: white;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.weekday-button-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
   margin-top: 10px;
 }
 
 .weekday-button {
   width: 82px;
   height: 82px;
+
+  border: 3px solid #fb6730;
   border-radius: 999px;
-  border: 3px solid var(--orange-deep);
+
   background: #ffffff;
-  color: var(--orange-deep);
-  font-weight: 800;
+  color: #fb6730;
+
+  font: inherit;
   font-size: 1.1rem;
+  font-weight: 800;
+
   cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.weekday-button:hover {
+  transform: translateY(-2px);
 }
 
 .weekday-button.selected {
-  background: linear-gradient(135deg, var(--orange-deep), var(--orange));
+  background: linear-gradient(
+    135deg,
+    #fb6730,
+    #fea020
+  );
+
   color: #ffffff;
+
+  box-shadow: 0 10px 24px rgba(254, 160, 32, 0.24);
 }
 
-@media (max-width: 1100px) {
-  .availability-toolbar {
-    grid-template-columns: 1fr;
-  }
 
-  .availability-row,
-  .availability-header {
-    grid-template-columns: 1fr;
-  }
+/* =========================================================
+   14. BESCHIKBAARHEDEN – TOOLBAR
+   ========================================================= */
 
-  .availability-header {
-    display: none;
-  }
-}
 .availability-toolbar {
-  display: grid;
-  grid-template-columns: 1fr 240px;
-  gap: 18px;
   margin: 24px 0;
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 240px;
+  gap: 18px;
 }
+
+
+/* =========================================================
+   15. BESCHIKBAARHEDEN – TABEL
+   ========================================================= */
 
 .availability-table {
   display: grid;
@@ -271,40 +901,64 @@
 }
 
 .availability-row {
+  padding: 18px 20px;
+
   display: grid;
-  grid-template-columns: 44px 1.2fr 1fr 1fr 1.4fr 0.7fr 0.8fr auto;
+  grid-template-columns:
+    44px
+    1.2fr
+    1fr
+    1fr
+    1.4fr
+    0.7fr
+    0.8fr
+    auto;
   gap: 14px;
   align-items: center;
-  padding: 18px 20px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.78);
+
   border: 1px solid rgba(3, 54, 99, 0.08);
+  border-radius: 20px;
+
+  background: rgba(255, 255, 255, 0.82);
 }
 
 .availability-header {
   background: rgba(3, 54, 99, 0.06);
+
   font-weight: 900;
 }
 
 .availability-row input[type="checkbox"] {
   width: 18px;
   height: 18px;
-  accent-color: var(--orange-deep);
+
+  accent-color: #fb6730;
 }
 
 .availability-badge {
   width: fit-content;
   padding: 6px 12px;
+
   border-radius: 999px;
+
   background: rgba(254, 160, 32, 0.16);
-  color: var(--orange-deep);
+  color: #fb6730;
+
   font-weight: 800;
 }
+
+
+/* =========================================================
+   16. STATUSBADGES
+   ========================================================= */
 
 .status-pill {
   width: fit-content;
   padding: 6px 12px;
+
   border-radius: 999px;
+
+  font-size: 0.84rem;
   font-weight: 800;
 }
 
@@ -315,39 +969,79 @@
 
 .status-pill.inactive {
   background: rgba(254, 32, 32, 0.12);
-  color: var(--red);
+  color: #d91d1d;
 }
+
+
+/* =========================================================
+   17. BESCHIKBAARHEID VERWIJDEREN
+   ========================================================= */
 
 .availability-delete {
+  padding: 10px 18px;
+
   border: none;
   border-radius: 999px;
-  padding: 10px 18px;
-  background: linear-gradient(135deg, var(--orange-deep), var(--orange));
-  color: white;
+
+  background: linear-gradient(
+    135deg,
+    #fb6730,
+    #fea020
+  );
+
+  color: #ffffff;
+
+  font: inherit;
   font-weight: 800;
+
   cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
+.availability-delete:hover {
+  box-shadow: 0 10px 24px rgba(254, 160, 32, 0.24);
+  transform: translateY(-2px);
+}
+
+
+/* =========================================================
+   18. BULKACTIES BESCHIKBAARHEDEN
+   ========================================================= */
+
 .availability-bulk-actions {
+  margin: 18px 0;
+
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin: 18px 0;
 }
 
 .availability-bulk-actions button {
+  padding: 12px 20px;
+
   border: none;
   border-radius: 999px;
-  padding: 12px 20px;
+
   background: rgba(3, 54, 99, 0.08);
-  color: var(--navy);
+  color: #033663;
+
+  font: inherit;
   font-weight: 800;
+
   cursor: pointer;
 }
 
 .availability-bulk-actions button:last-child {
-  background: linear-gradient(135deg, var(--orange-deep), var(--orange));
-  color: white;
+  background: linear-gradient(
+    135deg,
+    #fb6730,
+    #fea020
+  );
+
+  color: #ffffff;
 }
 
 .availability-bulk-actions button:disabled {
@@ -355,21 +1049,37 @@
   cursor: not-allowed;
 }
 
+
+/* =========================================================
+   19. PAGINERING BESCHIKBAARHEDEN
+   ========================================================= */
+
 .availability-pagination {
+  margin-top: 24px;
+
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 18px;
-  margin-top: 24px;
 }
 
 .availability-pagination button {
+  padding: 12px 22px;
+
   border: none;
   border-radius: 999px;
-  padding: 12px 22px;
-  background: linear-gradient(135deg, var(--orange-deep), var(--orange));
-  color: white;
+
+  background: linear-gradient(
+    135deg,
+    #fb6730,
+    #fea020
+  );
+
+  color: #ffffff;
+
+  font: inherit;
   font-weight: 800;
+
   cursor: pointer;
 }
 
@@ -378,134 +1088,130 @@
   cursor: not-allowed;
 }
 
-.weekday-button-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
-  margin-top: 10px;
-}
 
-.weekday-button {
-  width: 82px;
-  height: 82px;
-  border-radius: 999px;
-  border: 3px solid var(--orange-deep);
-  background: #ffffff;
-  color: var(--orange-deep);
-  font-weight: 800;
-  font-size: 1.1rem;
-  cursor: pointer;
-}
+/* =========================================================
+   20. LEERLINGPROFIELKNOP
+   ========================================================= */
 
-.weekday-button.selected {
-  background: linear-gradient(135deg, var(--orange-deep), var(--orange));
-  color: #ffffff;
-}
-
-@media (max-width: 1100px) {
-  .availability-toolbar {
-    grid-template-columns: 1fr;
-  }
-
-  .availability-row,
-  .availability-header {
-    grid-template-columns: 1fr;
-  }
-
-  .availability-header {
-    display: none;
-  }
-}
 .student-profile-button {
   width: 100%;
+  padding: 18px 22px;
+
   border: 1px solid rgba(3, 54, 99, 0.12);
   border-radius: 22px;
-  padding: 18px 22px;
-  background: rgba(255, 255, 255, 0.78);
-  color: var(--navy);
-  text-align: left;
-  font-weight: 850;
+
+  background: rgba(255, 255, 255, 0.82);
+  color: #033663;
+
+  font: inherit;
   font-size: 1.05rem;
+  font-weight: 850;
+  text-align: left;
+
   cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
 }
 
 .student-profile-button:hover {
   background: rgba(254, 160, 32, 0.12);
-}
-.profile-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 99999;
-  padding: 32px;
-  background: rgba(3, 54, 99, 0.72);
-  overflow-y: auto;
+
+  transform: translateY(-2px);
 }
 
-.profile-modal {
-  max-width: 1050px;
-  margin: 0 auto;
-  padding: 32px;
-  border-radius: 32px;
-  background: white;
-}
+
+/* =========================================================
+   21. LEERLINGPROFIELKAART
+   ========================================================= */
+
 .student-profile-card {
   width: 100%;
+  padding: 30px 42px;
+
   display: grid;
-  grid-template-columns: 110px 1fr 210px;
+  grid-template-columns: 110px minmax(0, 1fr) 210px;
   align-items: center;
   gap: 28px;
+
   border: 2px solid rgba(3, 54, 99, 0.12);
   border-radius: 34px;
-  padding: 30px 42px;
+
   background: rgba(255, 255, 255, 0.88);
-  color: var(--navy);
+  color: #033663;
+
   text-align: left;
+
   cursor: pointer;
-  transition: 0.2s ease;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .student-profile-card:hover {
   background: rgba(254, 160, 32, 0.08);
+
+  box-shadow: 0 16px 36px rgba(3, 54, 99, 0.09);
+
   transform: translateY(-2px);
 }
 
 .student-avatar {
   width: 92px;
   height: 92px;
-  border-radius: 50%;
+
   display: grid;
   place-items: center;
+
+  border-radius: 50%;
+
   background: rgba(40, 185, 170, 0.16);
-  color: var(--navy);
+  color: #033663;
+
   font-size: 2rem;
   font-weight: 900;
 }
 
 .student-card-info {
+  min-width: 0;
+
   display: grid;
   gap: 6px;
 }
 
 .student-card-info strong {
+  color: #033663;
+
   font-size: 1.45rem;
-  color: var(--navy);
 }
 
 .student-card-info span {
+  color: #033663;
+
   font-size: 1.15rem;
-  color: var(--navy);
 }
 
 .student-card-info small {
-  font-size: 1rem;
   color: rgba(3, 54, 99, 0.55);
+
+  font-size: 1rem;
 }
+
+
+/* =========================================================
+   22. FOTO-TOESTEMMING
+   ========================================================= */
 
 .student-photo-status {
   display: grid;
   justify-items: center;
   gap: 8px;
-  color: var(--navy);
+
+  color: #033663;
+
   font-weight: 800;
 }
 
@@ -520,6 +1226,7 @@
 
 .camera-icon.denied {
   filter: grayscale(1);
+  opacity: 0.6;
 }
 
 .student-photo-status small {
@@ -527,221 +1234,367 @@
   text-align: center;
 }
 
-@media (max-width: 900px) {
-  .student-profile-card {
-    grid-template-columns: 1fr;
-    justify-items: center;
-    text-align: center;
-  }
-}
-.admin-hero-clean {
-  width: min(1320px, calc(100% - 40px));
-  margin: 0 auto 28px;
-  padding: 42px 0 20px;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 24px;
+
+/* =========================================================
+   23. PROFIELMODAL
+   ========================================================= */
+
+.profile-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+
+  padding: 32px;
+
+  background: rgba(3, 54, 99, 0.72);
+
+  overflow-y: auto;
+
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
 }
 
-.admin-hero-clean h1 {
-  margin: 6px 0 10px;
-  color: #033663;
-  font-size: clamp(2.4rem, 5vw, 4rem);
-  line-height: 1;
-}
+.profile-modal {
+  width: min(1050px, 100%);
+  margin: 0 auto;
+  padding: 32px;
 
-.admin-hero-clean p {
-  max-width: 720px;
-  color: #466785;
-  font-size: 1.25rem;
-}
-
-.admin-shell {
-  width: min(1320px, calc(100% - 40px));
-  margin: 0 auto 80px;
-  display: grid;
-  grid-template-columns: 260px 1fr;
-  gap: 26px;
-  align-items: start;
-}
-
-.admin-sidebar-clean,
-.admin-content-clean {
   border-radius: 32px;
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(3, 54, 99, 0.08);
-  box-shadow: 0 20px 50px rgba(3, 54, 99, 0.1);
-  backdrop-filter: blur(14px);
+
+  background: #ffffff;
+
+  box-shadow: 0 28px 80px rgba(3, 54, 99, 0.28);
 }
 
-.admin-sidebar-clean {
-  position: sticky;
-  top: 100px;
-  padding: 18px;
-  display: grid;
-  gap: 8px;
-}
 
-.admin-sidebar-title {
-  padding: 8px 12px 14px;
-  color: #7890a7;
-  font-size: 0.8rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-}
+/* =========================================================
+   24. ALGEMENE FORMULIERMELDING
+   ========================================================= */
 
-.admin-sidebar-clean button {
-  width: 100%;
-  border: 0;
-  border-radius: 18px;
-  padding: 14px 16px;
-  background: transparent;
-  color: #033663;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font: inherit;
+.form-message {
+  margin: 0 0 20px;
+  padding: 14px 18px;
+
+  border-radius: 16px;
+
+  background: rgba(40, 185, 170, 0.12);
+  color: #126f67;
+
   font-weight: 700;
-  text-align: left;
-  cursor: pointer;
-  transition: 0.2s ease;
 }
 
-.admin-sidebar-clean button:hover {
-  background: rgba(40, 185, 170, 0.1);
-  transform: translateX(3px);
+
+/* =========================================================
+   25. PLACEHOLDERS
+   ========================================================= */
+
+.admin-placeholder {
+  min-height: 420px;
+
+  display: grid;
+  place-items: center;
+  align-content: center;
+
+  padding: 40px;
+
+  border: 1px dashed rgba(3, 54, 99, 0.18);
+  border-radius: 26px;
+
+  background: rgba(248, 250, 252, 0.8);
+
+  text-align: center;
 }
 
-.admin-sidebar-clean button.active {
-  background: linear-gradient(135deg, #fea020, #ffc44d);
-  color: white;
-  box-shadow: 0 12px 28px rgba(254, 160, 32, 0.28);
-}
+.admin-placeholder h2 {
+  margin: 0 0 10px;
 
-.admin-content-clean {
-  min-height: 620px;
-  padding: 28px;
-}
-
-.dashboard-heading {
-  margin-bottom: 22px;
-}
-
-.dashboard-heading h2 {
-  margin: 0 0 6px;
   color: #033663;
+
   font-size: 2rem;
 }
 
-.dashboard-heading p {
+.admin-placeholder p {
+  max-width: 520px;
   margin: 0;
-  color: #55718d;
+
+  color: rgba(3, 54, 99, 0.65);
+
+  line-height: 1.6;
 }
 
-.admin-stat-grid-clean {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(150px, 1fr));
-  gap: 18px;
-}
 
-.admin-stat-card-clean {
-  border: 1px solid rgba(3, 54, 99, 0.08);
-  border-radius: 26px;
+/* =========================================================
+   26. TABLE-CARDS
+   ========================================================= */
+
+.table-card {
   padding: 24px;
-  background: white;
-  text-align: left;
-  cursor: pointer;
-  box-shadow: 0 14px 34px rgba(3, 54, 99, 0.08);
-  transition: 0.2s ease;
+
+  border: 1px solid rgba(3, 54, 99, 0.08);
+  border-radius: 24px;
+
+  background: rgba(255, 255, 255, 0.86);
+
+  box-shadow: 0 14px 34px rgba(3, 54, 99, 0.07);
 }
 
-.admin-stat-card-clean:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 18px 42px rgba(3, 54, 99, 0.14);
+
+/* =========================================================
+   27. RESPONSIVE – GROTE TABLET
+   ========================================================= */
+
+@media (max-width: 1200px) {
+  .admin-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-dashboard-panels {
+    grid-template-columns: 1fr;
+  }
+
+  .availability-row {
+    grid-template-columns:
+      36px
+      1.1fr
+      0.8fr
+      0.8fr
+      1.2fr
+      0.7fr
+      auto;
+  }
 }
 
-.stat-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 16px;
-  display: grid;
-  place-items: center;
-  background: #f2fbfa;
-  margin-bottom: 18px;
-}
 
-.admin-stat-card-clean strong {
-  display: block;
-  color: #033663;
-  font-size: 2.3rem;
-  line-height: 1;
-  margin-bottom: 8px;
-}
+/* =========================================================
+   28. RESPONSIVE – TABLET
+   ========================================================= */
 
-.admin-stat-card-clean p {
-  margin: 0;
-  color: #496985;
-  font-weight: 700;
-}
+@media (max-width: 960px) {
+  .admin-hero {
+    width: min(100% - 40px, 1480px);
+    padding-top: 30px;
+  }
 
-.admin-quick-grid {
-  margin-top: 26px;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-}
-
-.admin-quick-grid button {
-  border: 0;
-  border-radius: 20px;
-  padding: 18px;
-  background: #033663;
-  color: white;
-  font-weight: 800;
-  cursor: pointer;
-  box-shadow: 0 14px 30px rgba(3, 54, 99, 0.18);
-}
-
-@media (max-width: 1100px) {
   .admin-shell {
+    width: min(100% - 40px, 1480px);
+
     grid-template-columns: 1fr;
   }
 
   .admin-sidebar-clean {
     position: static;
-    display: flex;
-    overflow-x: auto;
+
+    max-height: none;
+
+    overflow: hidden;
   }
 
-  .admin-sidebar-title {
+  .admin-sidebar-header {
     display: none;
   }
 
-  .admin-sidebar-clean button {
+  .admin-sidebar-nav {
+    display: flex;
+    gap: 8px;
+
+    overflow-x: auto;
+
+    scrollbar-width: thin;
+  }
+
+  .admin-sidebar-nav button {
+    width: auto;
     min-width: max-content;
   }
 
-  .admin-stat-grid-clean {
-    grid-template-columns: repeat(2, 1fr);
+  .availability-toolbar {
+    grid-template-columns: 1fr;
   }
 
-  .admin-quick-grid {
+  .availability-row {
     grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .availability-header {
+    display: none;
+  }
+
+  .student-profile-card {
+    grid-template-columns: 1fr;
+
+    justify-items: center;
+
+    padding: 26px;
+
+    text-align: center;
+  }
+
+  .student-card-info {
+    justify-items: center;
   }
 }
 
-@media (max-width: 640px) {
-  .admin-hero-clean {
+
+/* =========================================================
+   29. RESPONSIVE – MOBIEL
+   ========================================================= */
+
+@media (max-width: 700px) {
+  .admin-hero {
     flex-direction: column;
   }
 
-  .admin-stat-grid-clean {
-    grid-template-columns: 1fr;
+  .admin-hero__actions {
+    width: 100%;
   }
 
   .admin-content-clean {
-    padding: 18px;
+    min-height: 0;
+    padding: 20px;
+
+    border-radius: 26px;
+  }
+
+  .admin-dashboard-header {
+    flex-direction: column;
+  }
+
+  .admin-today {
+    width: 100%;
+    min-width: 0;
+
+    text-align: left;
+  }
+
+  .admin-stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-stat-card {
+    min-height: 185px;
+  }
+
+  .admin-dashboard-panels {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-quick-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .weekday-button {
+    width: 68px;
+    height: 68px;
+
+    font-size: 0.95rem;
+  }
+
+  .availability-bulk-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .availability-bulk-actions button {
+    width: 100%;
+  }
+
+  .availability-pagination {
+    flex-wrap: wrap;
+  }
+
+  .profile-modal-backdrop {
+    padding: 16px;
+  }
+
+  .profile-modal {
+    padding: 22px;
+
+    border-radius: 24px;
+  }
+}
+
+
+/* =========================================================
+   30. RESPONSIVE – KLEINE MOBIEL
+   ========================================================= */
+
+@media (max-width: 480px) {
+  .admin-hero,
+  .admin-shell {
+    width: min(100% - 24px, 1480px);
+  }
+
+  .admin-hero {
+    padding-top: 22px;
+  }
+
+  .admin-hero h1 {
+    font-size: 2.55rem;
+  }
+
+  .admin-hero__description {
+    font-size: 0.98rem;
+  }
+
+  .admin-content-clean {
+    padding: 16px;
+  }
+
+  .admin-dashboard-header h2 {
+    font-size: 2rem;
+  }
+
+  .admin-attention-card,
+  .admin-quick-panel {
+    padding: 19px;
+  }
+
+  .admin-attention-card__top {
+    flex-direction: column;
+  }
+
+  .admin-quick-actions button {
+    grid-template-columns: 38px minmax(0, 1fr) 27px;
+  }
+
+  .admin-quick-icon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .admin-quick-text strong,
+  .admin-quick-text small {
+    white-space: normal;
+  }
+
+  .weekday-button-row {
+    gap: 9px;
+  }
+
+  .weekday-button {
+    width: 58px;
+    height: 58px;
+
+    border-width: 2px;
+
+    font-size: 0.8rem;
+  }
+
+  .student-avatar {
+    width: 78px;
+    height: 78px;
+  }
+
+  .student-card-info strong {
+    font-size: 1.25rem;
+  }
+
+  .student-card-info span {
+    font-size: 1rem;
+  }
+
+  .student-card-info small {
+    font-size: 0.9rem;
   }
 }

@@ -1,5 +1,12 @@
 import PageShell from "@/components/PageShell";
 import Link from "next/link";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+const MAX_INSCHRIJVINGEN = 9;
+const PRODUCT_SLUG = "klaar-voor-de-sprong-middelbaar";
 
 type AanbodItem = {
   id: string;
@@ -12,6 +19,7 @@ type AanbodItem = {
   href?: string;
   externalHref?: string;
   buttonText?: string;
+  limited?: boolean;
 };
 
 const aanbod: AanbodItem[] = [
@@ -65,8 +73,9 @@ const aanbod: AanbodItem[] = [
     service: "ouderbegeleiding",
     text: [
       "Ik help je op weg om een goede leeromgeving te creëren en je kind te ondersteunen bij het leren.",
-      "Voor deze sessie kan je vragen doorsturen, zodat we gericht aan de slag kunnen. De leerling mag aanwezig zijn, maar dat is niet verplicht.",
-      "We bespreken hoe je je kind kan helpen met leren, plannen, concentreren en motiveren.",
+      "Voor deze sessie kan je vragen doorsturen, zodat we gericht aan de slag kunnen.",
+      "De leerling mag aanwezig zijn, maar dat is niet verplicht.",
+      "We bespreken leren, plannen, concentreren en motiveren.",
       "Aan huis binnen 15 km rond Peer of digitaal.",
     ],
   },
@@ -81,28 +90,56 @@ const aanbod: AanbodItem[] = [
     buttonText: "Meer informatie",
     text: [
       "Interactieve en leerrijke workshops gekoppeld aan de leerplannen van het Vlaamse onderwijs.",
-      "Leerlingen ontdekken leerinhouden op een actieve, visuele en motiverende manier.",
     ],
   },
   {
-    id: "klaar-voor-de-sprong-middelbaar",
+    id: PRODUCT_SLUG,
     badge: "Maximum 9 deelnemers",
     label: "Vierdaagse voorbereiding",
     title: "Klaar voor de Sprong naar het middelbaar",
     price: "€250",
-    service: "klaar-voor-de-sprong-middelbaar",
-    href: "/webshop/klaar-voor-de-sprong-middelbaar",
+    service: PRODUCT_SLUG,
+    href: `/webshop/${PRODUCT_SLUG}`,
     buttonText: "Schrijf je nu in",
+    limited: true,
     text: [
       "Een intensieve voorbereiding op de overstap van het zesde leerjaar naar het eerste middelbaar.",
       "We werken aan leren leren, plannen, organiseren, taal, wiskunde en zelfvertrouwen.",
       "Door de groep te beperken tot maximaal 9 leerlingen is er voldoende ruimte voor persoonlijke begeleiding.",
-      "Het aantal plaatsen is beperkt. Inschrijven kan rechtstreeks via de webshop.",
     ],
   },
 ];
 
-export default function BasisschoolPage() {
+async function getAantalInschrijvingen() {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const { count, error } = await supabaseAdmin
+    .from("orders")
+    .select("id", {
+      count: "exact",
+      head: true,
+    })
+    .eq("product_slug", PRODUCT_SLUG)
+    .in("status", ["paid", "open", "pending"]);
+
+  if (error) {
+    console.error("Aantal inschrijvingen ophalen mislukt:", error);
+    return 0;
+  }
+
+  return count ?? 0;
+}
+
+export default async function BasisschoolPage() {
+  const aantalInschrijvingen = await getAantalInschrijvingen();
+
+  const plaatsenOver = Math.max(
+    0,
+    MAX_INSCHRIJVINGEN - aantalInschrijvingen
+  );
+
+  const isVolzet = plaatsenOver === 0;
+
   return (
     <PageShell>
       <main className="basisschool-page">
@@ -128,11 +165,25 @@ export default function BasisschoolPage() {
               `/contact?service=${encodeURIComponent(item.service)}`;
 
             const isExternal = Boolean(item.externalHref);
+            const itemIsVolzet = item.limited && isVolzet;
 
             return (
-              <article className="aanbod-detail-card" key={item.id}>
+              <article
+                className={`aanbod-detail-card ${
+                  itemIsVolzet ? "aanbod-detail-card-volzet" : ""
+                }`}
+                key={item.id}
+              >
                 <div className="aanbod-card-top">
-                  <span className="aanbod-badge">{item.badge}</span>
+                  <span className="aanbod-badge">
+                    {item.limited
+                      ? isVolzet
+                        ? "Volzet"
+                        : `Nog ${plaatsenOver} ${
+                            plaatsenOver === 1 ? "plaats" : "plaatsen"
+                          }`
+                      : item.badge}
+                  </span>
 
                   <p className="eyebrow">{item.label}</p>
 
@@ -146,14 +197,34 @@ export default function BasisschoolPage() {
                     <p key={paragraph}>{paragraph}</p>
                   ))}
 
-                  <Link
-                    className="primary-action"
-                    href={href}
-                    target={isExternal ? "_blank" : undefined}
-                    rel={isExternal ? "noopener noreferrer" : undefined}
-                  >
-                    {item.buttonText || "Neem contact op"}
-                  </Link>
+                  {item.limited && !isVolzet && (
+                    <p className="plaatsen-melding">
+                      Er zijn nog{" "}
+                      <strong>
+                        {plaatsenOver}{" "}
+                        {plaatsenOver === 1 ? "plaats" : "plaatsen"}
+                      </strong>{" "}
+                      beschikbaar.
+                    </p>
+                  )}
+
+                  {itemIsVolzet ? (
+                    <span
+                      className="primary-action primary-action-disabled"
+                      aria-disabled="true"
+                    >
+                      Inschrijvingen volzet
+                    </span>
+                  ) : (
+                    <Link
+                      className="primary-action"
+                      href={href}
+                      target={isExternal ? "_blank" : undefined}
+                      rel={isExternal ? "noopener noreferrer" : undefined}
+                    >
+                      {item.buttonText || "Neem contact op"}
+                    </Link>
+                  )}
                 </div>
               </article>
             );

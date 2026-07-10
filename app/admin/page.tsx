@@ -11,9 +11,27 @@ import AdminWorkshops from "@/components/admin/AdminWorkshops";
 import AdminAvailability from "@/components/admin/AdminAvailability";
 import AdminParents from "@/components/admin/AdminParents";
 import AdminStudents from "@/components/admin/AdminStudents";
+import DiscountCodesAdmin from "@/components/DiscountCodesAdmin";
 import LogoutButton from "@/components/admin/LogoutButton";
 
-const tabs = [
+type AdminTab =
+  | "dashboard"
+  | "requests"
+  | "agenda"
+  | "availability"
+  | "students"
+  | "parents"
+  | "cards"
+  | "invoices"
+  | "payments"
+  | "discounts"
+  | "workshops";
+
+const tabs: {
+  id: AdminTab;
+  label: string;
+  icon: string;
+}[] = [
   { id: "dashboard", label: "Dashboard", icon: "📊" },
   { id: "requests", label: "Aanvragen", icon: "📥" },
   { id: "agenda", label: "Agenda", icon: "📅" },
@@ -23,49 +41,83 @@ const tabs = [
   { id: "cards", label: "Beurtenkaarten", icon: "🎟️" },
   { id: "invoices", label: "Facturen", icon: "📄" },
   { id: "payments", label: "Betalingen", icon: "💶" },
+  { id: "discounts", label: "Kortingscodes", icon: "🏷️" },
   { id: "workshops", label: "Workshops", icon: "🏕️" },
 ];
 
 export default function AdminClient() {
-  const [tab, setTab] = useState("dashboard");
+  const [tab, setTab] = useState<AdminTab>("dashboard");
 
   return (
     <PageShell>
-      <section className="admin-hero-clean">
-        <div>
-          <p className="eyebrow">Admin</p>
+      <section className="admin-hero">
+        <div className="admin-hero__content">
+          <p className="admin-hero__eyebrow">Adminomgeving</p>
+
           <h1>Studio SaGo Beheer</h1>
-          <p>Een duidelijk overzicht van aanvragen, lessen, betalingen en beurtenkaarten.</p>
+
+          <p className="admin-hero__description">
+            Beheer aanvragen, lessen, klanten, betalingen en beurtenkaarten
+            vanuit één overzichtelijke omgeving.
+          </p>
         </div>
-        <LogoutButton />
+
+        <div className="admin-hero__actions">
+          <LogoutButton />
+        </div>
       </section>
 
       <section className="admin-shell">
         <aside className="admin-sidebar-clean">
-          <div className="admin-sidebar-title">Menu</div>
+          <div className="admin-sidebar-header">
+            <span>Menu</span>
+          </div>
 
-          {tabs.map((item) => (
-            <button
-              key={item.id}
-              className={tab === item.id ? "active" : ""}
-              onClick={() => setTab(item.id)}
-            >
-              <span>{item.icon}</span>
-              {item.label}
-            </button>
-          ))}
+          <nav className="admin-sidebar-nav" aria-label="Adminmenu">
+            {tabs.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className={tab === item.id ? "active" : ""}
+                onClick={() => setTab(item.id)}
+              >
+                <span className="admin-menu-icon" aria-hidden="true">
+                  {item.icon}
+                </span>
+
+                <span>{item.label}</span>
+              </button>
+            ))}
+          </nav>
         </aside>
 
         <main className="admin-content-clean">
-          {tab === "dashboard" && <AdminDashboard setTab={setTab} />}
+          {tab === "dashboard" && (
+            <AdminDashboard setTab={(nextTab) => setTab(nextTab as AdminTab)} />
+          )}
+
           {tab === "requests" && <AdminRequests />}
           {tab === "agenda" && <AdminAgenda />}
           {tab === "availability" && <AdminAvailability />}
           {tab === "students" && <AdminStudents />}
           {tab === "parents" && <AdminParents />}
           {tab === "cards" && <AdminLessonCards />}
-          {tab === "invoices" && <AdminPlaceholder title="Facturen" text="Hier komen facturen en documenten." />}
-          {tab === "payments" && <AdminPlaceholder title="Betalingen" text="Hier volg je betalingen op." />}
+
+          {tab === "invoices" && (
+            <AdminPlaceholder
+              title="Facturen"
+              text="Hier beheer en download je facturen."
+            />
+          )}
+
+          {tab === "payments" && (
+            <AdminPlaceholder
+              title="Betalingen"
+              text="Hier volg je Mollie-betalingen en terugbetalingen op."
+            />
+          )}
+
+          {tab === "discounts" && <DiscountCodesAdmin />}
           {tab === "workshops" && <AdminWorkshops />}
         </main>
       </section>

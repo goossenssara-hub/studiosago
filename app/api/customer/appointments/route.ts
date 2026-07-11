@@ -23,6 +23,7 @@ export async function GET(): Promise<NextResponse> {
     if (userError || !user?.email) {
       return NextResponse.json(
         {
+          success: false,
           error: "Je bent niet aangemeld.",
         },
         {
@@ -57,6 +58,8 @@ export async function GET(): Promise<NextResponse> {
       `)
       .ilike("customer_email", email)
       .neq("status", "cancelled")
+      .not("appointment_date", "is", null)
+      .not("appointment_time", "is", null)
       .order("appointment_date", {
         ascending: true,
         nullsFirst: false,
@@ -74,6 +77,7 @@ export async function GET(): Promise<NextResponse> {
 
       return NextResponse.json(
         {
+          success: false,
           error:
             "De afspraken konden niet geladen worden.",
           details: error.message,
@@ -105,6 +109,7 @@ export async function GET(): Promise<NextResponse> {
 
     return NextResponse.json(
       {
+        success: false,
         error:
           error instanceof Error
             ? error.message

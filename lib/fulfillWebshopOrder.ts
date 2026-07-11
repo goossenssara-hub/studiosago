@@ -1,11 +1,5 @@
 type SupabaseAdmin = any;
 
-export type WebshopPaymentMethod =
-  | "mollie"
-  | "waardebon"
-  | "gratis"
-  | "admin";
-
 export type WebshopOrderMetadata = {
   checkoutId?: string;
 
@@ -32,7 +26,12 @@ export type WebshopOrderMetadata = {
   textType?: string;
   notes?: string;
 
-  paymentMethod?: WebshopPaymentMethod;
+  paymentMethod?: string;
+
+  /*
+   * Nodig voor volledig gratis diensten of waardebonnen
+   * die het volledige bedrag dekken.
+   */
   isFreeOrder?: boolean;
 };
 
@@ -42,7 +41,7 @@ type FulfillWebshopOrderArguments = {
   metadata: WebshopOrderMetadata;
 };
 
-export type FulfillWebshopOrderResult = {
+type FulfillWebshopOrderResult = {
   success: true;
   duplicate: boolean;
   contactId: string | null;
@@ -51,33 +50,29 @@ export type FulfillWebshopOrderResult = {
   isFreeOrder: boolean;
 };
 
-function clean(value: unknown): string {
+function clean(value: unknown) {
   return String(value ?? "").trim();
 }
 
-function normalizeEmail(value: unknown): string {
+function normalizeEmail(value: unknown) {
   return clean(value).toLowerCase();
 }
 
-function toSafeNumber(value: unknown, fallback = 0): number {
+function toSafeNumber(value: unknown, fallback = 0) {
   const parsed = Number(value);
 
-  if (!Number.isFinite(parsed)) {
-    return fallback;
-  }
-
-  return parsed;
+  return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-function roundCurrency(value: number): number {
+function roundCurrency(value: number) {
   return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
-function formatCurrency(value: number): string {
+function formatCurrency(value: number) {
   return `€${roundCurrency(value).toFixed(2)}`;
 }
 
-function makeReference(paymentId: string): string {
+function makeReference(paymentId: string) {
   return `Betalingsreferentie: ${paymentId}`;
 }
 
@@ -89,9 +84,11 @@ function getPaymentMethod({
   paymentId: string;
   metadata: WebshopOrderMetadata;
   isFreeOrder: boolean;
-}): WebshopPaymentMethod {
-  if (metadata.paymentMethod) {
-    return metadata.paymentMethod;
+}) {
+  const suppliedMethod = clean(metadata.paymentMethod);
+
+  if (suppliedMethod) {
+    return suppliedMethod;
   }
 
   if (paymentId.startsWith("voucher_")) {
@@ -113,38 +110,6 @@ function getPaymentMethod({
   return "mollie";
 }
 
-function getPaymentLabel({
-  paymentMethod,
-  isFreeOrder,
-  discountCode,
-}: {
-  paymentMethod: WebshopPaymentMethod;
-  isFreeOrder: boolean;
-  discountCode: string;
-}): string {
-  if (paymentMethod === "waardebon") {
-    return discountCode
-      ? `Volledig betaald met waardebon ${discountCode}`
-      : "Volledig betaald met waardebon";
-  }
-
-  if (paymentMethod === "gratis") {
-    return "Gratis aangeboden";
-  }
-
-  if (paymentMethod === "admin") {
-    return isFreeOrder
-      ? "Gratis aangeboden via admin"
-      : "Handmatig verwerkt via admin";
-  }
-
-  if (isFreeOrder) {
-    return "Gratis aangeboden";
-  }
-
-  return "Betaald via Mollie";
-}
-
 export async function fulfillWebshopOrder({
   supabaseAdmin,
   paymentId,
@@ -159,6 +124,7 @@ export async function fulfillWebshopOrder({
   }
 
   const product = clean(metadata.product);
+
   const productName =
     clean(metadata.productName) ||
     product ||
@@ -166,6 +132,7 @@ export async function fulfillWebshopOrder({
 
   const parentName = clean(metadata.parentName);
   const studentName = clean(metadata.studentName);
+
   const email = normalizeEmail(metadata.email);
   const phone = clean(metadata.phone);
 
@@ -175,7 +142,7 @@ export async function fulfillWebshopOrder({
 
   const wordCount = clean(metadata.wordCount);
   const textType = clean(metadata.textType);
-  const customerNotes = clean(metadata.notes);
+  const notes = clean(metadata.notes);
 
   const amount = roundCurrency(
     Math.max(toSafeNumber(metadata.amount), 0)
@@ -189,18 +156,14 @@ export async function fulfillWebshopOrder({
   );
 
   const discountAmount = roundCurrency(
-    Math.max(
-      toSafeNumber(metadata.discountAmount),
-      0
-    )
+    Math.max(toSafeNumber(metadata.discountAmount), 0)
   );
 
   const discountId = clean(metadata.discountId);
   const discountCode = clean(metadata.discountCode);
 
   const isFreeOrder =
-    metadata.isFreeOrder === true ||
-    amount === 0;
+    metadata.isFreeOrder === true || amount === 0;
 
   const paymentMethod = getPaymentMethod({
     paymentId: cleanedPaymentId,
@@ -208,26 +171,19 @@ export async function fulfillWebshopOrder({
     isFreeOrder,
   });
 
-  const paymentLabel = getPaymentLabel({
-    paymentMethod,
-    isFreeOrder,
-    discountCode,
-  });
+  const paymentReference =
+    makeReference(cleanedPaymentId);
 
-  const paymentReference = makeReference(
-    cleanedPaymentId
-  );
-
+  /*
+   * Dubbele verwerking voorkomen.
+   */
   const {
     data: existingBooking,
     error: duplicateError,
   } = await supabaseAdmin
     .from("bookings")
     .select("id, contact_id")
-    .ilike(
-      "notes",
-      `%${paymentReference}%`
-    )
+    .ilike("notes", `%${paymentReference}%`)
     .limit(1)
     .maybeSingle();
 
@@ -249,10 +205,7 @@ export async function fulfillWebshopOrder({
         .update({
           status: "paid",
         })
-        .eq(
-          "payment_id",
-          cleanedPaymentId
-        );
+        .eq("payment_id", cleanedPaymentId);
 
     if (paymentStatusError) {
       console.error(
@@ -273,6 +226,9 @@ export async function fulfillWebshopOrder({
     };
   }
 
+  /*
+   * Zoek een bestaand contact op e-mailadres.
+   */
   let contactId: string | null = null;
 
   if (email) {
@@ -298,13 +254,12 @@ export async function fulfillWebshopOrder({
     }
   }
 
+  /*
+   * Maak een contact aan wanneer het nog niet bestaat.
+   */
   if (!contactId) {
     const contactNotes = [
-      `${
-        isFreeOrder
-          ? "Gratis dienst"
-          : "Aankoop"
-      }: ${productName}`,
+      `${isFreeOrder ? "Gratis dienst" : "Aankoop"}: ${productName}`,
 
       studentName
         ? `Leerling: ${studentName}`
@@ -330,8 +285,8 @@ export async function fulfillWebshopOrder({
         ? `Teksttype: ${textType}`
         : "",
 
-      customerNotes
-        ? `Opmerking: ${customerNotes}`
+      notes
+        ? `Opmerking: ${notes}`
         : "",
 
       discountCode
@@ -342,7 +297,7 @@ export async function fulfillWebshopOrder({
         ? `Korting: ${formatCurrency(discountAmount)}`
         : "",
 
-      `Verwerking: ${paymentLabel}`,
+      `Betaalmethode: ${paymentMethod}`,
       paymentReference,
     ]
       .filter(Boolean)
@@ -358,6 +313,7 @@ export async function fulfillWebshopOrder({
           parentName ||
           studentName ||
           "Webshopklant",
+
         last_name: "",
         email,
         phone,
@@ -384,12 +340,11 @@ export async function fulfillWebshopOrder({
     contactId = String(newContact.id);
   }
 
+  /*
+   * Elke dienst wordt als bevestigde boeking opgeslagen.
+   */
   const bookingNotes = [
-    `${
-      isFreeOrder
-        ? "Gratis aangeboden product"
-        : "Betaald product"
-    }: ${productName}`,
+    `${isFreeOrder ? "Gratis aangeboden product" : "Betaald product"}: ${productName}`,
 
     product
       ? `Productsleutel: ${product}`
@@ -431,16 +386,16 @@ export async function fulfillWebshopOrder({
       ? `Kortingscode: ${discountCode}`
       : "",
 
-    `Te betalen bedrag: ${formatCurrency(amount)}`,
+    `Betaald bedrag: ${formatCurrency(amount)}`,
 
     isFreeOrder
       ? "Bestelling volledig voldaan zonder online betaling"
       : "",
 
-    `Verwerking: ${paymentLabel}`,
+    `Betaalmethode: ${paymentMethod}`,
 
-    customerNotes
-      ? `Opmerking: ${customerNotes}`
+    notes
+      ? `Opmerking: ${notes}`
       : "",
 
     paymentReference,
@@ -457,8 +412,10 @@ export async function fulfillWebshopOrder({
       contact_id: contactId,
       service_id: null,
       availability_id: null,
+
       status: "confirmed",
       payment_status: "paid",
+
       amount,
       notes: bookingNotes,
     })
@@ -479,7 +436,12 @@ export async function fulfillWebshopOrder({
     );
   }
 
-  const normalizedProduct = product.toLowerCase();
+  /*
+   * Herken beurtenkaarten.
+   */
+  const normalizedProduct =
+    product.toLowerCase();
+
   const normalizedProductName =
     productName.toLowerCase();
 
@@ -504,10 +466,7 @@ export async function fulfillWebshopOrder({
     } = await supabaseAdmin
       .from("passes")
       .select("id")
-      .eq(
-        "payment_id",
-        cleanedPaymentId
-      )
+      .eq("payment_id", cleanedPaymentId)
       .limit(1)
       .maybeSingle();
 
@@ -519,28 +478,33 @@ export async function fulfillWebshopOrder({
     }
 
     if (!existingPass?.id) {
-      const {
-        error: passInsertError,
-      } = await supabaseAdmin
-        .from("passes")
-        .insert({
-          contact_id: contactId,
-          customer_email: email,
-          title:
-            productName ||
-            "10-beurtenkaart",
-          product:
-            productName ||
-            product ||
-            "10-beurtenkaart",
-          level,
-          total_credits: 10,
-          remaining_credits: 10,
-          total_sessions: 10,
-          remaining_sessions: 10,
-          status: "active",
-          payment_id: cleanedPaymentId,
-        });
+      const { error: passInsertError } =
+        await supabaseAdmin
+          .from("passes")
+          .insert({
+            contact_id: contactId,
+            customer_email: email,
+
+            title:
+              productName ||
+              "10-beurtenkaart",
+
+            product:
+              productName ||
+              product ||
+              "10-beurtenkaart",
+
+            level,
+
+            total_credits: 10,
+            remaining_credits: 10,
+
+            total_sessions: 10,
+            remaining_sessions: 10,
+
+            status: "active",
+            payment_id: cleanedPaymentId,
+          });
 
       if (passInsertError) {
         console.error(
@@ -557,15 +521,16 @@ export async function fulfillWebshopOrder({
     }
   }
 
+  /*
+   * Registreer de kortingscode als gebruikt.
+   */
   if (discountId) {
     const {
       data: discountCodeRow,
       error: discountReadError,
     } = await supabaseAdmin
       .from("discount_codes")
-      .select(
-        "used_count, max_uses, active"
-      )
+      .select("used_count, max_uses, active")
       .eq("id", discountId)
       .maybeSingle();
 
@@ -576,9 +541,7 @@ export async function fulfillWebshopOrder({
       );
     } else if (discountCodeRow) {
       const currentUses = Math.max(
-        toSafeNumber(
-          discountCodeRow.used_count
-        ),
+        Number(discountCodeRow.used_count || 0),
         0
       );
 
@@ -588,10 +551,7 @@ export async function fulfillWebshopOrder({
       const maxUses =
         discountCodeRow.max_uses === null
           ? null
-          : toSafeNumber(
-              discountCodeRow.max_uses,
-              Number.NaN
-            );
+          : Number(discountCodeRow.max_uses);
 
       const shouldDeactivate =
         maxUses !== null &&
@@ -604,11 +564,10 @@ export async function fulfillWebshopOrder({
         .from("discount_codes")
         .update({
           used_count: newUsedCount,
+
           active: shouldDeactivate
             ? false
-            : Boolean(
-                discountCodeRow.active
-              ),
+            : Boolean(discountCodeRow.active),
         })
         .eq("id", discountId);
 
@@ -621,6 +580,9 @@ export async function fulfillWebshopOrder({
     }
   }
 
+  /*
+   * Zet de webshopbetaling op betaald.
+   */
   const {
     error: paymentUpdateError,
   } = await supabaseAdmin
@@ -628,10 +590,7 @@ export async function fulfillWebshopOrder({
     .update({
       status: "paid",
     })
-    .eq(
-      "payment_id",
-      cleanedPaymentId
-    );
+    .eq("payment_id", cleanedPaymentId);
 
   if (paymentUpdateError) {
     console.error(

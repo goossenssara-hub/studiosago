@@ -33,11 +33,6 @@ export type WebshopOrderMetadata = {
   notes?: string;
 
   paymentMethod?: WebshopPaymentMethod;
-
-  /*
-   * true wanneer de dienst gratis wordt aangeboden
-   * of wanneer een waardebon het volledige bedrag dekt.
-   */
   isFreeOrder?: boolean;
 };
 
@@ -64,10 +59,7 @@ function normalizeEmail(value: unknown): string {
   return clean(value).toLowerCase();
 }
 
-function toSafeNumber(
-  value: unknown,
-  fallback = 0
-): number {
+function toSafeNumber(value: unknown, fallback = 0): number {
   const parsed = Number(value);
 
   if (!Number.isFinite(parsed)) {
@@ -78,11 +70,7 @@ function toSafeNumber(
 }
 
 function roundCurrency(value: number): number {
-  return (
-    Math.round(
-      (value + Number.EPSILON) * 100
-    ) / 100
-  );
+  return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
 function formatCurrency(value: number): string {
@@ -171,7 +159,6 @@ export async function fulfillWebshopOrder({
   }
 
   const product = clean(metadata.product);
-
   const productName =
     clean(metadata.productName) ||
     product ||
@@ -179,7 +166,6 @@ export async function fulfillWebshopOrder({
 
   const parentName = clean(metadata.parentName);
   const studentName = clean(metadata.studentName);
-
   const email = normalizeEmail(metadata.email);
   const phone = clean(metadata.phone);
 
@@ -192,18 +178,12 @@ export async function fulfillWebshopOrder({
   const customerNotes = clean(metadata.notes);
 
   const amount = roundCurrency(
-    Math.max(
-      toSafeNumber(metadata.amount),
-      0
-    )
+    Math.max(toSafeNumber(metadata.amount), 0)
   );
 
   const originalAmount = roundCurrency(
     Math.max(
-      toSafeNumber(
-        metadata.originalAmount,
-        amount
-      ),
+      toSafeNumber(metadata.originalAmount, amount),
       0
     )
   );
@@ -216,16 +196,8 @@ export async function fulfillWebshopOrder({
   );
 
   const discountId = clean(metadata.discountId);
-  const discountCode = clean(
-    metadata.discountCode
-  );
+  const discountCode = clean(metadata.discountCode);
 
-  /*
-   * Een bestelling wordt als gratis beschouwd wanneer:
-   *
-   * 1. isFreeOrder expliciet true is;
-   * 2. het uiteindelijke bedrag €0,00 is.
-   */
   const isFreeOrder =
     metadata.isFreeOrder === true ||
     amount === 0;
@@ -246,9 +218,6 @@ export async function fulfillWebshopOrder({
     cleanedPaymentId
   );
 
-  /*
-   * Dubbele verwerking voorkomen.
-   */
   const {
     data: existingBooking,
     error: duplicateError,
@@ -274,17 +243,16 @@ export async function fulfillWebshopOrder({
   }
 
   if (existingBooking?.id) {
-    const {
-      error: paymentStatusError,
-    } = await supabaseAdmin
-      .from("webshop_payments")
-      .update({
-        status: "paid",
-      })
-      .eq(
-        "payment_id",
-        cleanedPaymentId
-      );
+    const { error: paymentStatusError } =
+      await supabaseAdmin
+        .from("webshop_payments")
+        .update({
+          status: "paid",
+        })
+        .eq(
+          "payment_id",
+          cleanedPaymentId
+        );
 
     if (paymentStatusError) {
       console.error(
@@ -296,23 +264,15 @@ export async function fulfillWebshopOrder({
     return {
       success: true,
       duplicate: true,
-
       contactId: existingBooking.contact_id
         ? String(existingBooking.contact_id)
         : null,
-
-      bookingId: String(
-        existingBooking.id
-      ),
-
+      bookingId: String(existingBooking.id),
       passCreated: false,
       isFreeOrder,
     };
   }
 
-  /*
-   * Bestaand contact zoeken op e-mailadres.
-   */
   let contactId: string | null = null;
 
   if (email) {
@@ -334,16 +294,10 @@ export async function fulfillWebshopOrder({
     }
 
     if (existingContact?.id) {
-      contactId = String(
-        existingContact.id
-      );
+      contactId = String(existingContact.id);
     }
   }
 
-  /*
-   * Nieuw contact aanmaken wanneer het
-   * e-mailadres nog niet bestaat.
-   */
   if (!contactId) {
     const contactNotes = [
       `${
@@ -385,13 +339,10 @@ export async function fulfillWebshopOrder({
         : "",
 
       discountAmount > 0
-        ? `Korting: ${formatCurrency(
-            discountAmount
-          )}`
+        ? `Korting: ${formatCurrency(discountAmount)}`
         : "",
 
       `Verwerking: ${paymentLabel}`,
-
       paymentReference,
     ]
       .filter(Boolean)
@@ -407,7 +358,6 @@ export async function fulfillWebshopOrder({
           parentName ||
           studentName ||
           "Webshopklant",
-
         last_name: "",
         email,
         phone,
@@ -434,12 +384,6 @@ export async function fulfillWebshopOrder({
     contactId = String(newContact.id);
   }
 
-  /*
-   * Boeking opslaan.
-   *
-   * Ook gratis bestellingen krijgen payment_status paid,
-   * omdat ze volledig afgehandeld zijn.
-   */
   const bookingNotes = [
     `${
       isFreeOrder
@@ -480,18 +424,14 @@ export async function fulfillWebshopOrder({
     )}`,
 
     discountAmount > 0
-      ? `Korting: ${formatCurrency(
-          discountAmount
-        )}`
+      ? `Korting: ${formatCurrency(discountAmount)}`
       : "",
 
     discountCode
       ? `Kortingscode: ${discountCode}`
       : "",
 
-    `Te betalen bedrag: ${formatCurrency(
-      amount
-    )}`,
+    `Te betalen bedrag: ${formatCurrency(amount)}`,
 
     isFreeOrder
       ? "Bestelling volledig voldaan zonder online betaling"
@@ -515,13 +455,10 @@ export async function fulfillWebshopOrder({
     .from("bookings")
     .insert({
       contact_id: contactId,
-
       service_id: null,
       availability_id: null,
-
       status: "confirmed",
       payment_status: "paid",
-
       amount,
       notes: bookingNotes,
     })
@@ -542,39 +479,22 @@ export async function fulfillWebshopOrder({
     );
   }
 
-  /*
-   * Productherkenning voor beurtenkaarten.
-   */
-  const normalizedProduct =
-    product.toLowerCase();
-
+  const normalizedProduct = product.toLowerCase();
   const normalizedProductName =
     productName.toLowerCase();
 
   const isTenSessionPass =
-    normalizedProduct.includes(
-      "10-beurtenkaart"
-    ) ||
-    normalizedProductName.includes(
-      "10-beurtenkaart"
-    ) ||
-    normalizedProduct.includes(
-      "tienbeurtenkaart"
-    ) ||
-    normalizedProductName.includes(
-      "tienbeurtenkaart"
-    );
+    normalizedProduct.includes("10-beurtenkaart") ||
+    normalizedProductName.includes("10-beurtenkaart") ||
+    normalizedProduct.includes("tienbeurtenkaart") ||
+    normalizedProductName.includes("tienbeurtenkaart");
 
   let passCreated = false;
 
   if (isTenSessionPass) {
     const level =
-      normalizedProduct.includes(
-        "secundair"
-      ) ||
-      normalizedProductName.includes(
-        "secundair"
-      )
+      normalizedProduct.includes("secundair") ||
+      normalizedProductName.includes("secundair")
         ? "secundair"
         : "lager";
 
@@ -606,28 +526,20 @@ export async function fulfillWebshopOrder({
         .insert({
           contact_id: contactId,
           customer_email: email,
-
           title:
             productName ||
             "10-beurtenkaart",
-
           product:
             productName ||
             product ||
             "10-beurtenkaart",
-
           level,
-
           total_credits: 10,
           remaining_credits: 10,
-
           total_sessions: 10,
           remaining_sessions: 10,
-
           status: "active",
-
-          payment_id:
-            cleanedPaymentId,
+          payment_id: cleanedPaymentId,
         });
 
       if (passInsertError) {
@@ -645,9 +557,6 @@ export async function fulfillWebshopOrder({
     }
   }
 
-  /*
-   * Kortingscode als gebruikt registreren.
-   */
   if (discountId) {
     const {
       data: discountCodeRow,
@@ -695,7 +604,6 @@ export async function fulfillWebshopOrder({
         .from("discount_codes")
         .update({
           used_count: newUsedCount,
-
           active: shouldDeactivate
             ? false
             : Boolean(
@@ -713,9 +621,6 @@ export async function fulfillWebshopOrder({
     }
   }
 
-  /*
-   * Betaling als afgehandeld markeren.
-   */
   const {
     error: paymentUpdateError,
   } = await supabaseAdmin

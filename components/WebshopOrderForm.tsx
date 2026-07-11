@@ -1,706 +1,863 @@
-type SupabaseAdmin = any;
+"use client";
+
+import {
+  FormEvent,
+  useMemo,
+  useState,
+} from "react";
 
 import type {
   WebshopOrderMetadata,
   WebshopPaymentMethod,
 } from "@/lib/fulfillWebshopOrder";
 
-type FulfillWebshopOrderArguments = {
-  supabaseAdmin: SupabaseAdmin;
-  paymentId: string;
-  metadata: WebshopOrderMetadata;
+type WebshopOrderFormProps = {
+  product: string;
 };
 
-type FulfillWebshopOrderResult = {
-  success: true;
-  duplicate: boolean;
-  contactId: string | null;
-  bookingId: string;
-  passCreated: boolean;
-  isFreeOrder: boolean;
-};
-
-function clean(value: unknown) {
-  return String(value ?? "").trim();
-}
-
-function normalizeEmail(value: unknown) {
-  return clean(value).toLowerCase();
-}
-
-function toSafeNumber(value: unknown, fallback = 0) {
-  const parsed = Number(value);
-
-  if (!Number.isFinite(parsed)) {
-    return fallback;
-  }
-
-  return parsed;
-}
-
-function roundCurrency(value: number) {
-  return Math.round((value + Number.EPSILON) * 100) / 100;
-}
-
-function formatCurrency(value: number) {
-  return `€${roundCurrency(value).toFixed(2)}`;
-}
-
-function makeReference(paymentId: string) {
-  return `Betalingsreferentie: ${paymentId}`;
-}
-
-function getPaymentMethod({
-  paymentId,
-  metadata,
-  isFreeOrder,
-}: {
-  paymentId: string;
-  metadata: WebshopOrderMetadata;
-  isFreeOrder: boolean;
-}) {
-  const suppliedMethod = clean(metadata.paymentMethod);
-
-  if (suppliedMethod) {
-    return suppliedMethod;
-  }
-
-  if (paymentId.startsWith("voucher_")) {
-    return "waardebon";
-  }
-
-  if (paymentId.startsWith("free_")) {
-    return "gratis";
-  }
-
-  if (paymentId.startsWith("admin_")) {
-    return "admin";
-  }
-
-  if (isFreeOrder) {
-    return "gratis";
-  }
-
-  return "mollie";
-}
-
-function getPaymentLabel({
-  paymentMethod,
-  isFreeOrder,
-  discountCode,
-}: {
-  paymentMethod: string;
-  isFreeOrder: boolean;
+type DiscountResult = {
+  valid: boolean;
+  discountId: string | null;
   discountCode: string;
-}) {
-  if (paymentMethod === "waardebon") {
-    return discountCode
-      ? `Volledig betaald met waardebon ${discountCode}`
-      : "Volledig betaald met waardebon";
-  }
+  discountAmount: number;
+  finalAmount: number;
+  paymentMethod?: WebshopPaymentMethod;
+  message?: string;
+};
 
-  if (paymentMethod === "gratis") {
-    return "Gratis aangeboden";
-  }
+type CheckoutResponse = {
+  success?: boolean;
+  checkoutUrl?: string;
+  redirectUrl?: string;
+  url?: string;
+  isFreeOrder?: boolean;
+  message?: string;
+  error?: string;
+};
 
-  if (paymentMethod === "admin") {
-    return isFreeOrder
-      ? "Gratis aangeboden via admin"
-      : "Handmatig verwerkt via admin";
-  }
+type ProductConfiguration = {
+  name: string;
+  amount: number;
+  category:
+    | "pass"
+    | "workshop"
+    | "text"
+    | "general";
+  requiresStudentData: boolean;
+};
 
-  if (isFreeOrder) {
-    return "Gratis aangeboden";
-  }
+const PRODUCT_CONFIG: Record<
+  string,
+  ProductConfiguration
+> = {
+  "10-beurtenkaart-lager": {
+    name: "10-beurtenkaart Lager onderwijs",
+    amount: 320,
+    category: "pass",
+    requiresStudentData: true,
+  },
 
-  return "Betaald via Mollie";
+  "10-beurtenkaart-secundair": {
+    name: "10-beurtenkaart Secundair onderwijs",
+    amount: 380,
+    category: "pass",
+    requiresStudentData: true,
+  },
+
+  "klaar-voor-de-sprong-middelbaar": {
+    name: "Klaar voor de Sprong – Naar het middelbaar",
+    amount: 250,
+    category: "workshop",
+    requiresStudentData: true,
+  },
+
+  "klaar-voor-de-sprong-eerste-leerjaar": {
+    name: "Klaar voor de Sprong – Naar het eerste leerjaar",
+    amount: 180,
+    category: "workshop",
+    requiresStudentData: true,
+  },
+
+  tekstcorrectie: {
+    name: "Tekstcorrectie",
+    amount: 20,
+    category: "text",
+    requiresStudentData: false,
+  },
+};
+
+function roundCurrency(value: number): number {
+  return (
+    Math.round(
+      (value + Number.EPSILON) * 100
+    ) / 100
+  );
 }
 
-export async function fulfillWebshopOrder({
-  supabaseAdmin,
-  paymentId,
-  metadata,
-}: FulfillWebshopOrderArguments): Promise<FulfillWebshopOrderResult> {
-  const cleanedPaymentId = clean(paymentId);
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat("nl-BE", {
+    style: "currency",
+    currency: "EUR",
+  }).format(roundCurrency(value));
+}
 
-  if (!cleanedPaymentId) {
-    throw new Error(
-      "De betalingsreferentie van de bestelling ontbreekt."
-    );
+function calculateTextCorrectionPrice(
+  wordCount: number
+): number {
+  if (
+    !Number.isFinite(wordCount) ||
+    wordCount <= 0
+  ) {
+    return 20;
   }
 
-  const product = clean(metadata.product);
+  if (wordCount <= 2000) {
+    return 20;
+  }
 
-  const productName =
-    clean(metadata.productName) ||
-    product ||
-    "Webshopaankoop";
-
-  const parentName = clean(metadata.parentName);
-  const studentName = clean(metadata.studentName);
-
-  const email = normalizeEmail(metadata.email);
-  const phone = clean(metadata.phone);
-
-  const studentAge = clean(metadata.studentAge);
-  const schoolYear = clean(metadata.schoolYear);
-  const school = clean(metadata.school);
-
-  const wordCount = clean(metadata.wordCount);
-  const textType = clean(metadata.textType);
-  const customerNotes = clean(metadata.notes);
-
-  const amount = roundCurrency(
-    Math.max(toSafeNumber(metadata.amount), 0)
+  const extraWords = wordCount - 2000;
+  const extraBlocks = Math.ceil(
+    extraWords / 1000
   );
 
-  const originalAmount = roundCurrency(
-    Math.max(
-      toSafeNumber(
-        metadata.originalAmount,
-        amount
+  return 20 + extraBlocks * 8;
+}
+
+export default function WebshopOrderForm({
+  product,
+}: WebshopOrderFormProps) {
+  const productConfig =
+    PRODUCT_CONFIG[product] ?? {
+      name: product,
+      amount: 0,
+      category: "general" as const,
+      requiresStudentData: true,
+    };
+
+  const [parentName, setParentName] =
+    useState("");
+
+  const [studentName, setStudentName] =
+    useState("");
+
+  const [email, setEmail] =
+    useState("");
+
+  const [phone, setPhone] =
+    useState("");
+
+  const [studentAge, setStudentAge] =
+    useState("");
+
+  const [schoolYear, setSchoolYear] =
+    useState("");
+
+  const [school, setSchool] =
+    useState("");
+
+  const [wordCount, setWordCount] =
+    useState("");
+
+  const [textType, setTextType] =
+    useState("");
+
+  const [notes, setNotes] =
+    useState("");
+
+  const [discountCode, setDiscountCode] =
+    useState("");
+
+  const [discount, setDiscount] =
+    useState<DiscountResult | null>(null);
+
+  const [
+    discountMessage,
+    setDiscountMessage,
+  ] = useState("");
+
+  const [isCheckingDiscount, setIsCheckingDiscount] =
+    useState(false);
+
+  const [isSubmitting, setIsSubmitting] =
+    useState(false);
+
+  const [errorMessage, setErrorMessage] =
+    useState("");
+
+  const [successMessage, setSuccessMessage] =
+    useState("");
+
+  const originalAmount = useMemo(() => {
+    if (product === "tekstcorrectie") {
+      return calculateTextCorrectionPrice(
+        Number(wordCount)
+      );
+    }
+
+    return productConfig.amount;
+  }, [
+    product,
+    productConfig.amount,
+    wordCount,
+  ]);
+
+  const finalAmount = useMemo(() => {
+    if (!discount?.valid) {
+      return originalAmount;
+    }
+
+    return Math.max(
+      roundCurrency(
+        originalAmount -
+          discount.discountAmount
       ),
       0
-    )
-  );
+    );
+  }, [
+    discount,
+    originalAmount,
+  ]);
 
-  const discountAmount = roundCurrency(
-    Math.max(
-      toSafeNumber(metadata.discountAmount),
-      0
-    )
-  );
-
-  const discountId = clean(metadata.discountId);
-  const discountCode = clean(metadata.discountCode);
-
-  /*
-   * Een bestelling wordt als gratis beschouwd wanneer:
-   *
-   * 1. het eindbedrag €0,00 is;
-   * 2. isFreeOrder expliciet true is;
-   * 3. de payment-id met voucher_, free_ of admin_ begint
-   *    en het bedrag €0,00 is.
-   */
   const isFreeOrder =
-    metadata.isFreeOrder === true ||
-    amount === 0;
+    finalAmount === 0;
 
-  const paymentMethod = getPaymentMethod({
-    paymentId: cleanedPaymentId,
-    metadata,
-    isFreeOrder,
-  });
-
-  const paymentLabel = getPaymentLabel({
-    paymentMethod,
-    isFreeOrder,
-    discountCode,
-  });
-
-  const paymentReference =
-    makeReference(cleanedPaymentId);
-
-  /*
-   * Dubbele verwerking voorkomen.
-   *
-   * Mollie kan dezelfde webhook meerdere keren sturen.
-   * Ook een gratis bestelling kan door een dubbele klik
-   * opnieuw worden aangeboden.
-   */
-  const {
-    data: existingBooking,
-    error: duplicateError,
-  } = await supabaseAdmin
-    .from("bookings")
-    .select("id, contact_id")
-    .ilike(
-      "notes",
-      `%${paymentReference}%`
-    )
-    .limit(1)
-    .maybeSingle();
-
-  if (duplicateError) {
-    console.error(
-      "FULFILL ORDER DUPLICATE CHECK ERROR:",
-      duplicateError
-    );
-
-    throw new Error(
-      "De bestelling kon niet op dubbele verwerking gecontroleerd worden."
-    );
+  function clearDiscount(): void {
+    setDiscount(null);
+    setDiscountMessage("");
   }
 
-  if (existingBooking?.id) {
-    const { error: paymentStatusError } =
-      await supabaseAdmin
-        .from("webshop_payments")
-        .update({
-          status: "paid",
-        })
-        .eq(
-          "payment_id",
-          cleanedPaymentId
-        );
+  async function handleCheckDiscount(): Promise<void> {
+    const code = discountCode
+      .trim()
+      .toUpperCase();
 
-    if (paymentStatusError) {
-      console.error(
-        "FULFILL DUPLICATE PAYMENT UPDATE ERROR:",
-        paymentStatusError
+    setErrorMessage("");
+    setSuccessMessage("");
+    setDiscountMessage("");
+
+    if (!code) {
+      clearDiscount();
+      setDiscountMessage(
+        "Vul eerst een kortingscode in."
       );
+      return;
     }
 
-    return {
-      success: true,
-      duplicate: true,
-      contactId: existingBooking.contact_id
-        ? String(existingBooking.contact_id)
-        : null,
-      bookingId: String(existingBooking.id),
-      passCreated: false,
-      isFreeOrder,
-    };
-  }
+    setIsCheckingDiscount(true);
 
-  /*
-   * Bestaand contact zoeken op e-mailadres.
-   * Zo ontstaan er geen dubbele contacten bij meerdere aankopen.
-   */
-  let contactId: string | null = null;
-
-  if (email) {
-    const {
-      data: existingContact,
-      error: contactFindError,
-    } = await supabaseAdmin
-      .from("contacts")
-      .select("id")
-      .ilike("email", email)
-      .limit(1)
-      .maybeSingle();
-
-    if (contactFindError) {
-      console.error(
-        "FULFILL ORDER CONTACT FIND ERROR:",
-        contactFindError
-      );
-    }
-
-    if (existingContact?.id) {
-      contactId = String(
-        existingContact.id
-      );
-    }
-  }
-
-  /*
-   * Contact aanmaken wanneer het nog niet bestaat.
-   */
-  if (!contactId) {
-    const contactNotes = [
-      `${isFreeOrder ? "Gratis dienst" : "Aankoop"}: ${productName}`,
-
-      studentName
-        ? `Leerling: ${studentName}`
-        : "",
-
-      studentAge
-        ? `Leeftijd: ${studentAge}`
-        : "",
-
-      schoolYear
-        ? `Studiejaar: ${schoolYear}`
-        : "",
-
-      school
-        ? `School: ${school}`
-        : "",
-
-      wordCount
-        ? `Aantal woorden: ${wordCount}`
-        : "",
-
-      textType
-        ? `Teksttype: ${textType}`
-        : "",
-
-      customerNotes
-        ? `Opmerking: ${customerNotes}`
-        : "",
-
-      discountCode
-        ? `Kortingscode: ${discountCode}`
-        : "",
-
-      discountAmount > 0
-        ? `Korting: ${formatCurrency(
-            discountAmount
-          )}`
-        : "",
-
-      `Verwerking: ${paymentLabel}`,
-      paymentReference,
-    ]
-      .filter(Boolean)
-      .join("\n");
-
-    const {
-      data: newContact,
-      error: contactInsertError,
-    } = await supabaseAdmin
-      .from("contacts")
-      .insert({
-        first_name:
-          parentName ||
-          studentName ||
-          "Webshopklant",
-
-        last_name: "",
-        email,
-        phone,
-
-        notes: contactNotes,
-        active: true,
-      })
-      .select("id")
-      .single();
-
-    if (
-      contactInsertError ||
-      !newContact?.id
-    ) {
-      console.error(
-        "FULFILL ORDER CONTACT INSERT ERROR:",
-        contactInsertError
+    try {
+      const response = await fetch(
+        "/api/discount-codes/validate",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            code,
+            product,
+            email:
+              email.trim().toLowerCase(),
+            amount: originalAmount,
+          }),
+        }
       );
 
-      throw new Error(
-        "Het contact kon niet opgeslagen worden."
-      );
-    }
+      const data = await response.json();
 
-    contactId = String(newContact.id);
-  }
-
-  /*
-   * Elke dienst wordt als bevestigde webshopboeking opgeslagen.
-   *
-   * Ook een gratis dienst krijgt payment_status 'paid',
-   * zodat ze in je dashboard als volledig afgehandeld verschijnt.
-   * Het werkelijk betaalde bedrag blijft correct €0,00.
-   */
-  const bookingNotes = [
-    `${isFreeOrder ? "Gratis aangeboden product" : "Betaald product"}: ${productName}`,
-
-    product
-      ? `Productsleutel: ${product}`
-      : "",
-
-    studentName
-      ? `Leerling: ${studentName}`
-      : "",
-
-    studentAge
-      ? `Leeftijd: ${studentAge}`
-      : "",
-
-    schoolYear
-      ? `Studiejaar: ${schoolYear}`
-      : "",
-
-    school
-      ? `School: ${school}`
-      : "",
-
-    wordCount
-      ? `Aantal woorden: ${wordCount}`
-      : "",
-
-    textType
-      ? `Teksttype: ${textType}`
-      : "",
-
-    `Oorspronkelijk bedrag: ${formatCurrency(
-      originalAmount
-    )}`,
-
-    discountAmount > 0
-      ? `Korting: ${formatCurrency(
-          discountAmount
-        )}`
-      : "",
-
-    discountCode
-      ? `Kortingscode: ${discountCode}`
-      : "",
-
-    `Te betalen bedrag: ${formatCurrency(
-      amount
-    )}`,
-
-    isFreeOrder
-      ? "Bestelling volledig voldaan zonder online betaling"
-      : "",
-
-    `Verwerking: ${paymentLabel}`,
-
-    customerNotes
-      ? `Opmerking: ${customerNotes}`
-      : "",
-
-    paymentReference,
-  ]
-    .filter(Boolean)
-    .join("\n");
-
-  const {
-    data: booking,
-    error: bookingError,
-  } = await supabaseAdmin
-    .from("bookings")
-    .insert({
-      contact_id: contactId,
-      service_id: null,
-      availability_id: null,
-
-      status: "confirmed",
-      payment_status: "paid",
-
-      /*
-       * Bij een gratis dienst wordt hier correct 0 opgeslagen.
-       */
-      amount,
-
-      notes: bookingNotes,
-    })
-    .select("id")
-    .single();
-
-  if (
-    bookingError ||
-    !booking?.id
-  ) {
-    console.error(
-      "FULFILL ORDER BOOKING INSERT ERROR:",
-      bookingError
-    );
-
-    throw new Error(
-      "De boeking kon niet opgeslagen worden."
-    );
-  }
-
-  /*
-   * Productherkenning.
-   */
-  const normalizedProduct =
-    product.toLowerCase();
-
-  const normalizedProductName =
-    productName.toLowerCase();
-
-  /*
-   * Alleen een 10-beurtenkaart moet een rij in passes krijgen.
-   *
-   * Alle andere gratis diensten zijn al correct geregistreerd
-   * in contacts + bookings.
-   */
-  const isTenSessionPass =
-    normalizedProduct.includes(
-      "10-beurtenkaart"
-    ) ||
-    normalizedProductName.includes(
-      "10-beurtenkaart"
-    ) ||
-    normalizedProduct.includes(
-      "tienbeurtenkaart"
-    ) ||
-    normalizedProductName.includes(
-      "tienbeurtenkaart"
-    );
-
-  let passCreated = false;
-
-  if (isTenSessionPass) {
-    const level =
-      normalizedProduct.includes(
-        "secundair"
-      ) ||
-      normalizedProductName.includes(
-        "secundair"
-      )
-        ? "secundair"
-        : "lager";
-
-    const {
-      data: existingPass,
-      error: passFindError,
-    } = await supabaseAdmin
-      .from("passes")
-      .select("id")
-      .eq(
-        "payment_id",
-        cleanedPaymentId
-      )
-      .limit(1)
-      .maybeSingle();
-
-    if (passFindError) {
-      console.error(
-        "FULFILL ORDER PASS FIND ERROR:",
-        passFindError
-      );
-    }
-
-    if (!existingPass?.id) {
-      const { error: passInsertError } =
-        await supabaseAdmin
-          .from("passes")
-          .insert({
-            contact_id: contactId,
-
-            customer_email: email,
-
-            title:
-              productName ||
-              "10-beurtenkaart",
-
-            product:
-              productName ||
-              product ||
-              "10-beurtenkaart",
-
-            level,
-
-            total_credits: 10,
-            remaining_credits: 10,
-
-            total_sessions: 10,
-            remaining_sessions: 10,
-
-            status: "active",
-
-            payment_id:
-              cleanedPaymentId,
-          });
-
-      if (passInsertError) {
-        console.error(
-          "FULFILL ORDER PASS INSERT ERROR:",
-          passInsertError
-        );
-
+      if (!response.ok) {
         throw new Error(
-          "De beurtenkaart kon niet opgeslagen worden."
+          data.error ||
+            "De kortingscode kon niet gecontroleerd worden."
         );
       }
 
-      passCreated = true;
-    }
-  }
-
-  /*
-   * De kortingscode wordt pas als gebruikt geregistreerd
-   * nadat contact, boeking en eventuele beurtenkaart
-   * succesvol zijn aangemaakt.
-   */
-  if (discountId) {
-    const {
-      data: discountCodeRow,
-      error: discountReadError,
-    } = await supabaseAdmin
-      .from("discount_codes")
-      .select(
-        "used_count, max_uses, active"
-      )
-      .eq("id", discountId)
-      .maybeSingle();
-
-    if (discountReadError) {
-      console.error(
-        "FULFILL ORDER DISCOUNT READ ERROR:",
-        discountReadError
-      );
-    } else if (discountCodeRow) {
-      const currentUses = Math.max(
-        Number(
-          discountCodeRow.used_count || 0
-        ),
+      const discountAmount = Math.max(
+        Number(data.discountAmount || 0),
         0
       );
 
-      const newUsedCount =
-        currentUses + 1;
-
-      const maxUses =
-        discountCodeRow.max_uses ===
-        null
-          ? null
-          : Number(
-              discountCodeRow.max_uses
-            );
-
-      const shouldDeactivate =
-        maxUses !== null &&
-        Number.isFinite(maxUses) &&
-        newUsedCount >= maxUses;
-
-      const {
-        error: discountUpdateError,
-      } = await supabaseAdmin
-        .from("discount_codes")
-        .update({
-          used_count: newUsedCount,
-
-          active: shouldDeactivate
-            ? false
-            : Boolean(
-                discountCodeRow.active
-              ),
-        })
-        .eq("id", discountId);
-
-      if (discountUpdateError) {
-        console.error(
-          "FULFILL ORDER DISCOUNT UPDATE ERROR:",
-          discountUpdateError
+      const calculatedFinalAmount =
+        Math.max(
+          roundCurrency(
+            originalAmount -
+              discountAmount
+          ),
+          0
         );
-      }
+
+      setDiscount({
+        valid: true,
+        discountId:
+          data.discountId ?? null,
+        discountCode:
+          data.discountCode ?? code,
+        discountAmount,
+        finalAmount:
+          Number.isFinite(
+            Number(data.finalAmount)
+          )
+            ? Math.max(
+                Number(data.finalAmount),
+                0
+              )
+            : calculatedFinalAmount,
+        paymentMethod:
+          calculatedFinalAmount === 0
+            ? "waardebon"
+            : "mollie",
+        message:
+          data.message ||
+          "Kortingscode toegepast.",
+      });
+
+      setDiscountMessage(
+        data.message ||
+          `Kortingscode toegepast: ${formatCurrency(
+            discountAmount
+          )} korting.`
+      );
+    } catch (error) {
+      clearDiscount();
+
+      setDiscountMessage(
+        error instanceof Error
+          ? error.message
+          : "De kortingscode is niet geldig."
+      );
+    } finally {
+      setIsCheckingDiscount(false);
     }
   }
 
-  /*
-   * De aankoop staat na verwerking altijd op paid.
-   *
-   * Voor gratis diensten betekent paid:
-   * volledig voldaan, zonder resterend bedrag.
-   */
-  const {
-    error: paymentUpdateError,
-  } = await supabaseAdmin
-    .from("webshop_payments")
-    .update({
-      status: "paid",
-    })
-    .eq(
-      "payment_id",
-      cleanedPaymentId
-    );
+  function validateForm(): string | null {
+    if (!parentName.trim()) {
+      return "Vul de naam van de ouder of klant in.";
+    }
 
-  if (paymentUpdateError) {
-    console.error(
-      "FULFILL ORDER PAYMENT UPDATE ERROR:",
-      paymentUpdateError
-    );
+    if (!email.trim()) {
+      return "Vul je e-mailadres in.";
+    }
+
+    if (
+      !email.includes("@") ||
+      !email.includes(".")
+    ) {
+      return "Vul een geldig e-mailadres in.";
+    }
+
+    if (
+      productConfig.requiresStudentData &&
+      !studentName.trim()
+    ) {
+      return "Vul de naam van de leerling in.";
+    }
+
+    if (
+      product === "tekstcorrectie" &&
+      Number(wordCount) <= 0
+    ) {
+      return "Vul het aantal woorden in.";
+    }
+
+    return null;
   }
 
-  return {
-    success: true,
-    duplicate: false,
-    contactId,
-    bookingId: String(booking.id),
-    passCreated,
-    isFreeOrder,
-  };
+  async function handleSubmit(
+    event: FormEvent<HTMLFormElement>
+  ): Promise<void> {
+    event.preventDefault();
+
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    const validationError =
+      validateForm();
+
+    if (validationError) {
+      setErrorMessage(validationError);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const paymentMethod: WebshopPaymentMethod =
+        isFreeOrder
+          ? discount?.paymentMethod ??
+            "gratis"
+          : "mollie";
+
+      const metadata: WebshopOrderMetadata =
+        {
+          product,
+          productName:
+            productConfig.name,
+
+          amount:
+            finalAmount.toFixed(2),
+
+          originalAmount:
+            originalAmount.toFixed(2),
+
+          discountId:
+            discount?.discountId ??
+            null,
+
+          discountCode:
+            discount?.discountCode ??
+            "",
+
+          discountAmount:
+            (
+              discount?.discountAmount ??
+              0
+            ).toFixed(2),
+
+          parentName:
+            parentName.trim(),
+
+          studentName:
+            studentName.trim(),
+
+          email:
+            email
+              .trim()
+              .toLowerCase(),
+
+          phone: phone.trim(),
+
+          studentAge:
+            studentAge.trim(),
+
+          schoolYear:
+            schoolYear.trim(),
+
+          school: school.trim(),
+
+          wordCount:
+            wordCount.trim(),
+
+          textType:
+            textType.trim(),
+
+          notes: notes.trim(),
+
+          paymentMethod,
+          isFreeOrder,
+        };
+
+      const response = await fetch(
+        "/api/mollie/create-payment",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            product,
+            productName:
+              productConfig.name,
+
+            amount:
+              finalAmount.toFixed(2),
+
+            originalAmount:
+              originalAmount.toFixed(2),
+
+            metadata,
+          }),
+        }
+      );
+
+      const data =
+        (await response.json()) as CheckoutResponse;
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            "De bestelling kon niet verwerkt worden."
+        );
+      }
+
+      const checkoutUrl =
+        data.checkoutUrl ||
+        data.redirectUrl ||
+        data.url;
+
+      if (
+        checkoutUrl &&
+        !isFreeOrder
+      ) {
+        window.location.href =
+          checkoutUrl;
+
+        return;
+      }
+
+      if (
+        data.success ||
+        data.isFreeOrder ||
+        isFreeOrder
+      ) {
+        setSuccessMessage(
+          data.message ||
+            "Je bestelling werd correct geregistreerd."
+        );
+
+        return;
+      }
+
+      throw new Error(
+        "Er werd geen betaalpagina ontvangen."
+      );
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Er ging iets mis bij het verwerken van je bestelling."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <section className="webshop-order-section">
+      <div className="webshop-order-card">
+        <div className="webshop-order-summary">
+          <p className="eyebrow">
+            Jouw bestelling
+          </p>
+
+          <h2>{productConfig.name}</h2>
+
+          <div className="webshop-price-overview">
+            {discount?.valid && (
+              <>
+                <div className="webshop-price-row">
+                  <span>
+                    Oorspronkelijke prijs
+                  </span>
+
+                  <span>
+                    {formatCurrency(
+                      originalAmount
+                    )}
+                  </span>
+                </div>
+
+                <div className="webshop-price-row webshop-discount-row">
+                  <span>Korting</span>
+
+                  <span>
+                    −{" "}
+                    {formatCurrency(
+                      discount.discountAmount
+                    )}
+                  </span>
+                </div>
+              </>
+            )}
+
+            <div className="webshop-price-row webshop-total-row">
+              <strong>
+                {isFreeOrder
+                  ? "Te betalen"
+                  : "Totaal"}
+              </strong>
+
+              <strong>
+                {formatCurrency(
+                  finalAmount
+                )}
+              </strong>
+            </div>
+
+            {isFreeOrder && (
+              <p className="webshop-free-notice">
+                Deze bestelling is volledig
+                voldaan. Je wordt niet naar
+                Mollie doorgestuurd.
+              </p>
+            )}
+          </div>
+        </div>
+
+        <form
+          className="webshop-order-form"
+          onSubmit={handleSubmit}
+        >
+          <div className="webshop-form-grid">
+            <label className="webshop-field">
+              <span>
+                Naam ouder of klant *
+              </span>
+
+              <input
+                type="text"
+                value={parentName}
+                onChange={(event) =>
+                  setParentName(
+                    event.target.value
+                  )
+                }
+                autoComplete="name"
+                required
+              />
+            </label>
+
+            {productConfig.requiresStudentData && (
+              <label className="webshop-field">
+                <span>
+                  Naam leerling *
+                </span>
+
+                <input
+                  type="text"
+                  value={studentName}
+                  onChange={(event) =>
+                    setStudentName(
+                      event.target.value
+                    )
+                  }
+                  required
+                />
+              </label>
+            )}
+
+            <label className="webshop-field">
+              <span>E-mailadres *</span>
+
+              <input
+                type="email"
+                value={email}
+                onChange={(event) => {
+                  setEmail(
+                    event.target.value
+                  );
+
+                  if (discount) {
+                    clearDiscount();
+                  }
+                }}
+                autoComplete="email"
+                required
+              />
+            </label>
+
+            <label className="webshop-field">
+              <span>Telefoonnummer</span>
+
+              <input
+                type="tel"
+                value={phone}
+                onChange={(event) =>
+                  setPhone(
+                    event.target.value
+                  )
+                }
+                autoComplete="tel"
+              />
+            </label>
+
+            {productConfig.requiresStudentData && (
+              <>
+                <label className="webshop-field">
+                  <span>
+                    Leeftijd leerling
+                  </span>
+
+                  <input
+                    type="text"
+                    value={studentAge}
+                    onChange={(event) =>
+                      setStudentAge(
+                        event.target.value
+                      )
+                    }
+                  />
+                </label>
+
+                <label className="webshop-field">
+                  <span>
+                    Leerjaar of studiejaar
+                  </span>
+
+                  <input
+                    type="text"
+                    value={schoolYear}
+                    onChange={(event) =>
+                      setSchoolYear(
+                        event.target.value
+                      )
+                    }
+                  />
+                </label>
+
+                <label className="webshop-field webshop-field-full">
+                  <span>School</span>
+
+                  <input
+                    type="text"
+                    value={school}
+                    onChange={(event) =>
+                      setSchool(
+                        event.target.value
+                      )
+                    }
+                  />
+                </label>
+              </>
+            )}
+
+            {product === "tekstcorrectie" && (
+              <>
+                <label className="webshop-field">
+                  <span>
+                    Aantal woorden *
+                  </span>
+
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={wordCount}
+                    onChange={(event) => {
+                      setWordCount(
+                        event.target.value
+                      );
+
+                      if (discount) {
+                        clearDiscount();
+                      }
+                    }}
+                    required
+                  />
+                </label>
+
+                <label className="webshop-field">
+                  <span>Soort tekst</span>
+
+                  <input
+                    type="text"
+                    value={textType}
+                    onChange={(event) =>
+                      setTextType(
+                        event.target.value
+                      )
+                    }
+                    placeholder="Bijvoorbeeld eindwerk of cursus"
+                  />
+                </label>
+              </>
+            )}
+
+            <label className="webshop-field webshop-field-full">
+              <span>
+                Extra opmerkingen
+              </span>
+
+              <textarea
+                value={notes}
+                onChange={(event) =>
+                  setNotes(
+                    event.target.value
+                  )
+                }
+                rows={4}
+              />
+            </label>
+          </div>
+
+          <div className="webshop-discount-box">
+            <label className="webshop-field">
+              <span>
+                Kortingscode of waardebon
+              </span>
+
+              <div className="webshop-discount-controls">
+                <input
+                  type="text"
+                  value={discountCode}
+                  onChange={(event) => {
+                    setDiscountCode(
+                      event.target.value
+                        .toUpperCase()
+                    );
+
+                    if (discount) {
+                      clearDiscount();
+                    }
+                  }}
+                  placeholder="Vul je code in"
+                />
+
+                <button
+                  type="button"
+                  onClick={
+                    handleCheckDiscount
+                  }
+                  disabled={
+                    isCheckingDiscount ||
+                    !discountCode.trim()
+                  }
+                >
+                  {isCheckingDiscount
+                    ? "Controleren..."
+                    : "Toepassen"}
+                </button>
+              </div>
+            </label>
+
+            {discountMessage && (
+              <p
+                className={
+                  discount?.valid
+                    ? "webshop-message webshop-message-success"
+                    : "webshop-message webshop-message-error"
+                }
+              >
+                {discountMessage}
+              </p>
+            )}
+          </div>
+
+          {errorMessage && (
+            <p className="webshop-message webshop-message-error">
+              {errorMessage}
+            </p>
+          )}
+
+          {successMessage && (
+            <p className="webshop-message webshop-message-success">
+              {successMessage}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            className="webshop-submit-button"
+            disabled={isSubmitting}
+          >
+            {isSubmitting
+              ? "Even geduld..."
+              : isFreeOrder
+                ? "Bestelling bevestigen"
+                : `Veilig betalen – ${formatCurrency(
+                    finalAmount
+                  )}`}
+          </button>
+
+          <p className="webshop-payment-note">
+            {isFreeOrder
+              ? "Voor deze bestelling is geen online betaling nodig."
+              : "Je wordt veilig doorgestuurd naar Mollie om met Bancontact te betalen."}
+          </p>
+        </form>
+      </div>
+    </section>
+  );
 }

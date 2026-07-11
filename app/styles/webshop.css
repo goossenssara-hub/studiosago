@@ -794,3 +794,6 @@
     font-size: 15px;
   }
 }
+.webshop-order-summary::before {
+  display: none;
+}

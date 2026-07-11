@@ -30,6 +30,12 @@ function normalizeCode(value: unknown): string {
   return clean(value).toUpperCase();
 }
 
+function normalizeName(value: unknown): string {
+  return clean(value)
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
 function toSafeNumber(
   value: unknown,
   fallback = 0
@@ -75,16 +81,15 @@ function productMatches(
 
   const isGeneralPassCode =
     configured === "10-beurtenkaart" ||
-    configured === "tienbeurtenkaart";
+    configured === "tienbeurtenkaart" ||
+    configured === "ten-beurtenkaart";
 
   const isRequestedPass =
     requested.includes("10-beurtenkaart") ||
-    requested.includes("tienbeurtenkaart");
+    requested.includes("tienbeurtenkaart") ||
+    requested.includes("ten-beurtenkaart");
 
-  return (
-    isGeneralPassCode &&
-    isRequestedPass
-  );
+  return isGeneralPassCode && isRequestedPass;
 }
 
 export async function POST(
@@ -97,6 +102,14 @@ export async function POST(
     const product = clean(body.product);
     const email = normalizeEmail(body.email);
 
+    const parentName = normalizeName(
+      body.parentName
+    );
+
+    const studentName = normalizeName(
+      body.studentName
+    );
+
     const amount = Math.max(
       toSafeNumber(body.amount),
       0
@@ -106,12 +119,9 @@ export async function POST(
       return NextResponse.json(
         {
           valid: false,
-          error:
-            "Vul een kortingscode in.",
+          error: "Vul een kortingscode in.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
@@ -119,12 +129,9 @@ export async function POST(
       return NextResponse.json(
         {
           valid: false,
-          error:
-            "Het product ontbreekt.",
+          error: "Het product ontbreekt.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
@@ -167,9 +174,7 @@ export async function POST(
           error:
             "De kortingscode kon niet gecontroleerd worden.",
         },
-        {
-          status: 500,
-        }
+        { status: 500 }
       );
     }
 
@@ -180,9 +185,7 @@ export async function POST(
           error:
             "Deze kortingscode bestaat niet.",
         },
-        {
-          status: 404,
-        }
+        { status: 404 }
       );
     }
 
@@ -196,9 +199,7 @@ export async function POST(
           error:
             "Deze kortingscode is niet meer actief.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
@@ -220,9 +221,7 @@ export async function POST(
             error:
               "Deze kortingscode is vervallen.",
           },
-          {
-            status: 400,
-          }
+          { status: 400 }
         );
       }
     }
@@ -247,9 +246,7 @@ export async function POST(
           error:
             "Deze kortingscode werd al maximaal gebruikt.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
@@ -265,9 +262,7 @@ export async function POST(
           error:
             "Deze kortingscode is niet geldig voor dit product.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
@@ -284,9 +279,28 @@ export async function POST(
           error:
             "Deze kortingscode is gekoppeld aan een ander e-mailadres.",
         },
+        { status: 400 }
+      );
+    }
+
+    const requiredCustomerName =
+      normalizeName(
+        discount.customer_name
+      );
+
+    const customerNameMatches =
+      !requiredCustomerName ||
+      requiredCustomerName === parentName ||
+      requiredCustomerName === studentName;
+
+    if (!customerNameMatches) {
+      return NextResponse.json(
         {
-          status: 400,
-        }
+          valid: false,
+          error:
+            "Deze kortingscode is gekoppeld aan een andere klant.",
+        },
+        { status: 400 }
       );
     }
 
@@ -332,31 +346,22 @@ export async function POST(
     return NextResponse.json(
       {
         valid: true,
-
         discountId:
           String(discount.id),
-
         discountCode:
           normalizeCode(
             discount.code
           ),
-
         discountAmount,
         finalAmount,
-
         message:
           finalAmount === 0
             ? "Je waardebon dekt het volledige bedrag."
             : `Kortingscode toegepast. Je krijgt €${discountAmount
                 .toFixed(2)
-                .replace(
-                  ".",
-                  ","
-                )} korting.`,
+                .replace(".", ",")} korting.`,
       },
-      {
-        status: 200,
-      }
+      { status: 200 }
     );
   } catch (error) {
     console.error(
@@ -370,9 +375,7 @@ export async function POST(
         error:
           "Er ging iets mis bij het controleren van de kortingscode.",
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 }

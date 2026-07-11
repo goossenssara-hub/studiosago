@@ -1,207 +1,83 @@
+.appointment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.appointment-action {
+  min-height: 46px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 850;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.appointment-action.secondary {
+  border: 1px solid rgba(3, 54, 99, 0.14);
+  background: white;
+  color: #033663;
+}
+
+.appointment-action.meet {
+  border: 0;
+  background: linear-gradient(
+    135deg,
+    #28b9aa,
+    #1f9f94
+  );
+  color: white;
+  box-shadow: 0 10px 24px rgba(40, 185, 170, 0.22);
+}
+
+.appointment-action:hover {
+  transform: translateY(-2px);
+}
 .customer-appointments {
   display: grid;
-  gap: 22px;
-  width: 100%;
+  gap: 20px;
 }
-
-/* =========================================================
-   Laden, foutmelding en lege toestand
-   ========================================================= */
-
-.appointments-loading,
-.appointments-empty,
-.appointments-error {
-  width: 100%;
-  padding: 20px;
-  border-radius: 18px;
-  color: #033663;
-  font-size: 15px;
-  line-height: 1.55;
-}
-
-.appointments-loading {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: rgba(
-    3,
-    54,
-    99,
-    0.04
-  );
-}
-
-.appointments-loading p,
-.appointments-empty p,
-.appointments-error p {
-  margin: 0;
-}
-
-.appointments-spinner {
-  width: 22px;
-  height: 22px;
-  flex: 0 0 22px;
-  border: 3px solid
-    rgba(
-      40,
-      185,
-      170,
-      0.2
-    );
-  border-top-color: #28b9aa;
-  border-radius: 50%;
-  animation:
-    appointments-spin
-    0.8s linear infinite;
-}
-
-@keyframes appointments-spin {
-  to {
-    transform: rotate(
-      360deg
-    );
-  }
-}
-
-.appointments-empty {
-  border: 1px solid
-    rgba(
-      3,
-      54,
-      99,
-      0.08
-    );
-  background: rgba(
-    255,
-    255,
-    255,
-    0.7
-  );
-}
-
-.appointments-error {
-  display: grid;
-  gap: 12px;
-  border: 1px solid
-    rgba(
-      251,
-      103,
-      48,
-      0.2
-    );
-  background: rgba(
-    251,
-    103,
-    48,
-    0.08
-  );
-  color: #cf4d27;
-}
-
-.appointments-error button {
-  width: fit-content;
-  min-height: 42px;
-  padding: 0 16px;
-  border: 0;
-  border-radius: 12px;
-  background: #033663;
-  color: white;
-  font: inherit;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-/* =========================================================
-   Google-synchronisatie
-   ========================================================= */
 
 .google-sync-card {
   display: grid;
-  grid-template-columns:
-    minmax(0, 1fr)
-    auto;
-  gap: 16px 22px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px 20px;
   align-items: center;
-  padding: 22px 24px;
-  border: 1px solid
-    rgba(
-      254,
-      160,
-      32,
-      0.24
-    );
-  border-radius: 22px;
+  padding: 20px 22px;
+  border: 1px solid rgba(254, 160, 32, 0.24);
+  border-radius: 20px;
   background:
     linear-gradient(
       145deg,
-      rgba(
-        254,
-        160,
-        32,
-        0.12
-      ),
-      rgba(
-        255,
-        255,
-        255,
-        0.96
-      )
+      rgba(254, 160, 32, 0.12),
+      rgba(255, 255, 255, 0.94)
     );
-  box-shadow:
-    0 14px 34px
-    rgba(
-      3,
-      54,
-      99,
-      0.08
-    );
-}
-
-.google-sync-content {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-}
-
-.google-sync-icon {
-  display: grid;
-  place-items: center;
-  width: 46px;
-  height: 46px;
-  flex: 0 0 46px;
-  border-radius: 14px;
-  background: rgba(
-    254,
-    160,
-    32,
-    0.14
-  );
-  font-size: 21px;
+  box-shadow: 0 14px 34px rgba(3, 54, 99, 0.08);
 }
 
 .google-sync-card strong {
-  display: block;
   color: #033663;
   font-size: 18px;
-  line-height: 1.3;
 }
 
 .google-sync-card p {
   margin: 6px 0 0;
-  color: rgba(
-    3,
-    54,
-    99,
-    0.66
-  );
-  line-height: 1.55;
+  color: rgba(3, 54, 99, 0.68);
+  line-height: 1.5;
 }
 
 .google-sync-button {
   min-height: 48px;
   padding: 0 20px;
   border: 0;
-  border-radius: 15px;
+  border-radius: 14px;
   background:
     linear-gradient(
       135deg,
@@ -215,32 +91,7 @@
   cursor: pointer;
   box-shadow:
     0 12px 26px
-    rgba(
-      251,
-      103,
-      48,
-      0.2
-    );
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
-    opacity 0.2s ease;
-}
-
-.google-sync-button:hover:not(
-    :disabled
-  ) {
-  transform: translateY(
-    -2px
-  );
-  box-shadow:
-    0 16px 32px
-    rgba(
-      251,
-      103,
-      48,
-      0.28
-    );
+    rgba(251, 103, 48, 0.2);
 }
 
 .google-sync-button:disabled {
@@ -250,506 +101,38 @@
 
 .google-sync-message {
   grid-column: 1 / -1;
-  margin: 0;
-  padding: 14px 16px;
+  padding: 13px 15px;
   border-radius: 14px;
-  background: rgba(
-    40,
-    185,
-    170,
-    0.1
-  );
+  background: rgba(40, 185, 170, 0.1);
   color: #033663;
   font-weight: 750;
-  line-height: 1.5;
 }
-
-/* =========================================================
-   Afsprakenlijst
-   ========================================================= */
-
-.agenda-list {
-  display: grid;
-  gap: 20px;
-}
-
-.agenda-item {
-  padding: 26px;
-  border: 1px solid
-    rgba(
-      3,
-      54,
-      99,
-      0.1
-    );
-  border-radius: 26px;
-  background: rgba(
-    255,
-    255,
-    255,
-    0.95
-  );
-  box-shadow:
-    0 16px 40px
-    rgba(
-      3,
-      54,
-      99,
-      0.08
-    );
-}
-
-.appointment-card-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content:
-    space-between;
-  gap: 22px;
-}
-
-.appointment-title-block {
-  min-width: 0;
-}
-
-.appointment-title {
-  display: block;
-  color: #033663;
-  font-size: clamp(
-    20px,
-    2vw,
-    25px
-  );
-  line-height: 1.25;
-  font-weight: 900;
-}
-
-.appointment-type-label {
-  margin: 8px 0 0;
-  color: rgba(
-    3,
-    54,
-    99,
-    0.66
-  );
-  font-size: 15px;
-  line-height: 1.4;
-  font-weight: 700;
-}
-
-/* =========================================================
-   Statusbadges
-   ========================================================= */
 
 .appointment-badges {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 9px;
+  gap: 8px;
 }
 
-.appointment-status-badge,
 .google-status-badge {
-  display: inline-flex;
-  min-height: 36px;
-  padding: 0 14px;
-  align-items: center;
-  justify-content: center;
+  padding: 8px 12px;
   border-radius: 999px;
   font-size: 12px;
-  line-height: 1;
   font-weight: 850;
-  white-space: nowrap;
-}
-
-.appointment-status-badge {
-  background: rgba(
-    3,
-    54,
-    99,
-    0.07
-  );
-  color: #033663;
-}
-
-.appointment-status-badge.confirmed {
-  background: rgba(
-    40,
-    185,
-    170,
-    0.11
-  );
-  color: #087f76;
-}
-
-.appointment-status-badge.pending {
-  background: rgba(
-    254,
-    160,
-    32,
-    0.14
-  );
-  color: #a86400;
-}
-
-.appointment-status-badge.cancelled {
-  background: rgba(
-    251,
-    103,
-    48,
-    0.1
-  );
-  color: #cf4d27;
 }
 
 .google-status-badge.linked {
-  background: rgba(
-    84,
-    149,
-    92,
-    0.12
-  );
+  background: rgba(84, 149, 92, 0.12);
   color: #3f7d48;
 }
 
 .google-status-badge.not-linked {
-  background: rgba(
-    254,
-    160,
-    32,
-    0.14
-  );
+  background: rgba(254, 160, 32, 0.14);
   color: #a86400;
 }
 
-/* =========================================================
-   Afspraakdetails
-   ========================================================= */
-
-.appointment-details {
-  display: grid;
-  gap: 11px;
-  margin-top: 24px;
-  padding-top: 22px;
-  border-top: 1px solid
-    rgba(
-      3,
-      54,
-      99,
-      0.07
-    );
-}
-
-.appointment-details p {
-  display: flex;
-  align-items: flex-start;
-  gap: 11px;
-  margin: 0;
-  color: rgba(
-    3,
-    54,
-    99,
-    0.78
-  );
-  font-size: 15px;
-  line-height: 1.55;
-}
-
-.appointment-detail-icon {
-  width: 23px;
-  flex: 0 0 23px;
-  text-align: center;
-  line-height: 1.55;
-}
-
-/* =========================================================
-   Actieknoppen
-   ========================================================= */
-
-.appointment-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
-  margin-top: 26px;
-}
-
-.appointment-action {
-  min-height: 52px;
-  padding: 0 22px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-
-  border-radius: 17px;
-  font: inherit;
-  font-size: 15px;
-  font-weight: 850;
-  line-height: 1;
-
-  text-decoration: none;
-  cursor: pointer;
-
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
-    border-color 0.2s ease,
-    background 0.2s ease,
-    opacity 0.2s ease;
-}
-
-.appointment-action > span {
-  font-size: 18px;
-  line-height: 1;
-}
-
-/* Google Agenda */
-
-.appointment-action.calendar {
-  border: 1px solid
-    rgba(
-      3,
-      54,
-      99,
-      0.16
-    );
-  background: rgba(
-    255,
-    255,
-    255,
-    0.98
-  );
-  color: #033663;
-  box-shadow:
-    0 10px 24px
-    rgba(
-      3,
-      54,
-      99,
-      0.06
-    );
-}
-
-.appointment-action.calendar:hover {
-  border-color: rgba(
-    3,
-    54,
-    99,
-    0.3
-  );
-  background: rgba(
-    3,
-    54,
-    99,
-    0.035
-  );
-  box-shadow:
-    0 14px 30px
-    rgba(
-      3,
-      54,
-      99,
-      0.1
-    );
-}
-
-/* Google Meet */
-
-.appointment-action.meet {
-  border: 1px solid
-    rgba(
-      40,
-      185,
-      170,
-      0.34
-    );
-  background:
-    linear-gradient(
-      135deg,
-      rgba(
-        40,
-        185,
-        170,
-        0.14
-      ),
-      rgba(
-        255,
-        255,
-        255,
-        0.98
-      )
-    );
-  color: #087f76;
-  box-shadow:
-    0 10px 24px
-    rgba(
-      40,
-      185,
-      170,
-      0.1
-    );
-}
-
-.appointment-action.meet:hover {
-  border-color: rgba(
-    40,
-    185,
-    170,
-    0.52
-  );
-  background:
-    linear-gradient(
-      135deg,
-      rgba(
-        40,
-        185,
-        170,
-        0.19
-      ),
-      rgba(
-        255,
-        255,
-        255,
-        0.98
-      )
-    );
-  box-shadow:
-    0 14px 30px
-    rgba(
-      40,
-      185,
-      170,
-      0.17
-    );
-}
-
-/* Annuleren */
-
-.appointment-action.cancel {
-  border: 1px solid
-    rgba(
-      251,
-      103,
-      48,
-      0.28
-    );
-  background:
-    linear-gradient(
-      135deg,
-      rgba(
-        251,
-        103,
-        48,
-        0.08
-      ),
-      rgba(
-        255,
-        255,
-        255,
-        0.98
-      )
-    );
-  color: #cf4d27;
-  box-shadow:
-    0 10px 24px
-    rgba(
-      251,
-      103,
-      48,
-      0.08
-    );
-}
-
-.appointment-action.cancel:hover:not(
-    :disabled
-  ) {
-  border-color: rgba(
-    251,
-    103,
-    48,
-    0.5
-  );
-  background:
-    linear-gradient(
-      135deg,
-      rgba(
-        251,
-        103,
-        48,
-        0.14
-      ),
-      rgba(
-        255,
-        255,
-        255,
-        0.98
-      )
-    );
-  box-shadow:
-    0 14px 30px
-    rgba(
-      251,
-      103,
-      48,
-      0.15
-    );
-}
-
-.appointment-action:hover:not(
-    :disabled
-  ) {
-  transform: translateY(
-    -2px
-  );
-}
-
-.appointment-action:focus-visible,
-.google-sync-button:focus-visible,
-.appointments-error button:focus-visible {
-  outline: 3px solid
-    rgba(
-      40,
-      185,
-      170,
-      0.28
-    );
-  outline-offset: 3px;
-}
-
-.appointment-action:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-  transform: none;
-  box-shadow: none;
-}
-
-/* =========================================================
-   Dashboardonderdelen
-   ========================================================= */
-
-.dashboard-card-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 26px;
-}
-
-.pass-empty-message {
-  margin: 16px 0 0;
-  color: rgba(
-    3,
-    54,
-    99,
-    0.62
-  );
-  font-size: 14px;
-  font-weight: 700;
-}
-
-/* =========================================================
-   Responsive
-   ========================================================= */
-
-@media (max-width: 760px) {
+@media (max-width: 700px) {
   .google-sync-card {
     grid-template-columns: 1fr;
   }
@@ -758,56 +141,20 @@
     width: 100%;
   }
 
-  .appointment-card-header {
-    flex-direction: column;
-  }
-
   .appointment-badges {
-    justify-content:
-      flex-start;
+    justify-content: flex-start;
   }
 }
-
-@media (max-width: 640px) {
-  .agenda-item {
-    padding: 21px;
-    border-radius: 22px;
-  }
-
-  .appointment-actions {
-    flex-direction: column;
-  }
-
-  .appointment-action {
-    width: 100%;
-  }
-
-  .dashboard-card-actions {
-    flex-direction: column;
-  }
-
-  .dashboard-card-actions
-    .primary-action {
-    width: 100%;
-  }
+.dashboard-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
 }
 
-@media (max-width: 420px) {
-  .google-sync-card {
-    padding: 18px;
-  }
-
-  .google-sync-content {
-    flex-direction: column;
-  }
-
-  .appointment-title {
-    font-size: 20px;
-  }
-
-  .appointment-status-badge,
-  .google-status-badge {
-    min-height: 34px;
-    padding: 0 11px;
-  }
+.pass-empty-message {
+  margin: 16px 0 0;
+  color: rgba(3, 54, 99, 0.62);
+  font-size: 14px;
+  font-weight: 700;
 }

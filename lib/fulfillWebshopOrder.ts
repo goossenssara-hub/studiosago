@@ -1,9 +1,17 @@
 type SupabaseAdmin = any;
 
+export type WebshopPaymentMethod =
+  | "mollie"
+  | "waardebon"
+  | "gratis"
+  | "admin";
+
 export type WebshopOrderMetadata = {
   checkoutId?: string;
+
   product?: string;
   productName?: string;
+
   amount?: string | number;
   originalAmount?: string | number;
 
@@ -15,14 +23,23 @@ export type WebshopOrderMetadata = {
   studentName?: string;
   email?: string;
   phone?: string;
+
   studentAge?: string;
   schoolYear?: string;
   school?: string;
+
   wordCount?: string;
   textType?: string;
   notes?: string;
 
-  paymentMethod?: string;
+  paymentMethod?: WebshopPaymentMethod;
+
+  /*
+   * true wanneer een dienst gratis wordt aangeboden,
+   * bijvoorbeeld vanuit de admin of door een waardebon
+   * die het volledige bedrag dekt.
+   */
+  isFreeOrder?: boolean;
 };
 
 type FulfillWebshopOrderArguments = {
@@ -31,65 +48,196 @@ type FulfillWebshopOrderArguments = {
   metadata: WebshopOrderMetadata;
 };
 
-function clean(value: unknown) {
+export type FulfillWebshopOrderResult = {
+  success: true;
+  duplicate: boolean;
+  contactId: string | null;
+  bookingId: string;
+  passCreated: boolean;
+  isFreeOrder: boolean;
+};
+
+function clean(value: unknown): string {
   return String(value ?? "").trim();
 }
 
-function normalizeEmail(value: unknown) {
+function normalizeEmail(value: unknown): string {
   return clean(value).toLowerCase();
 }
 
-function makeReference(paymentId: string) {
+function toSafeNumber(value: unknown, fallback = 0): number {
+  const parsed = Number(value);
+
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+
+  return parsed;
+}
+
+function roundCurrency(value: number): number {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
+function formatCurrency(value: number): string {
+  return `€${roundCurrency(value).toFixed(2)}`;
+}
+
+function makeReference(paymentId: string): string {
   return `Betalingsreferentie: ${paymentId}`;
+}
+
+function getPaymentMethod({
+  paymentId,
+  metadata,
+  isFreeOrder,
+}: {
+  paymentId: string;
+  metadata: WebshopOrderMetadata;
+  isFreeOrder: boolean;
+}): WebshopPaymentMethod {
+  if (metadata.paymentMethod) {
+    return metadata.paymentMethod;
+  }
+
+  if (paymentId.startsWith("voucher_")) {
+    return "waardebon";
+  }
+
+  if (paymentId.startsWith("free_")) {
+    return "gratis";
+  }
+
+  if (paymentId.startsWith("admin_")) {
+    return "admin";
+  }
+
+  if (isFreeOrder) {
+    return "gratis";
+  }
+
+  return "mollie";
+}
+
+function getPaymentLabel({
+  paymentMethod,
+  isFreeOrder,
+  discountCode,
+}: {
+  paymentMethod: WebshopPaymentMethod;
+  isFreeOrder: boolean;
+  discountCode: string;
+}): string {
+  if (paymentMethod === "waardebon") {
+    return discountCode
+      ? `Volledig betaald met waardebon ${discountCode}`
+      : "Volledig betaald met waardebon";
+  }
+
+  if (paymentMethod === "gratis") {
+    return "Gratis aangeboden";
+  }
+
+  if (paymentMethod === "admin") {
+    return isFreeOrder
+      ? "Gratis aangeboden via admin"
+      : "Handmatig verwerkt via admin";
+  }
+
+  if (isFreeOrder) {
+    return "Gratis aangeboden";
+  }
+
+  return "Betaald via Mollie";
 }
 
 export async function fulfillWebshopOrder({
   supabaseAdmin,
   paymentId,
   metadata,
-}: FulfillWebshopOrderArguments) {
+}: FulfillWebshopOrderArguments): Promise<FulfillWebshopOrderResult> {
+  const cleanedPaymentId = clean(paymentId);
+
+  if (!cleanedPaymentId) {
+    throw new Error(
+      "De betalingsreferentie van de bestelling ontbreekt."
+    );
+  }
+
   const product = clean(metadata.product);
+
   const productName =
-    clean(metadata.productName) || product || "Webshopaankoop";
+    clean(metadata.productName) ||
+    product ||
+    "Webshopaankoop";
 
   const parentName = clean(metadata.parentName);
   const studentName = clean(metadata.studentName);
+
   const email = normalizeEmail(metadata.email);
   const phone = clean(metadata.phone);
 
   const studentAge = clean(metadata.studentAge);
   const schoolYear = clean(metadata.schoolYear);
   const school = clean(metadata.school);
-  const notes = clean(metadata.notes);
 
-  const amount = Number(metadata.amount || 0);
-  const originalAmount = Number(
-    metadata.originalAmount || metadata.amount || 0
+  const wordCount = clean(metadata.wordCount);
+  const textType = clean(metadata.textType);
+  const customerNotes = clean(metadata.notes);
+
+  const amount = roundCurrency(
+    Math.max(toSafeNumber(metadata.amount), 0)
   );
 
-  const discountAmount = Number(metadata.discountAmount || 0);
+  const originalAmount = roundCurrency(
+    Math.max(
+      toSafeNumber(metadata.originalAmount, amount),
+      0
+    )
+  );
+
+  const discountAmount = roundCurrency(
+    Math.max(toSafeNumber(metadata.discountAmount), 0)
+  );
+
   const discountId = clean(metadata.discountId);
   const discountCode = clean(metadata.discountCode);
 
-  const paymentMethod =
-    clean(metadata.paymentMethod) ||
-    (paymentId.startsWith("voucher_")
-      ? "waardebon"
-      : "mollie");
+  /*
+   * Een bestelling is gratis wanneer:
+   * - isFreeOrder expliciet true is;
+   * - het te betalen bedrag 0 euro is.
+   */
+  const isFreeOrder =
+    metadata.isFreeOrder === true ||
+    amount === 0;
 
-  const paymentReference = makeReference(paymentId);
+  const paymentMethod = getPaymentMethod({
+    paymentId: cleanedPaymentId,
+    metadata,
+    isFreeOrder,
+  });
+
+  const paymentLabel = getPaymentLabel({
+    paymentMethod,
+    isFreeOrder,
+    discountCode,
+  });
+
+  const paymentReference = makeReference(cleanedPaymentId);
 
   /*
    * Dubbele verwerking voorkomen.
-   * Zowel Mollie als een statuscontrole kan dezelfde betaling
-   * eventueel meer dan één keer verwerken.
    */
-  const { data: existingBooking, error: duplicateError } =
-    await supabaseAdmin
-      .from("bookings")
-      .select("id")
-      .ilike("notes", `%${paymentReference}%`)
-      .maybeSingle();
+  const {
+    data: existingBooking,
+    error: duplicateError,
+  } = await supabaseAdmin
+    .from("bookings")
+    .select("id, contact_id")
+    .ilike("notes", `%${paymentReference}%`)
+    .limit(1)
+    .maybeSingle();
 
   if (duplicateError) {
     console.error(
@@ -102,34 +250,49 @@ export async function fulfillWebshopOrder({
     );
   }
 
-  if (existingBooking) {
-    await supabaseAdmin
-      .from("webshop_payments")
-      .update({ status: "paid" })
-      .eq("payment_id", paymentId);
+  if (existingBooking?.id) {
+    const { error: paymentStatusError } =
+      await supabaseAdmin
+        .from("webshop_payments")
+        .update({
+          status: "paid",
+        })
+        .eq("payment_id", cleanedPaymentId);
+
+    if (paymentStatusError) {
+      console.error(
+        "FULFILL DUPLICATE PAYMENT UPDATE ERROR:",
+        paymentStatusError
+      );
+    }
 
     return {
       success: true,
       duplicate: true,
-      contactId: null,
-      bookingId: existingBooking.id,
+      contactId: existingBooking.contact_id
+        ? String(existingBooking.contact_id)
+        : null,
+      bookingId: String(existingBooking.id),
+      passCreated: false,
+      isFreeOrder,
     };
   }
 
   /*
-   * Eerst zoeken of de klant al als contact bestaat.
-   * Daardoor wordt niet bij iedere aankoop een dubbel contact gemaakt.
+   * Bestaand contact zoeken.
    */
   let contactId: string | null = null;
 
   if (email) {
-    const { data: existingContact, error: contactFindError } =
-      await supabaseAdmin
-        .from("contacts")
-        .select("id")
-        .ilike("email", email)
-        .limit(1)
-        .maybeSingle();
+    const {
+      data: existingContact,
+      error: contactFindError,
+    } = await supabaseAdmin
+      .from("contacts")
+      .select("id")
+      .ilike("email", email)
+      .limit(1)
+      .maybeSingle();
 
     if (contactFindError) {
       console.error(
@@ -143,39 +306,74 @@ export async function fulfillWebshopOrder({
     }
   }
 
+  /*
+   * Nieuw contact aanmaken.
+   */
   if (!contactId) {
     const contactNotes = [
-      `Aankoop: ${productName}`,
-      studentName ? `Leerling: ${studentName}` : "",
-      studentAge ? `Leeftijd: ${studentAge}` : "",
-      schoolYear ? `Studiejaar: ${schoolYear}` : "",
-      school ? `School: ${school}` : "",
-      notes ? `Opmerking: ${notes}` : "",
+      `${isFreeOrder ? "Gratis dienst" : "Aankoop"}: ${productName}`,
+
+      studentName
+        ? `Leerling: ${studentName}`
+        : "",
+
+      studentAge
+        ? `Leeftijd: ${studentAge}`
+        : "",
+
+      schoolYear
+        ? `Studiejaar: ${schoolYear}`
+        : "",
+
+      school
+        ? `School: ${school}`
+        : "",
+
+      wordCount
+        ? `Aantal woorden: ${wordCount}`
+        : "",
+
+      textType
+        ? `Teksttype: ${textType}`
+        : "",
+
+      customerNotes
+        ? `Opmerking: ${customerNotes}`
+        : "",
+
       discountCode
         ? `Kortingscode: ${discountCode}`
         : "",
+
       discountAmount > 0
-        ? `Korting: €${discountAmount.toFixed(2)}`
+        ? `Korting: ${formatCurrency(discountAmount)}`
         : "",
-      `Betaalmethode: ${paymentMethod}`,
+
+      `Verwerking: ${paymentLabel}`,
       paymentReference,
     ]
       .filter(Boolean)
       .join("\n");
 
-    const { data: newContact, error: contactInsertError } =
-      await supabaseAdmin
-        .from("contacts")
-        .insert({
-          first_name: parentName || studentName || "Webshopklant",
-          last_name: "",
-          email,
-          phone,
-          notes: contactNotes,
-          active: true,
-        })
-        .select("id")
-        .single();
+    const {
+      data: newContact,
+      error: contactInsertError,
+    } = await supabaseAdmin
+      .from("contacts")
+      .insert({
+        first_name:
+          parentName ||
+          studentName ||
+          "Webshopklant",
+
+        last_name: "",
+        email,
+        phone,
+        notes: contactNotes,
+        active: true,
+      })
+      .select("id")
+      .single();
 
     if (contactInsertError || !newContact?.id) {
       console.error(
@@ -191,41 +389,91 @@ export async function fulfillWebshopOrder({
     contactId = String(newContact.id);
   }
 
+  /*
+   * Boeking opslaan.
+   */
   const bookingNotes = [
-    `Betaald product: ${productName}`,
-    studentName ? `Leerling: ${studentName}` : "",
-    studentAge ? `Leeftijd: ${studentAge}` : "",
-    schoolYear ? `Studiejaar: ${schoolYear}` : "",
-    school ? `School: ${school}` : "",
-    `Oorspronkelijk bedrag: €${originalAmount.toFixed(2)}`,
-    discountAmount > 0
-      ? `Korting: €${discountAmount.toFixed(2)}`
+    `${
+      isFreeOrder
+        ? "Gratis aangeboden product"
+        : "Betaald product"
+    }: ${productName}`,
+
+    product
+      ? `Productsleutel: ${product}`
       : "",
+
+    studentName
+      ? `Leerling: ${studentName}`
+      : "",
+
+    studentAge
+      ? `Leeftijd: ${studentAge}`
+      : "",
+
+    schoolYear
+      ? `Studiejaar: ${schoolYear}`
+      : "",
+
+    school
+      ? `School: ${school}`
+      : "",
+
+    wordCount
+      ? `Aantal woorden: ${wordCount}`
+      : "",
+
+    textType
+      ? `Teksttype: ${textType}`
+      : "",
+
+    `Oorspronkelijk bedrag: ${formatCurrency(
+      originalAmount
+    )}`,
+
+    discountAmount > 0
+      ? `Korting: ${formatCurrency(discountAmount)}`
+      : "",
+
     discountCode
       ? `Kortingscode: ${discountCode}`
       : "",
-    `Betaald bedrag: €${amount.toFixed(2)}`,
-    `Betaalmethode: ${paymentMethod}`,
-    notes ? `Opmerking: ${notes}` : "",
+
+    `Te betalen bedrag: ${formatCurrency(amount)}`,
+
+    isFreeOrder
+      ? "Bestelling volledig voldaan zonder online betaling"
+      : "",
+
+    `Verwerking: ${paymentLabel}`,
+
+    customerNotes
+      ? `Opmerking: ${customerNotes}`
+      : "",
+
     paymentReference,
   ]
     .filter(Boolean)
     .join("\n");
 
-  const { data: booking, error: bookingError } =
-    await supabaseAdmin
-      .from("bookings")
-      .insert({
-        contact_id: contactId,
-        service_id: null,
-        availability_id: null,
-        status: "confirmed",
-        payment_status: "paid",
-        amount,
-        notes: bookingNotes,
-      })
-      .select("id")
-      .single();
+  const {
+    data: booking,
+    error: bookingError,
+  } = await supabaseAdmin
+    .from("bookings")
+    .insert({
+      contact_id: contactId,
+      service_id: null,
+      availability_id: null,
+
+      status: "confirmed",
+      payment_status: "paid",
+      amount,
+
+      notes: bookingNotes,
+    })
+    .select("id")
+    .single();
 
   if (bookingError || !booking?.id) {
     console.error(
@@ -239,15 +487,19 @@ export async function fulfillWebshopOrder({
   }
 
   /*
-   * Maak automatisch een beurtenkaart aan.
-   * Controle gebeurt op productsleutel én productnaam.
+   * Automatisch een beurtenkaart aanmaken.
    */
   const normalizedProduct = product.toLowerCase();
-  const normalizedProductName = productName.toLowerCase();
+  const normalizedProductName =
+    productName.toLowerCase();
 
   const isTenSessionPass =
     normalizedProduct.includes("10-beurtenkaart") ||
-    normalizedProductName.includes("10-beurtenkaart");
+    normalizedProductName.includes("10-beurtenkaart") ||
+    normalizedProduct.includes("tienbeurtenkaart") ||
+    normalizedProductName.includes("tienbeurtenkaart");
+
+  let passCreated = false;
 
   if (isTenSessionPass) {
     const level =
@@ -256,12 +508,15 @@ export async function fulfillWebshopOrder({
         ? "secundair"
         : "lager";
 
-    const { data: existingPass, error: passFindError } =
-      await supabaseAdmin
-        .from("passes")
-        .select("id")
-        .eq("payment_id", paymentId)
-        .maybeSingle();
+    const {
+      data: existingPass,
+      error: passFindError,
+    } = await supabaseAdmin
+      .from("passes")
+      .select("id")
+      .eq("payment_id", cleanedPaymentId)
+      .limit(1)
+      .maybeSingle();
 
     if (passFindError) {
       console.error(
@@ -270,21 +525,34 @@ export async function fulfillWebshopOrder({
       );
     }
 
-    if (!existingPass) {
+    if (!existingPass?.id) {
       const { error: passInsertError } =
-        await supabaseAdmin.from("passes").insert({
-          contact_id: contactId,
-          customer_email: email,
-          title: productName || "10-beurtenkaart",
-          product: productName || product,
-          level,
-          total_credits: 10,
-          remaining_credits: 10,
-          total_sessions: 10,
-          remaining_sessions: 10,
-          status: "active",
-          payment_id: paymentId,
-        });
+        await supabaseAdmin
+          .from("passes")
+          .insert({
+            contact_id: contactId,
+            customer_email: email,
+
+            title:
+              productName ||
+              "10-beurtenkaart",
+
+            product:
+              productName ||
+              product ||
+              "10-beurtenkaart",
+
+            level,
+
+            total_credits: 10,
+            remaining_credits: 10,
+
+            total_sessions: 10,
+            remaining_sessions: 10,
+
+            status: "active",
+            payment_id: cleanedPaymentId,
+          });
 
       if (passInsertError) {
         console.error(
@@ -296,20 +564,23 @@ export async function fulfillWebshopOrder({
           "De beurtenkaart kon niet opgeslagen worden."
         );
       }
+
+      passCreated = true;
     }
   }
 
   /*
-   * Kortingscode pas als gebruikt registreren nadat de
-   * volledige bestelling succesvol verwerkt is.
+   * Kortingscode als gebruikt registreren.
    */
   if (discountId) {
-    const { data: discountCodeRow, error: discountReadError } =
-      await supabaseAdmin
-        .from("discount_codes")
-        .select("used_count, max_uses, active")
-        .eq("id", discountId)
-        .maybeSingle();
+    const {
+      data: discountCodeRow,
+      error: discountReadError,
+    } = await supabaseAdmin
+      .from("discount_codes")
+      .select("used_count, max_uses, active")
+      .eq("id", discountId)
+      .maybeSingle();
 
     if (discountReadError) {
       console.error(
@@ -317,27 +588,35 @@ export async function fulfillWebshopOrder({
         discountReadError
       );
     } else if (discountCodeRow) {
-      const currentUses = Number(
-        discountCodeRow.used_count || 0
+      const currentUses = Math.max(
+        toSafeNumber(discountCodeRow.used_count),
+        0
       );
 
       const newUsedCount = currentUses + 1;
+
       const maxUses =
         discountCodeRow.max_uses === null
           ? null
-          : Number(discountCodeRow.max_uses);
+          : toSafeNumber(
+              discountCodeRow.max_uses,
+              Number.NaN
+            );
 
       const shouldDeactivate =
-        maxUses !== null && newUsedCount >= maxUses;
+        maxUses !== null &&
+        Number.isFinite(maxUses) &&
+        newUsedCount >= maxUses;
 
       const { error: discountUpdateError } =
         await supabaseAdmin
           .from("discount_codes")
           .update({
             used_count: newUsedCount,
+
             active: shouldDeactivate
               ? false
-              : discountCodeRow.active,
+              : Boolean(discountCodeRow.active),
           })
           .eq("id", discountId);
 
@@ -350,11 +629,16 @@ export async function fulfillWebshopOrder({
     }
   }
 
+  /*
+   * Betaling als afgehandeld opslaan.
+   */
   const { error: paymentUpdateError } =
     await supabaseAdmin
       .from("webshop_payments")
-      .update({ status: "paid" })
-      .eq("payment_id", paymentId);
+      .update({
+        status: "paid",
+      })
+      .eq("payment_id", cleanedPaymentId);
 
   if (paymentUpdateError) {
     console.error(
@@ -368,5 +652,7 @@ export async function fulfillWebshopOrder({
     duplicate: false,
     contactId,
     bookingId: String(booking.id),
+    passCreated,
+    isFreeOrder,
   };
 }

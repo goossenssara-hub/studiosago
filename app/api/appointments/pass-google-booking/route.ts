@@ -14,6 +14,16 @@ type PassRow = {
   total_credits: number | null;
 };
 
+type GoogleBookingResponse = {
+  success?: boolean;
+  error?: string;
+  eventId?: string;
+  htmlLink?: string;
+  meetLink?: string;
+  start?: string;
+  end?: string;
+};
+
 function clean(value: unknown): string {
   return String(value ?? "").trim();
 }
@@ -38,9 +48,13 @@ function addMinutesLocal(
     `${date}T${clean(time).slice(0, 5)}:00`
   );
 
-  start.setMinutes(
-    start.getMinutes() + minutes
-  );
+  if (Number.isNaN(start.getTime())) {
+    throw new Error(
+      "De gekozen datum of het gekozen tijdstip is ongeldig."
+    );
+  }
+
+  start.setMinutes(start.getMinutes() + minutes);
 
   const year = start.getFullYear();
 
@@ -93,6 +107,161 @@ function getTotalCredits(
     : 0;
 }
 
+async function createGoogleBooking({
+  bookingId,
+  date,
+  time,
+  email,
+  customerName,
+  appointmentType,
+  customerAddress,
+  notes,
+}: {
+  bookingId: string;
+  date: string;
+  time: string;
+  email: string;
+  customerName: string;
+  appointmentType: string;
+  customerAddress: string;
+  notes: string;
+}): Promise<GoogleBookingResponse> {
+  const scriptUrl = clean(
+    process.env
+      .GOOGLE_APPS_SCRIPT_AVAILABILITY_URL
+  );
+
+  if (!scriptUrl) {
+    return {
+      success: false,
+      error:
+        "GOOGLE_APPS_SCRIPT_AVAILABILITY_URL ontbreekt.",
+    };
+  }
+
+  const bookingSecret = clean(
+    process.env
+      .GOOGLE_APPS_SCRIPT_BOOKING_SECRET
+  );
+
+  try {
+    const response = await fetch(
+      scriptUrl,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+          Accept:
+            "application/json",
+        },
+
+        cache: "no-store",
+        redirect: "follow",
+
+        body: JSON.stringify({
+          action:
+            "createBooking",
+
+          secret:
+            bookingSecret,
+
+          bookingId,
+
+          date,
+          time,
+          email,
+          customerName,
+          appointmentType,
+
+          customerAddress:
+            appointmentType === "home"
+              ? customerAddress
+              : "",
+
+          notes,
+        }),
+      }
+    );
+
+    const responseText =
+      await response.text();
+
+    let data:
+      GoogleBookingResponse = {};
+
+    try {
+      data = JSON.parse(
+        responseText
+      ) as GoogleBookingResponse;
+    } catch {
+      console.error(
+        "GOOGLE BOOKING GAF GEEN GELDIGE JSON:",
+        responseText.slice(
+          0,
+          500
+        )
+      );
+
+      return {
+        success: false,
+        error:
+          "Google Agenda gaf geen geldig antwoord terug.",
+      };
+    }
+
+    if (
+      !response.ok ||
+      data.success === false
+    ) {
+      console.error(
+        "GOOGLE BOOKING RESPONSE ERROR:",
+        {
+          status:
+            response.status,
+          response:
+            data,
+        }
+      );
+
+      return {
+        success: false,
+        error:
+          clean(data.error) ||
+          "De afspraak kon niet aan Google Agenda worden toegevoegd.",
+      };
+    }
+
+    return {
+      success: true,
+      eventId:
+        clean(data.eventId),
+      htmlLink:
+        clean(data.htmlLink),
+      meetLink:
+        clean(data.meetLink),
+      start:
+        clean(data.start),
+      end:
+        clean(data.end),
+    };
+  } catch (error) {
+    console.error(
+      "GOOGLE BOOKING FETCH ERROR:",
+      error
+    );
+
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Google Agenda kon niet bereikt worden.",
+    };
+  }
+}
+
 export async function POST(
   request: Request
 ): Promise<NextResponse> {
@@ -100,29 +269,47 @@ export async function POST(
     const supabaseAdmin =
       getSupabaseAdmin();
 
-    const body = await request.json();
+    const body =
+      await request.json();
 
-    const passId = clean(body.passId);
-    const email = normalizeEmail(body.email);
-    const customerName = clean(
-      body.customerName
-    );
+    const passId =
+      clean(body.passId);
 
-    const date = clean(body.date);
-    const time = clean(body.time).slice(0, 5);
+    const email =
+      normalizeEmail(
+        body.email
+      );
 
-    const appointmentType = clean(
-      body.appointmentType
-    );
+    const customerName =
+      clean(
+        body.customerName
+      );
 
-    const customerAddress = clean(
-      body.customerAddress
-    );
+    const date =
+      clean(body.date);
 
-    const notes = clean(body.notes);
+    const time =
+      clean(body.time).slice(
+        0,
+        5
+      );
+
+    const appointmentType =
+      clean(
+        body.appointmentType
+      );
+
+    const customerAddress =
+      clean(
+        body.customerAddress
+      );
+
+    const notes =
+      clean(body.notes);
 
     const cancellationPolicyAccepted =
-      body.cancellationPolicyAccepted === true;
+      body.cancellationPolicyAccepted ===
+      true;
 
     if (
       !passId ||
@@ -145,8 +332,10 @@ export async function POST(
     }
 
     if (
-      appointmentType !== "digital" &&
-      appointmentType !== "home"
+      appointmentType !==
+        "digital" &&
+      appointmentType !==
+        "home"
     ) {
       return NextResponse.json(
         {
@@ -159,7 +348,9 @@ export async function POST(
       );
     }
 
-    if (!cancellationPolicyAccepted) {
+    if (
+      !cancellationPolicyAccepted
+    ) {
       return NextResponse.json(
         {
           error:
@@ -172,7 +363,8 @@ export async function POST(
     }
 
     if (
-      appointmentType === "home" &&
+      appointmentType ===
+        "home" &&
       !customerAddress
     ) {
       return NextResponse.json(
@@ -188,9 +380,6 @@ export async function POST(
 
     /*
      * Beurtenkaart ophalen.
-     *
-     * De e-mailcontrole gebeurt hieronder genormaliseerd,
-     * zodat hoofdletters in de database geen probleem vormen.
      */
     const {
       data: passData,
@@ -211,9 +400,10 @@ export async function POST(
       .eq("id", passId)
       .maybeSingle();
 
-    const pass = passData as
-      | PassRow
-      | null;
+    const pass =
+      passData as
+        | PassRow
+        | null;
 
     if (passError) {
       console.error(
@@ -234,7 +424,8 @@ export async function POST(
 
     if (
       !pass ||
-      pass.status !== "active" ||
+      pass.status !==
+        "active" ||
       normalizeEmail(
         pass.customer_email
       ) !== email
@@ -251,10 +442,14 @@ export async function POST(
     }
 
     const remaining =
-      getRemainingCredits(pass);
+      getRemainingCredits(
+        pass
+      );
 
     const total =
-      getTotalCredits(pass);
+      getTotalCredits(
+        pass
+      );
 
     if (remaining <= 0) {
       return NextResponse.json(
@@ -269,22 +464,33 @@ export async function POST(
     }
 
     /*
-     * Controleren of het tijdstip ondertussen
-     * al door iemand anders geboekt werd.
+     * Controleren of het tijdstip al geboekt is.
      */
     const {
       data: existingBooking,
-      error: existingBookingError,
+      error:
+        existingBookingError,
     } = await supabaseAdmin
       .from("bookings")
       .select("id")
-      .eq("appointment_date", date)
-      .eq("appointment_time", time)
-      .neq("status", "cancelled")
+      .eq(
+        "appointment_date",
+        date
+      )
+      .eq(
+        "appointment_time",
+        time
+      )
+      .neq(
+        "status",
+        "cancelled"
+      )
       .limit(1)
       .maybeSingle();
 
-    if (existingBookingError) {
+    if (
+      existingBookingError
+    ) {
       console.error(
         "EXISTING BOOKING CHECK ERROR:",
         existingBookingError
@@ -314,7 +520,10 @@ export async function POST(
     }
 
     const appointmentStart =
-      makeLocalDateTime(date, time);
+      makeLocalDateTime(
+        date,
+        time
+      );
 
     const appointmentEnd =
       addMinutesLocal(
@@ -324,12 +533,13 @@ export async function POST(
       );
 
     const title =
-      appointmentType === "home"
+      appointmentType ===
+      "home"
         ? "Studiebegeleiding aan huis"
         : "Digitale studiebegeleiding";
 
     /*
-     * Eerst de afspraak opslaan.
+     * Eerst afspraak in Supabase opslaan.
      */
     const {
       data: booking,
@@ -337,41 +547,82 @@ export async function POST(
     } = await supabaseAdmin
       .from("bookings")
       .insert({
-        pass_id: pass.id,
+        pass_id:
+          pass.id,
+
         title,
-        customer_email: email,
+
+        customer_email:
+          email,
+
         customer_name:
-          customerName || null,
-        appointment_date: date,
-        appointment_time: time,
-        start_time: appointmentStart,
-        end_time: appointmentEnd,
+          customerName,
+
+        appointment_date:
+          date,
+
+        appointment_time:
+          time,
+
+        start_time:
+          appointmentStart,
+
+        end_time:
+          appointmentEnd,
+
+        customer_address:
+          appointmentType ===
+          "home"
+            ? customerAddress
+            : null,
+
         location:
-          appointmentType === "home"
+          appointmentType ===
+          "home"
             ? customerAddress
             : "Digitaal",
+
         notes,
+
         service_type:
           "begeleiding",
+
         appointment_type:
           appointmentType,
-        status: "confirmed",
+
+        status:
+          "confirmed",
+
         payment_status:
           "paid_with_pass",
-        deducted: true,
-        restored_lesson: false,
-        credit_refunded: false,
+
+        deducted:
+          true,
+
+        restored_lesson:
+          false,
+
+        credit_refunded:
+          false,
+
         confirmed_at:
-          new Date().toISOString(),
+          new Date()
+            .toISOString(),
+
         cancellation_policy_accepted:
           true,
+
         updated_at:
-          new Date().toISOString(),
+          new Date()
+            .toISOString(),
       })
       .select("*")
       .single();
 
-    if (bookingError || !booking) {
+    if (
+      bookingError ||
+      !booking
+    ) {
       console.error(
         "BOOKING INSERT ERROR:",
         bookingError
@@ -393,12 +644,7 @@ export async function POST(
       remaining - 1;
 
     /*
-     * Alleen kolommen meesturen die werkelijk
-     * door deze beurtenkaart gebruikt worden.
-     *
-     * Hierdoor schrijven we geen null naar een
-     * verplichte kolom en wordt updated_at niet
-     * aangepast wanneer die kolom niet bestaat.
+     * Alleen bestaande saldovelden aanpassen.
      */
     const passUpdate: Record<
       string,
@@ -406,7 +652,8 @@ export async function POST(
     > = {};
 
     if (
-      pass.remaining_sessions !== null &&
+      pass.remaining_sessions !==
+        null &&
       pass.remaining_sessions !==
         undefined
     ) {
@@ -415,7 +662,8 @@ export async function POST(
     }
 
     if (
-      pass.remaining_credits !== null &&
+      pass.remaining_credits !==
+        null &&
       pass.remaining_credits !==
         undefined
     ) {
@@ -424,14 +672,19 @@ export async function POST(
     }
 
     if (
-      Object.keys(passUpdate).length === 0
+      Object.keys(
+        passUpdate
+      ).length === 0
     ) {
       const {
         error: rollbackError,
       } = await supabaseAdmin
         .from("bookings")
         .delete()
-        .eq("id", booking.id);
+        .eq(
+          "id",
+          booking.id
+        );
 
       if (rollbackError) {
         console.error(
@@ -452,19 +705,26 @@ export async function POST(
     }
 
     /*
-     * Optimistische controle:
-     * de update lukt alleen wanneer het aantal
-     * sinds het ophalen niet gewijzigd is.
+     * Optimistische controle om dubbel afboeken te vermijden.
      */
     let updateQuery =
       supabaseAdmin
         .from("passes")
-        .update(passUpdate)
-        .eq("id", pass.id)
-        .eq("status", "active");
+        .update(
+          passUpdate
+        )
+        .eq(
+          "id",
+          pass.id
+        )
+        .eq(
+          "status",
+          "active"
+        );
 
     if (
-      pass.remaining_sessions !== null &&
+      pass.remaining_sessions !==
+        null &&
       pass.remaining_sessions !==
         undefined
     ) {
@@ -487,7 +747,8 @@ export async function POST(
 
     const {
       data: updatedPass,
-      error: passUpdateError,
+      error:
+        passUpdateError,
     } = await updateQuery
       .select(
         `
@@ -507,16 +768,15 @@ export async function POST(
         passUpdateError
       );
 
-      /*
-       * De afspraak verwijderen wanneer het
-       * afboeken van de beurt mislukt.
-       */
       const {
         error: rollbackError,
       } = await supabaseAdmin
         .from("bookings")
         .delete()
-        .eq("id", booking.id);
+        .eq(
+          "id",
+          booking.id
+        );
 
       if (rollbackError) {
         console.error(
@@ -546,24 +806,140 @@ export async function POST(
       );
     }
 
-    const finalRemaining = Number(
-      updatedPass.remaining_sessions ??
-        updatedPass.remaining_credits ??
-        newRemaining
-    );
+    /*
+     * Google Agenda-event en eventueel Google Meet aanmaken.
+     */
+    const googleBooking =
+      await createGoogleBooking({
+        bookingId:
+          String(
+            booking.id
+          ),
+
+        date,
+        time,
+        email,
+        customerName,
+        appointmentType,
+        customerAddress,
+        notes,
+      });
+
+    let finalBooking =
+      booking;
+
+    if (
+      googleBooking.success
+    ) {
+      const googleEventId =
+        clean(
+          googleBooking.eventId
+        ) || null;
+
+      const googleEventUrl =
+        clean(
+          googleBooking.htmlLink
+        ) || null;
+
+      const googleMeetUrl =
+        clean(
+          googleBooking.meetLink
+        ) || null;
+
+      const {
+        data:
+          bookingWithGoogleLinks,
+        error:
+          googleLinksUpdateError,
+      } = await supabaseAdmin
+        .from("bookings")
+        .update({
+          google_event_id:
+            googleEventId,
+
+          google_event_url:
+            googleEventUrl,
+
+          /*
+           * Voor compatibiliteit met je oude dashboardveld.
+           */
+          google_event_link:
+            googleMeetUrl ||
+            googleEventUrl,
+
+          google_meet_url:
+            googleMeetUrl,
+
+          updated_at:
+            new Date()
+              .toISOString(),
+        })
+        .eq(
+          "id",
+          booking.id
+        )
+        .select("*")
+        .single();
+
+      if (
+        googleLinksUpdateError
+      ) {
+        console.error(
+          "GOOGLE LINKS UPDATE ERROR:",
+          googleLinksUpdateError
+        );
+      } else if (
+        bookingWithGoogleLinks
+      ) {
+        finalBooking =
+          bookingWithGoogleLinks;
+      }
+    } else {
+      console.error(
+        "GOOGLE BOOKING ERROR:",
+        googleBooking.error
+      );
+    }
+
+    const finalRemaining =
+      Number(
+        updatedPass
+          .remaining_sessions ??
+          updatedPass
+            .remaining_credits ??
+          newRemaining
+      );
 
     return NextResponse.json(
       {
         success: true,
-        booking,
+
+        booking:
+          finalBooking,
+
         pass: {
-          id: pass.id,
+          id:
+            pass.id,
+
           total,
+
           remaining:
             finalRemaining,
         },
+
         remainingSessions:
           finalRemaining,
+
+        googleCalendarCreated:
+          googleBooking.success ===
+          true,
+
+        googleCalendarError:
+          googleBooking.success ===
+          true
+            ? null
+            : googleBooking.error ||
+              "Google Agenda kon niet gekoppeld worden.",
       },
       {
         status: 200,

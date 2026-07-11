@@ -196,6 +196,7 @@ async function findAndValidateDiscount({
   product,
   email,
   parentName,
+  studentName,
   originalAmount,
 }: {
   supabaseAdmin: any;
@@ -203,6 +204,7 @@ async function findAndValidateDiscount({
   product: TenSessionProduct;
   email: string;
   parentName: string;
+  studentName: string;
   originalAmount: number;
 }): Promise<{
   discountId: string | null;
@@ -319,11 +321,20 @@ async function findAndValidateDiscount({
     row.customer_name
   ).toLowerCase();
 
-  if (
-    requiredCustomerName &&
-    requiredCustomerName !==
-      parentName.toLowerCase()
-  ) {
+  const normalizedParentName =
+    parentName.toLowerCase();
+
+  const normalizedStudentName =
+    studentName.toLowerCase();
+
+  const customerNameMatches =
+    !requiredCustomerName ||
+    requiredCustomerName ===
+      normalizedParentName ||
+    requiredCustomerName ===
+      normalizedStudentName;
+
+  if (!customerNameMatches) {
     throw new Error(
       "Deze kortingscode is gekoppeld aan een andere klant."
     );
@@ -502,6 +513,7 @@ export async function POST(
           product,
           email,
           parentName,
+          studentName,
           originalAmount,
         });
     } catch (discountError) {

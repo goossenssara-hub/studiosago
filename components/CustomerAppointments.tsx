@@ -601,7 +601,7 @@ export default function CustomerAppointments() {
                       className="appointment-detail-icon"
                       aria-hidden="true"
                     >
-                      📅
+                      📅 
                     </span>
 
                     <span>
@@ -616,7 +616,7 @@ export default function CustomerAppointments() {
                       className="appointment-detail-icon"
                       aria-hidden="true"
                     >
-                      🕒
+                      🕒 
                     </span>
 
                     <span>
@@ -635,7 +635,7 @@ export default function CustomerAppointments() {
                           className="appointment-detail-icon"
                           aria-hidden="true"
                         >
-                          🏠
+                          🏠 
                         </span>
 
                         <span>
@@ -651,7 +651,7 @@ export default function CustomerAppointments() {
                         className="appointment-detail-icon"
                         aria-hidden="true"
                       >
-                        📝
+                        📝 
                       </span>
 
                       <span>
@@ -674,7 +674,7 @@ export default function CustomerAppointments() {
                       <span
                         aria-hidden="true"
                       >
-                        📅
+                        📅 
                       </span>
 
                       Open in Google
@@ -694,10 +694,10 @@ export default function CustomerAppointments() {
                         <span
                           aria-hidden="true"
                         >
-                          🎥
+                          🎥 
                         </span>
 
-                        Deelnemen via
+                         Deelnemen via
                         Google Meet
                       </a>
                     )}
@@ -715,12 +715,9 @@ export default function CustomerAppointments() {
                       booking.id
                     }
                   >
-                    <span
-                      aria-hidden="true"
-                    >
-                      🗑️
-                    </span>
-
+<span aria-hidden="true">
+  ✕ 
+</span>
                     {cancellingId ===
                     booking.id
                       ? "Afspraak annuleren..."

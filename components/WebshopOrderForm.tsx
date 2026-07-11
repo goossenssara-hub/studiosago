@@ -1,47 +1,9 @@
 type SupabaseAdmin = any;
 
-export type WebshopOrderMetadata = {
-  checkoutId?: string;
-
-  product?: string;
-  productName?: string;
-
-  amount?: string | number;
-  originalAmount?: string | number;
-
-  discountId?: string | null;
-  discountCode?: string;
-  discountAmount?: string | number;
-
-  parentName?: string;
-  studentName?: string;
-  email?: string;
-  phone?: string;
-
-  studentAge?: string;
-  schoolYear?: string;
-  school?: string;
-
-  wordCount?: string;
-  textType?: string;
-  notes?: string;
-
-  /*
-   * Mogelijke waarden:
-   * - mollie
-   * - waardebon
-   * - gratis
-   * - admin
-   */
-  paymentMethod?: string;
-
-  /*
-   * Hiermee kun je later vanuit de admin expliciet aangeven
-   * dat een dienst gratis werd aangeboden.
-   */
-  isFreeOrder?: boolean;
-};
-
+import type {
+  WebshopOrderMetadata,
+  WebshopPaymentMethod,
+} from "@/lib/fulfillWebshopOrder";
 type FulfillWebshopOrderArguments = {
   supabaseAdmin: SupabaseAdmin;
   paymentId: string;

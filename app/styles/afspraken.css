@@ -1,0 +1,413 @@
+.page {
+  position: relative;
+  z-index: 8;
+  width: 100%;
+  min-height: 100vh;
+  padding: 42px 24px 110px;
+}
+
+.shell {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+}
+
+.header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 28px;
+  align-items: end;
+  margin-bottom: 26px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--teal, #28b9aa);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.header h1 {
+  margin: 0;
+  color: var(--navy, #033663);
+  font-family: "StudioTitle", sans-serif;
+  font-size: clamp(38px, 5vw, 64px);
+  line-height: 1.02;
+  font-weight: 950;
+}
+
+.intro {
+  max-width: 680px;
+  margin: 14px 0 0;
+  color: rgba(3, 54, 99, 0.72);
+  font-size: 17px;
+  line-height: 1.6;
+  font-weight: 650;
+}
+
+.passCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 150px;
+  padding: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 26px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(40, 185, 170, 0.16),
+      rgba(255, 255, 255, 0.92)
+    );
+  box-shadow: 0 18px 44px rgba(3, 54, 99, 0.12);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  text-align: center;
+}
+
+.passCard span,
+.passCard small {
+  color: rgba(3, 54, 99, 0.7);
+  font-weight: 750;
+}
+
+.passCard strong {
+  margin: 4px 0 2px;
+  color: var(--navy, #033663);
+  font-size: 46px;
+  line-height: 1;
+  font-weight: 950;
+}
+
+.errorMessage {
+  margin-bottom: 22px;
+  padding: 16px 18px;
+  border: 1px solid rgba(251, 103, 48, 0.24);
+  border-radius: 16px;
+  background: rgba(251, 103, 48, 0.1);
+  color: var(--orange-deep, #fb6730);
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.form {
+  display: grid;
+  gap: 22px;
+}
+
+.formCard {
+  padding: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.74);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 20px 52px rgba(3, 54, 99, 0.12);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.sectionHeading {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.sectionHeading > span {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  border-radius: 50%;
+  background: var(--teal, #28b9aa);
+  color: white;
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.sectionHeading h2 {
+  margin: 0;
+  color: var(--navy, #033663);
+  font-size: 23px;
+  line-height: 1.2;
+  font-weight: 950;
+}
+
+.sectionHeading p {
+  margin: 5px 0 0;
+  color: rgba(3, 54, 99, 0.62);
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 650;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field > span {
+  color: var(--navy, #033663);
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.field small {
+  color: rgba(3, 54, 99, 0.58);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid rgba(3, 54, 99, 0.14);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.97);
+  color: var(--navy, #033663);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 650;
+  outline: none;
+  box-shadow: 0 8px 22px rgba(3, 54, 99, 0.045);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.field input,
+.field select {
+  min-height: 52px;
+  padding: 0 15px;
+}
+
+.field textarea {
+  min-height: 132px;
+  padding: 15px;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: var(--teal, #28b9aa);
+  box-shadow:
+    0 0 0 4px rgba(40, 185, 170, 0.13),
+    0 12px 28px rgba(3, 54, 99, 0.07);
+}
+
+.field input:disabled,
+.field select:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+  background: rgba(245, 247, 249, 0.9);
+}
+
+.full {
+  grid-column: 1 / -1;
+}
+
+.checkboxCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 15px 16px;
+  border-radius: 16px;
+  background: rgba(40, 185, 170, 0.08);
+  color: var(--navy, #033663);
+  font-size: 14px;
+  line-height: 1.55;
+  font-weight: 700;
+}
+
+.checkboxCard input,
+.policyText input {
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  flex: 0 0 20px;
+  accent-color: var(--teal, #28b9aa);
+}
+
+.policyCard {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 18px;
+  align-items: center;
+  padding: 22px 24px;
+  border: 1px solid rgba(254, 160, 32, 0.2);
+  border-radius: 22px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(254, 160, 32, 0.12),
+      rgba(255, 255, 255, 0.9)
+    );
+  box-shadow: 0 16px 38px rgba(3, 54, 99, 0.08);
+}
+
+.policyIcon {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  background:
+    linear-gradient(
+      135deg,
+      var(--orange, #fea020),
+      var(--orange-deep, #fb6730)
+    );
+  color: white;
+  font-size: 21px;
+  font-weight: 950;
+}
+
+.policyText {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  color: var(--navy, #033663);
+  font-size: 15px;
+  line-height: 1.55;
+  font-weight: 750;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+}
+
+.primaryButton,
+.secondaryButton {
+  min-height: 54px;
+  padding: 0 26px;
+  border-radius: 16px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.primaryButton {
+  min-width: 250px;
+  border: 0;
+  background:
+    linear-gradient(
+      135deg,
+      var(--orange, #fea020),
+      var(--orange-deep, #fb6730)
+    );
+  color: white;
+  box-shadow: 0 14px 30px rgba(251, 103, 48, 0.22);
+}
+
+.secondaryButton {
+  border: 1px solid rgba(3, 54, 99, 0.14);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--navy, #033663);
+}
+
+.primaryButton:hover:not(:disabled),
+.secondaryButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.primaryButton:hover:not(:disabled) {
+  box-shadow: 0 18px 36px rgba(251, 103, 48, 0.28);
+}
+
+.primaryButton:disabled,
+.secondaryButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+@media (max-width: 780px) {
+  .page {
+    padding: 28px 16px 80px;
+  }
+
+  .header {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .passCard {
+    min-height: auto;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .full {
+    grid-column: auto;
+  }
+
+  .formCard {
+    padding: 22px;
+    border-radius: 23px;
+  }
+
+  .policyCard {
+    grid-template-columns: 1fr;
+  }
+
+  .policyIcon {
+    width: 58px;
+    height: 58px;
+    border-radius: 16px;
+    font-size: 18px;
+  }
+
+  .actions {
+    flex-direction: column-reverse;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 460px) {
+  .page {
+    padding-inline: 12px;
+  }
+
+  .header h1 {
+    font-size: 40px;
+  }
+
+  .formCard {
+    padding: 18px;
+  }
+
+  .sectionHeading h2 {
+    font-size: 20px;
+  }
+}

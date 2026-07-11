@@ -658,10 +658,9 @@ export async function POST(
           passCreated:
             fulfillment.passCreated,
 
-          redirectUrl: `${baseUrl}/betaling/gelukt?paymentId=${encodeURIComponent(
+          redirectUrl: `${baseUrl}/betaling/bedankt?paymentId=${encodeURIComponent(
             freePaymentId
           )}`,
-
           message:
             "Je bestelling werd correct geregistreerd. Er is geen online betaling nodig.",
         },
@@ -702,7 +701,7 @@ export async function POST(
 
         description: product.name,
 
-        redirectUrl: `${baseUrl}/betaling/gelukt?checkoutId=${encodeURIComponent(
+        redirectUrl: `${baseUrl}/betaling/bedankt?checkoutId=${encodeURIComponent(
           checkoutId
         )}`,
 

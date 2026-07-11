@@ -40,3 +40,108 @@
 .appointment-action:hover {
   transform: translateY(-2px);
 }
+.customer-appointments {
+  display: grid;
+  gap: 20px;
+}
+
+.google-sync-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px 20px;
+  align-items: center;
+  padding: 20px 22px;
+  border: 1px solid rgba(254, 160, 32, 0.24);
+  border-radius: 20px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(254, 160, 32, 0.12),
+      rgba(255, 255, 255, 0.94)
+    );
+  box-shadow: 0 14px 34px rgba(3, 54, 99, 0.08);
+}
+
+.google-sync-card strong {
+  color: #033663;
+  font-size: 18px;
+}
+
+.google-sync-card p {
+  margin: 6px 0 0;
+  color: rgba(3, 54, 99, 0.68);
+  line-height: 1.5;
+}
+
+.google-sync-button {
+  min-height: 48px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 14px;
+  background:
+    linear-gradient(
+      135deg,
+      #fea020,
+      #fb6730
+    );
+  color: white;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 850;
+  cursor: pointer;
+  box-shadow:
+    0 12px 26px
+    rgba(251, 103, 48, 0.2);
+}
+
+.google-sync-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.google-sync-message {
+  grid-column: 1 / -1;
+  padding: 13px 15px;
+  border-radius: 14px;
+  background: rgba(40, 185, 170, 0.1);
+  color: #033663;
+  font-weight: 750;
+}
+
+.appointment-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.google-status-badge {
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.google-status-badge.linked {
+  background: rgba(84, 149, 92, 0.12);
+  color: #3f7d48;
+}
+
+.google-status-badge.not-linked {
+  background: rgba(254, 160, 32, 0.14);
+  color: #a86400;
+}
+
+@media (max-width: 700px) {
+  .google-sync-card {
+    grid-template-columns: 1fr;
+  }
+
+  .google-sync-button {
+    width: 100%;
+  }
+
+  .appointment-badges {
+    justify-content: flex-start;
+  }
+}

@@ -433,6 +433,7 @@ export default function CustomerAppointments() {
     return (
       <div className="appointments-loading">
         <span className="appointments-spinner" />
+
         <p>
           Afspraken laden...
         </p>
@@ -443,7 +444,9 @@ export default function CustomerAppointments() {
   if (errorMessage) {
     return (
       <div className="appointments-error">
-        <p>{errorMessage}</p>
+        <p>
+          {errorMessage}
+        </p>
 
         <button
           type="button"
@@ -601,7 +604,7 @@ export default function CustomerAppointments() {
                       className="appointment-detail-icon"
                       aria-hidden="true"
                     >
-                      📅 
+                      📅
                     </span>
 
                     <span>
@@ -616,7 +619,7 @@ export default function CustomerAppointments() {
                       className="appointment-detail-icon"
                       aria-hidden="true"
                     >
-                      🕒 
+                      🕒
                     </span>
 
                     <span>
@@ -635,7 +638,7 @@ export default function CustomerAppointments() {
                           className="appointment-detail-icon"
                           aria-hidden="true"
                         >
-                          🏠 
+                          🏠
                         </span>
 
                         <span>
@@ -651,7 +654,7 @@ export default function CustomerAppointments() {
                         className="appointment-detail-icon"
                         aria-hidden="true"
                       >
-                        📝 
+                        📝
                       </span>
 
                       <span>
@@ -674,7 +677,7 @@ export default function CustomerAppointments() {
                       <span
                         aria-hidden="true"
                       >
-                        📅 
+                        📅
                       </span>
 
                       Open in Google
@@ -694,10 +697,10 @@ export default function CustomerAppointments() {
                         <span
                           aria-hidden="true"
                         >
-                          🎥 
+                          🎥
                         </span>
 
-                         Deelnemen via
+                        Deelnemen via
                         Google Meet
                       </a>
                     )}
@@ -715,9 +718,12 @@ export default function CustomerAppointments() {
                       booking.id
                     }
                   >
-<span aria-hidden="true">
-  ✕ 
-</span>
+                    <span
+                      aria-hidden="true"
+                    >
+                      ✕
+                    </span>
+
                     {cancellingId ===
                     booking.id
                       ? "Annuleren..."

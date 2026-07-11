@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import {
+  fulfillWebshopOrder,
+  WebshopOrderMetadata,
+} from "@/lib/fulfillWebshopOrder";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,7 +13,9 @@ export async function POST(request: Request) {
     const supabaseAdmin = getSupabaseAdmin();
 
     const formData = await request.formData();
-    const paymentId = String(formData.get("id") || "");
+    const paymentId = String(
+      formData.get("id") || ""
+    ).trim();
 
     if (!paymentId) {
       return NextResponse.json(
@@ -20,161 +26,116 @@ export async function POST(request: Request) {
 
     const mollieApiKey = process.env.MOLLIE_API_KEY;
 
-if (!mollieApiKey) {
-  return NextResponse.json(
-    {
-      error: "MOLLIE_API_KEY ontbreekt.",
-      env: process.env.VERCEL_ENV,
-      hasSiteUrl: !!process.env.NEXT_PUBLIC_SITE_URL,
-      allEnvKeys: Object.keys(process.env).filter((k) =>
-        k.includes("MOLLIE")
-      ),
-    },
-    { status: 500 }
-  );
-}
-    const response = await fetch(
-      `https://api.mollie.com/v2/payments/${paymentId}`,
+    if (!mollieApiKey) {
+      console.error(
+        "MOLLIE WEBHOOK: MOLLIE_API_KEY ontbreekt."
+      );
+
+      return NextResponse.json(
+        { error: "De Mollie-configuratie ontbreekt." },
+        { status: 500 }
+      );
+    }
+
+    const mollieResponse = await fetch(
+      `https://api.mollie.com/v2/payments/${encodeURIComponent(
+        paymentId
+      )}`,
       {
+        method: "GET",
         headers: {
           Authorization: `Bearer ${mollieApiKey}`,
+          Accept: "application/json",
         },
+        cache: "no-store",
       }
     );
 
-    const payment = await response.json();
+    const payment = await mollieResponse.json();
 
-    if (!response.ok) {
-      console.error("MOLLIE WEBHOOK PAYMENT ERROR:", payment);
+    if (!mollieResponse.ok) {
+      console.error(
+        "MOLLIE WEBHOOK PAYMENT ERROR:",
+        payment
+      );
 
       return NextResponse.json(
-        { error: "Betaling niet gevonden." },
-        { status: 404 }
+        {
+          error:
+            payment.detail ||
+            "De betaling kon niet bij Mollie opgehaald worden.",
+        },
+        { status: mollieResponse.status }
       );
     }
 
-    if (payment.status !== "paid") {
-      return NextResponse.json({ received: true });
-    }
+    const paymentStatus = String(
+      payment.status || "open"
+    );
 
-    const metadata = payment.metadata || {};
-
-    const { data: existingBooking, error: existingBookingError } =
+    /*
+     * Ook mislukte, verlopen of geannuleerde betalingen
+     * in webshop_payments bijwerken.
+     */
+    const { error: statusUpdateError } =
       await supabaseAdmin
-        .from("bookings")
-        .select("id")
-        .ilike("notes", `%Mollie betaling: ${payment.id}%`)
-        .maybeSingle();
+        .from("webshop_payments")
+        .update({
+          status: paymentStatus,
+        })
+        .eq("payment_id", payment.id);
 
-    if (existingBookingError) {
-      console.error("WEBHOOK DUPLICATE CHECK ERROR:", existingBookingError);
-    }
-
-    if (existingBooking) {
-      return NextResponse.json({ received: true, duplicate: true });
-    }
-
-    const { data: contact, error: contactError } = await supabaseAdmin
-      .from("contacts")
-      .insert({
-        first_name: metadata.parentName || "",
-        last_name: "",
-        email: metadata.email || "",
-        phone: metadata.phone || "",
-        notes: [
-          `Aankoop: ${metadata.productName}`,
-          metadata.studentName ? `Leerling: ${metadata.studentName}` : "",
-          metadata.studentAge ? `Leeftijd: ${metadata.studentAge}` : "",
-          metadata.schoolYear ? `Studiejaar: ${metadata.schoolYear}` : "",
-          metadata.school ? `School: ${metadata.school}` : "",
-          metadata.notes ? `Opmerking: ${metadata.notes}` : "",
-          `Mollie betaling: ${payment.id}`,
-        ]
-          .filter(Boolean)
-          .join("\n"),
-        active: true,
-      })
-      .select("id")
-      .single();
-
-    if (contactError || !contact) {
-      console.error("WEBHOOK CONTACT INSERT ERROR:", contactError);
-
-      return NextResponse.json(
-        { error: "Contact kon niet opgeslagen worden." },
-        { status: 500 }
+    if (statusUpdateError) {
+      console.error(
+        "MOLLIE WEBHOOK STATUS UPDATE ERROR:",
+        statusUpdateError
       );
     }
 
-    const { error: bookingError } = await supabaseAdmin
-      .from("bookings")
-      .insert({
-        contact_id: contact.id,
-        service_id: null,
-        availability_id: null,
-        status: "confirmed",
-        payment_status: "paid",
-        amount: Number(metadata.amount || 0),
-        notes: [
-          `Betaald product: ${metadata.productName}`,
-          metadata.studentName ? `Leerling: ${metadata.studentName}` : "",
-          metadata.studentAge ? `Leeftijd: ${metadata.studentAge}` : "",
-          metadata.schoolYear ? `Studiejaar: ${metadata.schoolYear}` : "",
-          `Mollie betaling: ${payment.id}`,
-        ]
-          .filter(Boolean)
-          .join("\n"),
+    /*
+     * Alleen een definitief betaalde betaling levert
+     * een boeking, contact en eventueel beurtenkaart op.
+     */
+    if (paymentStatus !== "paid") {
+      return NextResponse.json({
+        received: true,
+        status: paymentStatus,
       });
-
-    if (bookingError) {
-      console.error("WEBHOOK BOOKING INSERT ERROR:", bookingError);
-
-      return NextResponse.json(
-        { error: "Boeking kon niet opgeslagen worden." },
-        { status: 500 }
-      );
     }
 
-    const productName = String(metadata.productName || "").toLowerCase();
+    const metadata =
+      payment.metadata &&
+      typeof payment.metadata === "object"
+        ? (payment.metadata as WebshopOrderMetadata)
+        : {};
 
-    if (productName.includes("10-beurtenkaart")) {
-      const level = productName.includes("secundair") ? "secundair" : "lager";
+    const result = await fulfillWebshopOrder({
+      supabaseAdmin,
+      paymentId: String(payment.id),
+      metadata: {
+        ...metadata,
+        paymentMethod: "mollie",
+      },
+    });
 
-      const { error: passError } = await supabaseAdmin.from("passes").insert({
-        contact_id: contact.id,
-        customer_email: metadata.email || "",
-        title: metadata.productName || "10-beurtenkaart",
-        product: metadata.productName || "10-beurtenkaart",
-        level,
-        total_credits: 10,
-        remaining_credits: 10,
-        total_sessions: 10,
-        remaining_sessions: 10,
-        status: "active",
-        payment_id: payment.id,
-      });
-
-      if (passError) {
-        console.error("WEBHOOK PASS INSERT ERROR:", passError);
-
-        return NextResponse.json(
-          { error: "Beurtenkaart kon niet opgeslagen worden." },
-          { status: 500 }
-        );
-      }
-    }
-
-    await supabaseAdmin
-      .from("webshop_payments")
-      .update({ status: payment.status })
-      .eq("payment_id", payment.id);
-
-    return NextResponse.json({ received: true });
+    return NextResponse.json({
+      received: true,
+      status: "paid",
+      duplicate: result.duplicate,
+    });
   } catch (error) {
-    console.error("MOLLIE WEBHOOK SERVER ERROR:", error);
+    console.error(
+      "MOLLIE WEBHOOK SERVER ERROR:",
+      error
+    );
 
     return NextResponse.json(
-      { error: "Webhook fout." },
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Er trad een fout op tijdens de verwerking van de webhook.",
+      },
       { status: 500 }
     );
   }

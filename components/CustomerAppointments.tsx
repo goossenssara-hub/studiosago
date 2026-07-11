@@ -720,7 +720,7 @@ export default function CustomerAppointments() {
 </span>
                     {cancellingId ===
                     booking.id
-                      ? "Afspraak annuleren..."
+                      ? "Annuleren..."
                       : "Afspraak annuleren"}
                   </button>
                 </div>

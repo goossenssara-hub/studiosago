@@ -383,23 +383,23 @@ async function findAndValidateDiscount({
 }
 
 /*
- * De bestaande tabel webshop_payments bevat volgens je
- * Supabase-overzicht enkel deze relevante velden:
+ * webshop_payments vereist minstens:
  *
- * payment_id, product, email, status en created_at.
+ * payment_id, checkout_id, product, email en status.
  *
  * created_at wordt automatisch door Supabase ingevuld.
- * Daarom slaan we hier bewust geen onbekende kolommen op.
  */
 async function saveWebshopPayment({
   supabaseAdmin,
   paymentId,
+  checkoutId,
   product,
   email,
   status,
 }: {
   supabaseAdmin: any;
   paymentId: string;
+  checkoutId: string;
   product: string;
   email: string;
   status: string;
@@ -408,6 +408,7 @@ async function saveWebshopPayment({
     .from("webshop_payments")
     .insert({
       payment_id: paymentId,
+      checkout_id: checkoutId,
       product,
       email,
       status,
@@ -623,23 +624,25 @@ export async function POST(
       }_${checkoutId}`;
 
       /*
-       * Eerst de bestelling, boeking en beurtenkaart verwerken.
-       * Daarna registreren we de betaling in webshop_payments.
+       * Eerst registreren we de bestelling als pending.
+       * fulfillWebshopOrder verwerkt daarna de boeking,
+       * eventuele beurtenkaart en zet de betaling op paid.
        */
+      await saveWebshopPayment({
+        supabaseAdmin,
+        paymentId: freePaymentId,
+        checkoutId,
+        product: product.key,
+        email,
+        status: "pending",
+      });
+
       const fulfillment =
         await fulfillWebshopOrder({
           supabaseAdmin,
           paymentId: freePaymentId,
           metadata,
         });
-
-      await saveWebshopPayment({
-        supabaseAdmin,
-        paymentId: freePaymentId,
-        product: product.key,
-        email,
-        status: "paid",
-      });
 
       return NextResponse.json(
         {
@@ -725,6 +728,7 @@ export async function POST(
     await saveWebshopPayment({
       supabaseAdmin,
       paymentId: payment.id,
+      checkoutId,
       product: product.key,
       email,
       status: payment.status,

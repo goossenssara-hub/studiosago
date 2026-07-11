@@ -4,12 +4,35 @@ import {
   calculateCorrectionPrice,
   webshopProducts,
 } from "@/lib/webshopProducts";
+import { fulfillWebshopOrder } from "@/lib/fulfillWebshopOrder";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+type DiscountResult = {
+  hasDiscount: boolean;
+  discountAmount: number;
+  finalAmount: number;
+  discountId: string | null;
+  discountCode: string;
+};
+
 function normalize(value: string) {
   return value.trim().toLowerCase();
+}
+
+function roundCurrency(value: number) {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
+function noDiscount(amount: number): DiscountResult {
+  return {
+    hasDiscount: false,
+    discountAmount: 0,
+    finalAmount: roundCurrency(amount),
+    discountId: null,
+    discountCode: "",
+  };
 }
 
 async function getDiscount({
@@ -20,79 +43,116 @@ async function getDiscount({
   discountCode,
   amount,
 }: {
-  supabaseAdmin: any;
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
   product: string;
   parentName: string;
   email: string;
   discountCode: string;
   amount: number;
-}) {
-  if (!discountCode.trim()) {
-    return {
-      hasDiscount: false,
-      discountAmount: 0,
-      finalAmount: amount,
-      discountId: null as string | null,
-      discountCode: "",
-    };
+}): Promise<DiscountResult> {
+  const cleanedDiscountCode = discountCode
+    .trim()
+    .toUpperCase();
+
+  if (!cleanedDiscountCode) {
+    return noDiscount(amount);
   }
 
   const { data: code, error } = await supabaseAdmin
     .from("discount_codes")
     .select("*")
-    .eq("code", discountCode.trim().toUpperCase())
+    .eq("code", cleanedDiscountCode)
     .eq("active", true)
     .maybeSingle();
 
-  if (error || !code) {
-    return {
-      hasDiscount: false,
-      discountAmount: 0,
-      finalAmount: amount,
-      discountId: null as string | null,
-      discountCode: "",
-    };
+  if (error) {
+    console.error("DISCOUNT CODE LOOKUP ERROR:", error);
+    return noDiscount(amount);
+  }
+
+  if (!code) {
+    return noDiscount(amount);
   }
 
   const now = new Date();
 
-  const productOk = code.product === "all" || code.product === product;
-  const emailOk = !code.email || normalize(code.email) === normalize(email);
+  const productOk =
+    !code.product ||
+    code.product === "all" ||
+    code.product === product;
+
+  const emailOk =
+    !code.email ||
+    normalize(String(code.email)) === normalize(email);
+
   const nameOk =
     !code.customer_name ||
-    normalize(code.customer_name) === normalize(parentName);
+    normalize(String(code.customer_name)) ===
+      normalize(parentName);
 
-  const dateOk =
-    (!code.valid_from || new Date(code.valid_from) <= now) &&
-    (!code.valid_until || new Date(code.valid_until) >= now);
+  const validFromOk =
+    !code.valid_from ||
+    new Date(code.valid_from).getTime() <= now.getTime();
+
+  const validUntilOk =
+    !code.valid_until ||
+    new Date(`${code.valid_until}T23:59:59`).getTime() >=
+      now.getTime();
 
   const usesOk =
-    !code.max_uses || Number(code.used_count || 0) < Number(code.max_uses);
+    !code.max_uses ||
+    Number(code.used_count || 0) <
+      Number(code.max_uses);
 
-  if (!productOk || !emailOk || !nameOk || !dateOk || !usesOk) {
-    return {
-      hasDiscount: false,
-      discountAmount: 0,
-      finalAmount: amount,
-      discountId: null as string | null,
-      discountCode: "",
-    };
+  if (
+    !productOk ||
+    !emailOk ||
+    !nameOk ||
+    !validFromOk ||
+    !validUntilOk ||
+    !usesOk
+  ) {
+    return noDiscount(amount);
   }
 
-  let discountAmount = Number(code.discount_value || 0);
+  const discountValue = Number(code.discount_value);
+
+  if (
+    !Number.isFinite(discountValue) ||
+    discountValue <= 0
+  ) {
+    console.error("INVALID DISCOUNT VALUE:", {
+      code: code.code,
+      discountValue: code.discount_value,
+    });
+
+    return noDiscount(amount);
+  }
+
+  let discountAmount = discountValue;
 
   if (code.discount_type === "percentage") {
-    discountAmount = amount * (discountAmount / 100);
+    discountAmount =
+      amount * (discountValue / 100);
   }
 
-  discountAmount = Math.min(discountAmount, amount);
+  discountAmount = roundCurrency(
+    Math.min(
+      Math.max(discountAmount, 0),
+      amount
+    )
+  );
+
+  const finalAmount = roundCurrency(
+    amount - discountAmount
+  );
 
   return {
-    hasDiscount: true,
+    hasDiscount: discountAmount > 0,
     discountAmount,
-    finalAmount: Math.max(amount - discountAmount, 0),
-    discountId: code.id as string,
-    discountCode: code.code as string,
+    finalAmount,
+    discountId: String(code.id),
+    discountCode: String(code.code),
   };
 }
 
@@ -101,35 +161,112 @@ export async function POST(request: Request) {
     const supabaseAdmin = getSupabaseAdmin();
     const formData = await request.formData();
 
-    const product = String(formData.get("product") || "");
-    const parentName = String(formData.get("parent_name") || "");
-    const email = String(formData.get("email") || "");
-    const phone = String(formData.get("phone") || "");
-    const notes = String(formData.get("notes") || "");
-    const discountCode = String(formData.get("discount_code") || "");
+    const product = String(
+      formData.get("product") || ""
+    ).trim();
+
+    const parentName = String(
+      formData.get("parent_name") || ""
+    ).trim();
+
+    const email = String(
+      formData.get("email") || ""
+    )
+      .trim()
+      .toLowerCase();
+
+    const phone = String(
+      formData.get("phone") || ""
+    ).trim();
+
+    const notes = String(
+      formData.get("notes") || ""
+    ).trim();
+
+    const discountCode = String(
+      formData.get("discount_code") || ""
+    ).trim();
+
+    const studentName = String(
+      formData.get("student_name") || ""
+    ).trim();
+
+    const studentAge = String(
+      formData.get("student_age") || ""
+    ).trim();
+
+    const schoolYear = String(
+      formData.get("school_year") || ""
+    ).trim();
+
+    const school = String(
+      formData.get("school") || ""
+    ).trim();
+
+    const wordCountValue = String(
+      formData.get("word_count") || ""
+    ).trim();
+
+    const textType = String(
+      formData.get("text_type") || ""
+    ).trim();
+
+    if (!product) {
+      return NextResponse.json(
+        {
+          error: "Geen product geselecteerd.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!parentName || !email || !phone) {
+      return NextResponse.json(
+        {
+          error:
+            "Niet alle verplichte velden zijn ingevuld.",
+        },
+        { status: 400 }
+      );
+    }
 
     let productName = "";
     let amountNumber = 0;
 
     if (product === "tekstcorrectie") {
-      const wordCount = Number(formData.get("word_count") || 0);
+      const wordCount = Number(
+        wordCountValue || 0
+      );
 
-      if (!wordCount || wordCount < 1) {
+      if (
+        !Number.isFinite(wordCount) ||
+        wordCount < 1
+      ) {
         return NextResponse.json(
-          { error: "Aantal woorden ontbreekt." },
+          {
+            error: "Aantal woorden ontbreekt.",
+          },
           { status: 400 }
         );
       }
 
-      productName = `Tekstcorrectie Studio SaGo - ${wordCount} woorden`;
-      amountNumber = calculateCorrectionPrice(wordCount);
+      productName =
+        `Tekstcorrectie Studio SaGo - ${wordCount} woorden`;
+
+      amountNumber = Number(
+        calculateCorrectionPrice(wordCount)
+      );
     } else {
       const productInfo =
-        webshopProducts[product as keyof typeof webshopProducts];
+        webshopProducts[
+          product as keyof typeof webshopProducts
+        ];
 
       if (!productInfo) {
         return NextResponse.json(
-          { error: "Onbekend product." },
+          {
+            error: "Onbekend product.",
+          },
           { status: 400 }
         );
       }
@@ -138,12 +275,25 @@ export async function POST(request: Request) {
       amountNumber = Number(productInfo.amount);
     }
 
-    if (!parentName || !email || !phone) {
+    if (
+      !Number.isFinite(amountNumber) ||
+      amountNumber <= 0
+    ) {
+      console.error("INVALID PRODUCT AMOUNT:", {
+        product,
+        amountNumber,
+      });
+
       return NextResponse.json(
-        { error: "Niet alle verplichte velden zijn ingevuld." },
+        {
+          error:
+            "De prijs van dit product is ongeldig.",
+        },
         { status: 400 }
       );
     }
+
+    amountNumber = roundCurrency(amountNumber);
 
     const discount = await getDiscount({
       supabaseAdmin,
@@ -154,21 +304,32 @@ export async function POST(request: Request) {
       amount: amountNumber,
     });
 
-    const amount = discount.finalAmount.toFixed(2);
+    const finalAmountNumber = roundCurrency(
+      discount.finalAmount
+    );
 
-    const mollieApiKey = process.env.MOLLIE_API_KEY;
-    const siteUrlEnv = process.env.NEXT_PUBLIC_SITE_URL;
-
-    if (!mollieApiKey) {
+    if (
+      !Number.isFinite(finalAmountNumber) ||
+      finalAmountNumber < 0
+    ) {
       return NextResponse.json(
-        { error: "MOLLIE_API_KEY ontbreekt." },
-        { status: 500 }
+        {
+          error:
+            "Het berekende eindbedrag is ongeldig.",
+        },
+        { status: 400 }
       );
     }
 
+    const siteUrlEnv =
+      process.env.NEXT_PUBLIC_SITE_URL;
+
     if (!siteUrlEnv) {
       return NextResponse.json(
-        { error: "NEXT_PUBLIC_SITE_URL ontbreekt." },
+        {
+          error:
+            "NEXT_PUBLIC_SITE_URL ontbreekt.",
+        },
         { status: 500 }
       );
     }
@@ -176,80 +337,299 @@ export async function POST(request: Request) {
     const siteUrl = siteUrlEnv.replace(/\/$/, "");
     const checkoutId = crypto.randomUUID();
 
-    const paymentBody = {
-      amount: {
-        currency: "EUR",
-        value: amount,
-      },
-      description: discount.hasDiscount
-        ? `${productName} - €${discount.discountAmount.toFixed(0)} korting`
-        : productName,
-      method: "bancontact",
-      redirectUrl: `${siteUrl}/betaling/status?checkoutId=${checkoutId}`,
-      locale: "nl_BE",
-      metadata: {
-        checkoutId,
-        product,
-        productName,
-        amount,
-        originalAmount: amountNumber.toFixed(2),
-        discountId: discount.discountId,
-        discountCode: discount.discountCode,
-        discountAmount: discount.discountAmount.toFixed(2),
-        parentName,
-        email,
-        phone,
-        studentName: String(formData.get("student_name") || ""),
-        studentAge: String(formData.get("student_age") || ""),
-        schoolYear: String(formData.get("school_year") || ""),
-        school: String(formData.get("school") || ""),
-        wordCount: String(formData.get("word_count") || ""),
-        textType: String(formData.get("text_type") || ""),
-        notes,
-      },
-      ...(process.env.NODE_ENV === "production"
-        ? { webhookUrl: `${siteUrl}/api/mollie/webshop-webhook` }
-        : {}),
-    };
+    /*
+     * VOLLEDIGE WAARDEBON
+     *
+     * Mollie ondersteunt geen betaling van €0,00.
+     * Daarom slaan we de aankoop rechtstreeks als betaald op
+     * en voeren we dezelfde verwerking uit als bij een
+     * normale betaalde Molliebetaling.
+     */
+    if (finalAmountNumber === 0) {
+      if (
+        !discount.hasDiscount ||
+        !discount.discountId
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Een bestelling van €0,00 is alleen mogelijk met een geldige waardebon.",
+          },
+          { status: 400 }
+        );
+      }
 
-    const response = await fetch("https://api.mollie.com/v2/payments", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${mollieApiKey}`,
-        "Content-Type": "application/json",
-        "Idempotency-Key": checkoutId,
-      },
-      body: JSON.stringify(paymentBody),
-    });
+      const voucherPaymentId =
+        `voucher_${checkoutId}`;
 
-    const payment = await response.json();
+      const { error: saveVoucherError } =
+        await supabaseAdmin
+          .from("webshop_payments")
+          .insert({
+            checkout_id: checkoutId,
+            payment_id: voucherPaymentId,
+            product,
+            email,
+            status: "paid",
+          });
 
-    if (!response.ok) {
+      if (saveVoucherError) {
+        console.error(
+          "VOUCHER PAYMENT SAVE ERROR:",
+          saveVoucherError
+        );
+
+        return NextResponse.json(
+          {
+            error:
+              "De bestelling met waardebon kon niet opgeslagen worden.",
+          },
+          { status: 500 }
+        );
+      }
+
+      try {
+        await fulfillWebshopOrder({
+          supabaseAdmin,
+          paymentId: voucherPaymentId,
+          metadata: {
+            checkoutId,
+            product,
+            productName,
+
+            amount: "0.00",
+            originalAmount:
+              amountNumber.toFixed(2),
+
+            discountId: discount.discountId,
+            discountCode:
+              discount.discountCode,
+            discountAmount:
+              discount.discountAmount.toFixed(2),
+
+            parentName,
+            email,
+            phone,
+
+            studentName,
+            studentAge,
+            schoolYear,
+            school,
+
+            wordCount: wordCountValue,
+            textType,
+            notes,
+
+            paymentMethod: "waardebon",
+          },
+        });
+      } catch (fulfillError) {
+        console.error(
+          "VOUCHER ORDER FULFILL ERROR:",
+          fulfillError
+        );
+
+        await supabaseAdmin
+          .from("webshop_payments")
+          .update({
+            status: "failed",
+          })
+          .eq("payment_id", voucherPaymentId);
+
+        return NextResponse.json(
+          {
+            error:
+              fulfillError instanceof Error
+                ? fulfillError.message
+                : "De bestelling met waardebon kon niet verwerkt worden.",
+          },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json({
+        url:
+          `${siteUrl}/betaling/status?checkoutId=${checkoutId}`,
+
+        hasDiscount: true,
+        fullyPaidWithVoucher: true,
+
+        discountAmount:
+          discount.discountAmount,
+
+        originalAmount: amountNumber,
+        finalAmount: 0,
+      });
+    }
+
+    /*
+     * Alleen wanneer er nog een positief bedrag betaald
+     * moet worden, maken we een Molliebetaling aan.
+     */
+    const mollieApiKey =
+      process.env.MOLLIE_API_KEY;
+
+    if (!mollieApiKey) {
       return NextResponse.json(
         {
-          error: payment.detail || "Mollie betaling kon niet gestart worden.",
+          error: "MOLLIE_API_KEY ontbreekt.",
         },
         { status: 500 }
       );
     }
 
-    const { error: saveError } = await supabaseAdmin
-      .from("webshop_payments")
-      .insert({
-        checkout_id: checkoutId,
-        payment_id: payment.id,
-        product,
-        email,
-        status: payment.status || "created",
-      });
+    const mollieAmount =
+      finalAmountNumber.toFixed(2);
 
-    if (saveError) {
-      console.error("SUPABASE SAVE ERROR:", saveError);
+    const paymentBody = {
+      amount: {
+        currency: "EUR",
+        value: mollieAmount,
+      },
+
+      description: discount.hasDiscount
+        ? `${productName} - €${discount.discountAmount.toFixed(
+            2
+          )} korting`
+        : productName,
+
+      method: "bancontact",
+
+      redirectUrl:
+        `${siteUrl}/betaling/status?checkoutId=${checkoutId}`,
+
+      webhookUrl:
+        `${siteUrl}/api/mollie/webhook`,
+
+      locale: "nl_BE",
+
+      metadata: {
+        checkoutId,
+        product,
+        productName,
+
+        amount: mollieAmount,
+        originalAmount:
+          amountNumber.toFixed(2),
+
+        discountId: discount.discountId,
+        discountCode:
+          discount.discountCode,
+        discountAmount:
+          discount.discountAmount.toFixed(2),
+
+        parentName,
+        email,
+        phone,
+
+        studentName,
+        studentAge,
+        schoolYear,
+        school,
+
+        wordCount: wordCountValue,
+        textType,
+        notes,
+
+        paymentMethod: "mollie",
+      },
+    };
+
+    console.log("MOLLIE PAYMENT AMOUNTS:", {
+      product,
+      originalAmount:
+        amountNumber.toFixed(2),
+      discountCode:
+        discount.discountCode,
+      discountAmount:
+        discount.discountAmount.toFixed(2),
+      finalAmount: mollieAmount,
+    });
+
+    const response = await fetch(
+      "https://api.mollie.com/v2/payments",
+      {
+        method: "POST",
+
+        headers: {
+          Authorization:
+            `Bearer ${mollieApiKey}`,
+          "Content-Type":
+            "application/json",
+          "Idempotency-Key": checkoutId,
+        },
+
+        body: JSON.stringify(paymentBody),
+      }
+    );
+
+    const payment = await response.json();
+
+    if (!response.ok) {
+      console.error(
+        "MOLLIE PAYMENT CREATE ERROR:",
+        payment
+      );
 
       return NextResponse.json(
         {
-          error: saveError.message,
-          details: saveError.details,
+          error:
+            payment.detail ||
+            "Mollie-betaling kon niet gestart worden.",
+        },
+        {
+          status:
+            response.status || 500,
+        }
+      );
+    }
+
+    if (!payment.id) {
+      return NextResponse.json(
+        {
+          error:
+            "Mollie heeft geen geldig betalingsnummer teruggestuurd.",
+        },
+        { status: 500 }
+      );
+    }
+
+    const checkoutUrl =
+      payment._links?.checkout?.href;
+
+    if (!checkoutUrl) {
+      return NextResponse.json(
+        {
+          error:
+            "Mollie heeft geen geldige betaallink teruggestuurd.",
+        },
+        { status: 500 }
+      );
+    }
+
+    const { error: saveError } =
+      await supabaseAdmin
+        .from("webshop_payments")
+        .insert({
+          checkout_id: checkoutId,
+          payment_id: payment.id,
+          product,
+          email,
+          status:
+            payment.status || "open",
+        });
+
+    if (saveError) {
+      console.error(
+        "SUPABASE PAYMENT SAVE ERROR:",
+        saveError
+      );
+
+      return NextResponse.json(
+        {
+          error:
+            "De betaling werd aangemaakt, maar kon niet in de database worden opgeslagen.",
+          details: saveError.message,
           hint: saveError.hint,
           code: saveError.code,
         },
@@ -258,14 +638,27 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({
-      url: payment._links?.checkout?.href,
-      hasDiscount: discount.hasDiscount,
-      discountAmount: discount.discountAmount,
-      originalAmount: amountNumber,
-      finalAmount: discount.finalAmount,
+      url: checkoutUrl,
+
+      hasDiscount:
+        discount.hasDiscount,
+
+      fullyPaidWithVoucher: false,
+
+      discountAmount:
+        discount.discountAmount,
+
+      originalAmount:
+        amountNumber,
+
+      finalAmount:
+        finalAmountNumber,
     });
   } catch (error) {
-    console.error("WEBSHOP CHECKOUT ERROR:", error);
+    console.error(
+      "WEBSHOP CHECKOUT ERROR:",
+      error
+    );
 
     return NextResponse.json(
       {

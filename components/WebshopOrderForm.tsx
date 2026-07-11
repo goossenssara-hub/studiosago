@@ -1,301 +1,743 @@
-"use client";
+type SupabaseAdmin = any;
 
-import { FormEvent, useMemo, useState } from "react";
-import {
-  calculateCorrectionPrice,
-  webshopProducts,
-} from "@/lib/webshopProducts";
+export type WebshopOrderMetadata = {
+  checkoutId?: string;
 
-type Props = {
-  product: string;
+  product?: string;
+  productName?: string;
+
+  amount?: string | number;
+  originalAmount?: string | number;
+
+  discountId?: string | null;
+  discountCode?: string;
+  discountAmount?: string | number;
+
+  parentName?: string;
+  studentName?: string;
+  email?: string;
+  phone?: string;
+
+  studentAge?: string;
+  schoolYear?: string;
+  school?: string;
+
+  wordCount?: string;
+  textType?: string;
+  notes?: string;
+
+  /*
+   * Mogelijke waarden:
+   * - mollie
+   * - waardebon
+   * - gratis
+   * - admin
+   */
+  paymentMethod?: string;
+
+  /*
+   * Hiermee kun je later vanuit de admin expliciet aangeven
+   * dat een dienst gratis werd aangeboden.
+   */
+  isFreeOrder?: boolean;
 };
 
-const DISCOUNT_CODES = [
-  "4KX9-MP7Q-L2ZT-81NR",
-  "Q7LP-82XM-V4KT-9R31",
-  "ZX81-TQ7M-NP46-KL2R",
-];
+type FulfillWebshopOrderArguments = {
+  supabaseAdmin: SupabaseAdmin;
+  paymentId: string;
+  metadata: WebshopOrderMetadata;
+};
 
-export default function WebshopOrderForm({ product }: Props) {
-  const [loading, setLoading] = useState(false);
-  const [wordCount, setWordCount] = useState("");
-  const [error, setError] = useState("");
-  const [discountCode, setDiscountCode] = useState("");
+type FulfillWebshopOrderResult = {
+  success: true;
+  duplicate: boolean;
+  contactId: string | null;
+  bookingId: string;
+  passCreated: boolean;
+  isFreeOrder: boolean;
+};
 
-  const isTextCorrection = product === "tekstcorrectie";
+function clean(value: unknown) {
+  return String(value ?? "").trim();
+}
 
-  const isTenBeurtenkaart =
-    product === "10-beurtenkaart-lager" ||
-    product === "10-beurtenkaart-secundair";
+function normalizeEmail(value: unknown) {
+  return clean(value).toLowerCase();
+}
 
-  const correctionPrice = useMemo(() => {
-    const words = Number(wordCount || 0);
-    if (!words) return 20;
-    return calculateCorrectionPrice(words);
-  }, [wordCount]);
+function toSafeNumber(value: unknown, fallback = 0) {
+  const parsed = Number(value);
 
-  const productInfo =
-    product in webshopProducts
-      ? webshopProducts[product as keyof typeof webshopProducts]
-      : null;
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
 
-  const basePrice = isTextCorrection
-    ? correctionPrice
-    : Number(productInfo?.amount || 0);
+  return parsed;
+}
 
-  const discountCodeLooksValid =
-    isTenBeurtenkaart &&
-    DISCOUNT_CODES.includes(discountCode.trim().toUpperCase());
+function roundCurrency(value: number) {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
 
-  const visiblePrice =
-    discountCodeLooksValid ? Math.max(basePrice - 20, 0) : basePrice;
+function formatCurrency(value: number) {
+  return `€${roundCurrency(value).toFixed(2)}`;
+}
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+function makeReference(paymentId: string) {
+  return `Betalingsreferentie: ${paymentId}`;
+}
 
-    if (loading) return;
+function getPaymentMethod({
+  paymentId,
+  metadata,
+  isFreeOrder,
+}: {
+  paymentId: string;
+  metadata: WebshopOrderMetadata;
+  isFreeOrder: boolean;
+}) {
+  const suppliedMethod = clean(metadata.paymentMethod);
 
-    setLoading(true);
-    setError("");
+  if (suppliedMethod) {
+    return suppliedMethod;
+  }
 
-    try {
-      const formData = new FormData(event.currentTarget);
-      formData.set("product", product);
+  if (paymentId.startsWith("voucher_")) {
+    return "waardebon";
+  }
 
-      if (isTextCorrection) {
-        formData.set("amount", String(correctionPrice));
-      }
+  if (paymentId.startsWith("free_")) {
+    return "gratis";
+  }
 
-      const response = await fetch("/api/checkout/webshop", {
-        method: "POST",
-        body: formData,
-      });
+  if (paymentId.startsWith("admin_")) {
+    return "admin";
+  }
 
-      let data: any = {};
+  if (isFreeOrder) {
+    return "gratis";
+  }
 
-      try {
-        data = await response.json();
-      } catch {
-        throw new Error("De server stuurde geen geldige JSON terug.");
-      }
+  return "mollie";
+}
 
-      if (!response.ok) {
-        throw new Error(data.error || `Serverfout (${response.status}).`);
-      }
+function getPaymentLabel({
+  paymentMethod,
+  isFreeOrder,
+  discountCode,
+}: {
+  paymentMethod: string;
+  isFreeOrder: boolean;
+  discountCode: string;
+}) {
+  if (paymentMethod === "waardebon") {
+    return discountCode
+      ? `Volledig betaald met waardebon ${discountCode}`
+      : "Volledig betaald met waardebon";
+  }
 
-      if (!data.url) {
-        throw new Error("Geen Mollie-betaallink ontvangen.");
-      }
+  if (paymentMethod === "gratis") {
+    return "Gratis aangeboden";
+  }
 
-      window.location.assign(data.url);
-    } catch (err) {
-      console.error("Checkout error:", err);
+  if (paymentMethod === "admin") {
+    return isFreeOrder
+      ? "Gratis aangeboden via admin"
+      : "Handmatig verwerkt via admin";
+  }
 
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Er ging iets mis bij het starten van de betaling."
+  if (isFreeOrder) {
+    return "Gratis aangeboden";
+  }
+
+  return "Betaald via Mollie";
+}
+
+export async function fulfillWebshopOrder({
+  supabaseAdmin,
+  paymentId,
+  metadata,
+}: FulfillWebshopOrderArguments): Promise<FulfillWebshopOrderResult> {
+  const cleanedPaymentId = clean(paymentId);
+
+  if (!cleanedPaymentId) {
+    throw new Error(
+      "De betalingsreferentie van de bestelling ontbreekt."
+    );
+  }
+
+  const product = clean(metadata.product);
+
+  const productName =
+    clean(metadata.productName) ||
+    product ||
+    "Webshopaankoop";
+
+  const parentName = clean(metadata.parentName);
+  const studentName = clean(metadata.studentName);
+
+  const email = normalizeEmail(metadata.email);
+  const phone = clean(metadata.phone);
+
+  const studentAge = clean(metadata.studentAge);
+  const schoolYear = clean(metadata.schoolYear);
+  const school = clean(metadata.school);
+
+  const wordCount = clean(metadata.wordCount);
+  const textType = clean(metadata.textType);
+  const customerNotes = clean(metadata.notes);
+
+  const amount = roundCurrency(
+    Math.max(toSafeNumber(metadata.amount), 0)
+  );
+
+  const originalAmount = roundCurrency(
+    Math.max(
+      toSafeNumber(
+        metadata.originalAmount,
+        amount
+      ),
+      0
+    )
+  );
+
+  const discountAmount = roundCurrency(
+    Math.max(
+      toSafeNumber(metadata.discountAmount),
+      0
+    )
+  );
+
+  const discountId = clean(metadata.discountId);
+  const discountCode = clean(metadata.discountCode);
+
+  /*
+   * Een bestelling wordt als gratis beschouwd wanneer:
+   *
+   * 1. het eindbedrag €0,00 is;
+   * 2. isFreeOrder expliciet true is;
+   * 3. de payment-id met voucher_, free_ of admin_ begint
+   *    en het bedrag €0,00 is.
+   */
+  const isFreeOrder =
+    metadata.isFreeOrder === true ||
+    amount === 0;
+
+  const paymentMethod = getPaymentMethod({
+    paymentId: cleanedPaymentId,
+    metadata,
+    isFreeOrder,
+  });
+
+  const paymentLabel = getPaymentLabel({
+    paymentMethod,
+    isFreeOrder,
+    discountCode,
+  });
+
+  const paymentReference =
+    makeReference(cleanedPaymentId);
+
+  /*
+   * Dubbele verwerking voorkomen.
+   *
+   * Mollie kan dezelfde webhook meerdere keren sturen.
+   * Ook een gratis bestelling kan door een dubbele klik
+   * opnieuw worden aangeboden.
+   */
+  const {
+    data: existingBooking,
+    error: duplicateError,
+  } = await supabaseAdmin
+    .from("bookings")
+    .select("id, contact_id")
+    .ilike(
+      "notes",
+      `%${paymentReference}%`
+    )
+    .limit(1)
+    .maybeSingle();
+
+  if (duplicateError) {
+    console.error(
+      "FULFILL ORDER DUPLICATE CHECK ERROR:",
+      duplicateError
+    );
+
+    throw new Error(
+      "De bestelling kon niet op dubbele verwerking gecontroleerd worden."
+    );
+  }
+
+  if (existingBooking?.id) {
+    const { error: paymentStatusError } =
+      await supabaseAdmin
+        .from("webshop_payments")
+        .update({
+          status: "paid",
+        })
+        .eq(
+          "payment_id",
+          cleanedPaymentId
+        );
+
+    if (paymentStatusError) {
+      console.error(
+        "FULFILL DUPLICATE PAYMENT UPDATE ERROR:",
+        paymentStatusError
       );
+    }
 
-      setLoading(false);
+    return {
+      success: true,
+      duplicate: true,
+      contactId: existingBooking.contact_id
+        ? String(existingBooking.contact_id)
+        : null,
+      bookingId: String(existingBooking.id),
+      passCreated: false,
+      isFreeOrder,
+    };
+  }
+
+  /*
+   * Bestaand contact zoeken op e-mailadres.
+   * Zo ontstaan er geen dubbele contacten bij meerdere aankopen.
+   */
+  let contactId: string | null = null;
+
+  if (email) {
+    const {
+      data: existingContact,
+      error: contactFindError,
+    } = await supabaseAdmin
+      .from("contacts")
+      .select("id")
+      .ilike("email", email)
+      .limit(1)
+      .maybeSingle();
+
+    if (contactFindError) {
+      console.error(
+        "FULFILL ORDER CONTACT FIND ERROR:",
+        contactFindError
+      );
+    }
+
+    if (existingContact?.id) {
+      contactId = String(
+        existingContact.id
+      );
     }
   }
 
-  return (
-    <form
-      className="form-card booking-form-with-calendar"
-      onSubmit={handleSubmit}
-    >
-      <div className="form-grid">
-        <label>
-          Naam ouder / klant
-          <input name="parent_name" required />
-        </label>
+  /*
+   * Contact aanmaken wanneer het nog niet bestaat.
+   */
+  if (!contactId) {
+    const contactNotes = [
+      `${isFreeOrder ? "Gratis dienst" : "Aankoop"}: ${productName}`,
 
-        <label>
-          E-mail
-          <input name="email" type="email" required />
-        </label>
+      studentName
+        ? `Leerling: ${studentName}`
+        : "",
 
-        <label>
-          Telefoon
-          <input name="phone" type="tel" required />
-        </label>
+      studentAge
+        ? `Leeftijd: ${studentAge}`
+        : "",
 
-        {isTenBeurtenkaart && (
-          <label>
-            Kortingscode
-            <input
-              name="discount_code"
-              type="text"
-              value={discountCode}
-              onChange={(e) => setDiscountCode(e.target.value)}
-              placeholder="Bijvoorbeeld 1234-ABCD-5E6F-G7H8"
-            />
-          </label>
-        )}
+      schoolYear
+        ? `Studiejaar: ${schoolYear}`
+        : "",
 
-        {!isTextCorrection && (
-          <>
-            <label>
-              Naam leerling
-              <input name="student_name" required />
-            </label>
+      school
+        ? `School: ${school}`
+        : "",
 
-            <label>
-              Leeftijd leerling
-              <input
-                name="student_age"
-                type="number"
-                min="4"
-                max="20"
-                required
-              />
-            </label>
+      wordCount
+        ? `Aantal woorden: ${wordCount}`
+        : "",
 
-            <label>
-              Studiejaar / leerjaar
-              <select name="school_year" required>
-                <option value="">Kies studiejaar</option>
+      textType
+        ? `Teksttype: ${textType}`
+        : "",
 
-                {product === "10-beurtenkaart-lager" && (
-                  <>
-                    <option>1e leerjaar</option>
-                    <option>2e leerjaar</option>
-                    <option>3e leerjaar</option>
-                    <option>4e leerjaar</option>
-                    <option>5e leerjaar</option>
-                    <option>6e leerjaar</option>
-                  </>
-                )}
+      customerNotes
+        ? `Opmerking: ${customerNotes}`
+        : "",
 
-                {product === "10-beurtenkaart-secundair" && (
-                  <>
-                    <option>1e middelbaar</option>
-                    <option>2e middelbaar</option>
-                    <option>3e middelbaar</option>
-                    <option>4e middelbaar</option>
-                    <option>5e middelbaar</option>
-                    <option>6e middelbaar</option>
-                  </>
-                )}
+      discountCode
+        ? `Kortingscode: ${discountCode}`
+        : "",
 
-                {product === "klaar-voor-de-sprong-middelbaar" && (
-                  <>
-                    <option>6e leerjaar</option>
-                    <option>1e middelbaar</option>
-                  </>
-                )}
+      discountAmount > 0
+        ? `Korting: ${formatCurrency(
+            discountAmount
+          )}`
+        : "",
 
-                {product === "klaar-voor-de-sprong-eerste-leerjaar" && (
-                  <>
-                    <option>3e kleuterklas</option>
-                    <option>1e leerjaar</option>
-                  </>
-                )}
-              </select>
-            </label>
+      `Verwerking: ${paymentLabel}`,
+      paymentReference,
+    ]
+      .filter(Boolean)
+      .join("\n");
 
-            <label>
-              School
-              <input name="school" />
-            </label>
-          </>
-        )}
+    const {
+      data: newContact,
+      error: contactInsertError,
+    } = await supabaseAdmin
+      .from("contacts")
+      .insert({
+        first_name:
+          parentName ||
+          studentName ||
+          "Webshopklant",
 
-        {isTextCorrection && (
-          <>
-            <label>
-              Aantal woorden
-              <input
-                name="word_count"
-                type="number"
-                min="1"
-                required
-                value={wordCount}
-                onChange={(e) => setWordCount(e.target.value)}
-              />
-            </label>
+        last_name: "",
+        email,
+        phone,
 
-            <label>
-              Type tekst
-              <select name="text_type" required>
-                <option value="">Kies type tekst</option>
-                <option value="cursus">Cursus</option>
-                <option value="paper">Paper</option>
-                <option value="taak">Taak</option>
-                <option value="scriptie">Scriptie</option>
-                <option value="sollicitatie">Sollicitatiebrief</option>
-                <option value="andere">Andere</option>
-              </select>
-            </label>
+        notes: contactNotes,
+        active: true,
+      })
+      .select("id")
+      .single();
 
-            <label>
-              Bestand uploaden
-              <input
-                name="file"
-                type="file"
-                accept=".pdf,.doc,.docx"
-                required
-              />
-            </label>
-          </>
-        )}
-      </div>
+    if (
+      contactInsertError ||
+      !newContact?.id
+    ) {
+      console.error(
+        "FULFILL ORDER CONTACT INSERT ERROR:",
+        contactInsertError
+      );
 
-      {discountCodeLooksValid && (
-        <p
-          className="form-message"
-          style={{
-            color: "#54955c",
-            fontWeight: 800,
-          }}
-        >
-          Kortingscode herkend. De korting wordt definitief gecontroleerd bij
-          betaling.
-        </p>
-      )}
+      throw new Error(
+        "Het contact kon niet opgeslagen worden."
+      );
+    }
 
-      <label style={{ marginTop: 20, display: "block" }}>
-        Opmerkingen
-        <textarea
-          name="notes"
-          rows={5}
-          placeholder="Zijn er zaken waarmee ik rekening kan houden?"
-        />
-      </label>
+    contactId = String(newContact.id);
+  }
 
-      <p className="form-message">
-        Te betalen:{" "}
-        <strong>
-          €{visiblePrice.toFixed(0)}
-          {discountCodeLooksValid && " i.p.v. €" + basePrice.toFixed(0)}
-        </strong>
-      </p>
+  /*
+   * Elke dienst wordt als bevestigde webshopboeking opgeslagen.
+   *
+   * Ook een gratis dienst krijgt payment_status 'paid',
+   * zodat ze in je dashboard als volledig afgehandeld verschijnt.
+   * Het werkelijk betaalde bedrag blijft correct €0,00.
+   */
+  const bookingNotes = [
+    `${isFreeOrder ? "Gratis aangeboden product" : "Betaald product"}: ${productName}`,
 
-      {error && (
-        <p
-          className="form-message"
-          style={{
-            color: "#fe2020",
-            fontWeight: 700,
-          }}
-        >
-          {error}
-        </p>
-      )}
+    product
+      ? `Productsleutel: ${product}`
+      : "",
 
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          marginTop: 24,
-        }}
-      >
-        <button className="primary-action" type="submit" disabled={loading}>
-          {loading ? "Betaling starten..." : "Betaal nu"}
-        </button>
-      </div>
-    </form>
-  );
+    studentName
+      ? `Leerling: ${studentName}`
+      : "",
+
+    studentAge
+      ? `Leeftijd: ${studentAge}`
+      : "",
+
+    schoolYear
+      ? `Studiejaar: ${schoolYear}`
+      : "",
+
+    school
+      ? `School: ${school}`
+      : "",
+
+    wordCount
+      ? `Aantal woorden: ${wordCount}`
+      : "",
+
+    textType
+      ? `Teksttype: ${textType}`
+      : "",
+
+    `Oorspronkelijk bedrag: ${formatCurrency(
+      originalAmount
+    )}`,
+
+    discountAmount > 0
+      ? `Korting: ${formatCurrency(
+          discountAmount
+        )}`
+      : "",
+
+    discountCode
+      ? `Kortingscode: ${discountCode}`
+      : "",
+
+    `Te betalen bedrag: ${formatCurrency(
+      amount
+    )}`,
+
+    isFreeOrder
+      ? "Bestelling volledig voldaan zonder online betaling"
+      : "",
+
+    `Verwerking: ${paymentLabel}`,
+
+    customerNotes
+      ? `Opmerking: ${customerNotes}`
+      : "",
+
+    paymentReference,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const {
+    data: booking,
+    error: bookingError,
+  } = await supabaseAdmin
+    .from("bookings")
+    .insert({
+      contact_id: contactId,
+      service_id: null,
+      availability_id: null,
+
+      status: "confirmed",
+      payment_status: "paid",
+
+      /*
+       * Bij een gratis dienst wordt hier correct 0 opgeslagen.
+       */
+      amount,
+
+      notes: bookingNotes,
+    })
+    .select("id")
+    .single();
+
+  if (
+    bookingError ||
+    !booking?.id
+  ) {
+    console.error(
+      "FULFILL ORDER BOOKING INSERT ERROR:",
+      bookingError
+    );
+
+    throw new Error(
+      "De boeking kon niet opgeslagen worden."
+    );
+  }
+
+  /*
+   * Productherkenning.
+   */
+  const normalizedProduct =
+    product.toLowerCase();
+
+  const normalizedProductName =
+    productName.toLowerCase();
+
+  /*
+   * Alleen een 10-beurtenkaart moet een rij in passes krijgen.
+   *
+   * Alle andere gratis diensten zijn al correct geregistreerd
+   * in contacts + bookings.
+   */
+  const isTenSessionPass =
+    normalizedProduct.includes(
+      "10-beurtenkaart"
+    ) ||
+    normalizedProductName.includes(
+      "10-beurtenkaart"
+    ) ||
+    normalizedProduct.includes(
+      "tienbeurtenkaart"
+    ) ||
+    normalizedProductName.includes(
+      "tienbeurtenkaart"
+    );
+
+  let passCreated = false;
+
+  if (isTenSessionPass) {
+    const level =
+      normalizedProduct.includes(
+        "secundair"
+      ) ||
+      normalizedProductName.includes(
+        "secundair"
+      )
+        ? "secundair"
+        : "lager";
+
+    const {
+      data: existingPass,
+      error: passFindError,
+    } = await supabaseAdmin
+      .from("passes")
+      .select("id")
+      .eq(
+        "payment_id",
+        cleanedPaymentId
+      )
+      .limit(1)
+      .maybeSingle();
+
+    if (passFindError) {
+      console.error(
+        "FULFILL ORDER PASS FIND ERROR:",
+        passFindError
+      );
+    }
+
+    if (!existingPass?.id) {
+      const { error: passInsertError } =
+        await supabaseAdmin
+          .from("passes")
+          .insert({
+            contact_id: contactId,
+
+            customer_email: email,
+
+            title:
+              productName ||
+              "10-beurtenkaart",
+
+            product:
+              productName ||
+              product ||
+              "10-beurtenkaart",
+
+            level,
+
+            total_credits: 10,
+            remaining_credits: 10,
+
+            total_sessions: 10,
+            remaining_sessions: 10,
+
+            status: "active",
+
+            payment_id:
+              cleanedPaymentId,
+          });
+
+      if (passInsertError) {
+        console.error(
+          "FULFILL ORDER PASS INSERT ERROR:",
+          passInsertError
+        );
+
+        throw new Error(
+          "De beurtenkaart kon niet opgeslagen worden."
+        );
+      }
+
+      passCreated = true;
+    }
+  }
+
+  /*
+   * De kortingscode wordt pas als gebruikt geregistreerd
+   * nadat contact, boeking en eventuele beurtenkaart
+   * succesvol zijn aangemaakt.
+   */
+  if (discountId) {
+    const {
+      data: discountCodeRow,
+      error: discountReadError,
+    } = await supabaseAdmin
+      .from("discount_codes")
+      .select(
+        "used_count, max_uses, active"
+      )
+      .eq("id", discountId)
+      .maybeSingle();
+
+    if (discountReadError) {
+      console.error(
+        "FULFILL ORDER DISCOUNT READ ERROR:",
+        discountReadError
+      );
+    } else if (discountCodeRow) {
+      const currentUses = Math.max(
+        Number(
+          discountCodeRow.used_count || 0
+        ),
+        0
+      );
+
+      const newUsedCount =
+        currentUses + 1;
+
+      const maxUses =
+        discountCodeRow.max_uses ===
+        null
+          ? null
+          : Number(
+              discountCodeRow.max_uses
+            );
+
+      const shouldDeactivate =
+        maxUses !== null &&
+        Number.isFinite(maxUses) &&
+        newUsedCount >= maxUses;
+
+      const {
+        error: discountUpdateError,
+      } = await supabaseAdmin
+        .from("discount_codes")
+        .update({
+          used_count: newUsedCount,
+
+          active: shouldDeactivate
+            ? false
+            : Boolean(
+                discountCodeRow.active
+              ),
+        })
+        .eq("id", discountId);
+
+      if (discountUpdateError) {
+        console.error(
+          "FULFILL ORDER DISCOUNT UPDATE ERROR:",
+          discountUpdateError
+        );
+      }
+    }
+  }
+
+  /*
+   * De aankoop staat na verwerking altijd op paid.
+   *
+   * Voor gratis diensten betekent paid:
+   * volledig voldaan, zonder resterend bedrag.
+   */
+  const {
+    error: paymentUpdateError,
+  } = await supabaseAdmin
+    .from("webshop_payments")
+    .update({
+      status: "paid",
+    })
+    .eq(
+      "payment_id",
+      cleanedPaymentId
+    );
+
+  if (paymentUpdateError) {
+    console.error(
+      "FULFILL ORDER PAYMENT UPDATE ERROR:",
+      paymentUpdateError
+    );
+  }
+
+  return {
+    success: true,
+    duplicate: false,
+    contactId,
+    bookingId: String(booking.id),
+    passCreated,
+    isFreeOrder,
+  };
 }

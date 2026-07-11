@@ -1,0 +1,42 @@
+.appointment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.appointment-action {
+  min-height: 46px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 850;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.appointment-action.secondary {
+  border: 1px solid rgba(3, 54, 99, 0.14);
+  background: white;
+  color: #033663;
+}
+
+.appointment-action.meet {
+  border: 0;
+  background: linear-gradient(
+    135deg,
+    #28b9aa,
+    #1f9f94
+  );
+  color: white;
+  box-shadow: 0 10px 24px rgba(40, 185, 170, 0.22);
+}
+
+.appointment-action:hover {
+  transform: translateY(-2px);
+}

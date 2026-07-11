@@ -35,9 +35,8 @@ export type WebshopOrderMetadata = {
   paymentMethod?: WebshopPaymentMethod;
 
   /*
-   * true wanneer een dienst gratis wordt aangeboden,
-   * bijvoorbeeld vanuit de admin of door een waardebon
-   * die het volledige bedrag dekt.
+   * true wanneer de dienst gratis wordt aangeboden
+   * of wanneer een waardebon het volledige bedrag dekt.
    */
   isFreeOrder?: boolean;
 };
@@ -65,7 +64,10 @@ function normalizeEmail(value: unknown): string {
   return clean(value).toLowerCase();
 }
 
-function toSafeNumber(value: unknown, fallback = 0): number {
+function toSafeNumber(
+  value: unknown,
+  fallback = 0
+): number {
   const parsed = Number(value);
 
   if (!Number.isFinite(parsed)) {
@@ -76,7 +78,11 @@ function toSafeNumber(value: unknown, fallback = 0): number {
 }
 
 function roundCurrency(value: number): number {
-  return Math.round((value + Number.EPSILON) * 100) / 100;
+  return (
+    Math.round(
+      (value + Number.EPSILON) * 100
+    ) / 100
+  );
 }
 
 function formatCurrency(value: number): string {
@@ -186,27 +192,39 @@ export async function fulfillWebshopOrder({
   const customerNotes = clean(metadata.notes);
 
   const amount = roundCurrency(
-    Math.max(toSafeNumber(metadata.amount), 0)
+    Math.max(
+      toSafeNumber(metadata.amount),
+      0
+    )
   );
 
   const originalAmount = roundCurrency(
     Math.max(
-      toSafeNumber(metadata.originalAmount, amount),
+      toSafeNumber(
+        metadata.originalAmount,
+        amount
+      ),
       0
     )
   );
 
   const discountAmount = roundCurrency(
-    Math.max(toSafeNumber(metadata.discountAmount), 0)
+    Math.max(
+      toSafeNumber(metadata.discountAmount),
+      0
+    )
   );
 
   const discountId = clean(metadata.discountId);
-  const discountCode = clean(metadata.discountCode);
+  const discountCode = clean(
+    metadata.discountCode
+  );
 
   /*
-   * Een bestelling is gratis wanneer:
-   * - isFreeOrder expliciet true is;
-   * - het te betalen bedrag 0 euro is.
+   * Een bestelling wordt als gratis beschouwd wanneer:
+   *
+   * 1. isFreeOrder expliciet true is;
+   * 2. het uiteindelijke bedrag €0,00 is.
    */
   const isFreeOrder =
     metadata.isFreeOrder === true ||
@@ -224,7 +242,9 @@ export async function fulfillWebshopOrder({
     discountCode,
   });
 
-  const paymentReference = makeReference(cleanedPaymentId);
+  const paymentReference = makeReference(
+    cleanedPaymentId
+  );
 
   /*
    * Dubbele verwerking voorkomen.
@@ -235,7 +255,10 @@ export async function fulfillWebshopOrder({
   } = await supabaseAdmin
     .from("bookings")
     .select("id, contact_id")
-    .ilike("notes", `%${paymentReference}%`)
+    .ilike(
+      "notes",
+      `%${paymentReference}%`
+    )
     .limit(1)
     .maybeSingle();
 
@@ -251,13 +274,17 @@ export async function fulfillWebshopOrder({
   }
 
   if (existingBooking?.id) {
-    const { error: paymentStatusError } =
-      await supabaseAdmin
-        .from("webshop_payments")
-        .update({
-          status: "paid",
-        })
-        .eq("payment_id", cleanedPaymentId);
+    const {
+      error: paymentStatusError,
+    } = await supabaseAdmin
+      .from("webshop_payments")
+      .update({
+        status: "paid",
+      })
+      .eq(
+        "payment_id",
+        cleanedPaymentId
+      );
 
     if (paymentStatusError) {
       console.error(
@@ -269,17 +296,22 @@ export async function fulfillWebshopOrder({
     return {
       success: true,
       duplicate: true,
+
       contactId: existingBooking.contact_id
         ? String(existingBooking.contact_id)
         : null,
-      bookingId: String(existingBooking.id),
+
+      bookingId: String(
+        existingBooking.id
+      ),
+
       passCreated: false,
       isFreeOrder,
     };
   }
 
   /*
-   * Bestaand contact zoeken.
+   * Bestaand contact zoeken op e-mailadres.
    */
   let contactId: string | null = null;
 
@@ -302,16 +334,23 @@ export async function fulfillWebshopOrder({
     }
 
     if (existingContact?.id) {
-      contactId = String(existingContact.id);
+      contactId = String(
+        existingContact.id
+      );
     }
   }
 
   /*
-   * Nieuw contact aanmaken.
+   * Nieuw contact aanmaken wanneer het
+   * e-mailadres nog niet bestaat.
    */
   if (!contactId) {
     const contactNotes = [
-      `${isFreeOrder ? "Gratis dienst" : "Aankoop"}: ${productName}`,
+      `${
+        isFreeOrder
+          ? "Gratis dienst"
+          : "Aankoop"
+      }: ${productName}`,
 
       studentName
         ? `Leerling: ${studentName}`
@@ -346,10 +385,13 @@ export async function fulfillWebshopOrder({
         : "",
 
       discountAmount > 0
-        ? `Korting: ${formatCurrency(discountAmount)}`
+        ? `Korting: ${formatCurrency(
+            discountAmount
+          )}`
         : "",
 
       `Verwerking: ${paymentLabel}`,
+
       paymentReference,
     ]
       .filter(Boolean)
@@ -375,7 +417,10 @@ export async function fulfillWebshopOrder({
       .select("id")
       .single();
 
-    if (contactInsertError || !newContact?.id) {
+    if (
+      contactInsertError ||
+      !newContact?.id
+    ) {
       console.error(
         "FULFILL ORDER CONTACT INSERT ERROR:",
         contactInsertError
@@ -391,6 +436,9 @@ export async function fulfillWebshopOrder({
 
   /*
    * Boeking opslaan.
+   *
+   * Ook gratis bestellingen krijgen payment_status paid,
+   * omdat ze volledig afgehandeld zijn.
    */
   const bookingNotes = [
     `${
@@ -432,14 +480,18 @@ export async function fulfillWebshopOrder({
     )}`,
 
     discountAmount > 0
-      ? `Korting: ${formatCurrency(discountAmount)}`
+      ? `Korting: ${formatCurrency(
+          discountAmount
+        )}`
       : "",
 
     discountCode
       ? `Kortingscode: ${discountCode}`
       : "",
 
-    `Te betalen bedrag: ${formatCurrency(amount)}`,
+    `Te betalen bedrag: ${formatCurrency(
+      amount
+    )}`,
 
     isFreeOrder
       ? "Bestelling volledig voldaan zonder online betaling"
@@ -463,19 +515,23 @@ export async function fulfillWebshopOrder({
     .from("bookings")
     .insert({
       contact_id: contactId,
+
       service_id: null,
       availability_id: null,
 
       status: "confirmed",
       payment_status: "paid",
-      amount,
 
+      amount,
       notes: bookingNotes,
     })
     .select("id")
     .single();
 
-  if (bookingError || !booking?.id) {
+  if (
+    bookingError ||
+    !booking?.id
+  ) {
     console.error(
       "FULFILL ORDER BOOKING INSERT ERROR:",
       bookingError
@@ -487,24 +543,38 @@ export async function fulfillWebshopOrder({
   }
 
   /*
-   * Automatisch een beurtenkaart aanmaken.
+   * Productherkenning voor beurtenkaarten.
    */
-  const normalizedProduct = product.toLowerCase();
+  const normalizedProduct =
+    product.toLowerCase();
+
   const normalizedProductName =
     productName.toLowerCase();
 
   const isTenSessionPass =
-    normalizedProduct.includes("10-beurtenkaart") ||
-    normalizedProductName.includes("10-beurtenkaart") ||
-    normalizedProduct.includes("tienbeurtenkaart") ||
-    normalizedProductName.includes("tienbeurtenkaart");
+    normalizedProduct.includes(
+      "10-beurtenkaart"
+    ) ||
+    normalizedProductName.includes(
+      "10-beurtenkaart"
+    ) ||
+    normalizedProduct.includes(
+      "tienbeurtenkaart"
+    ) ||
+    normalizedProductName.includes(
+      "tienbeurtenkaart"
+    );
 
   let passCreated = false;
 
   if (isTenSessionPass) {
     const level =
-      normalizedProduct.includes("secundair") ||
-      normalizedProductName.includes("secundair")
+      normalizedProduct.includes(
+        "secundair"
+      ) ||
+      normalizedProductName.includes(
+        "secundair"
+      )
         ? "secundair"
         : "lager";
 
@@ -514,7 +584,10 @@ export async function fulfillWebshopOrder({
     } = await supabaseAdmin
       .from("passes")
       .select("id")
-      .eq("payment_id", cleanedPaymentId)
+      .eq(
+        "payment_id",
+        cleanedPaymentId
+      )
       .limit(1)
       .maybeSingle();
 
@@ -526,33 +599,36 @@ export async function fulfillWebshopOrder({
     }
 
     if (!existingPass?.id) {
-      const { error: passInsertError } =
-        await supabaseAdmin
-          .from("passes")
-          .insert({
-            contact_id: contactId,
-            customer_email: email,
+      const {
+        error: passInsertError,
+      } = await supabaseAdmin
+        .from("passes")
+        .insert({
+          contact_id: contactId,
+          customer_email: email,
 
-            title:
-              productName ||
-              "10-beurtenkaart",
+          title:
+            productName ||
+            "10-beurtenkaart",
 
-            product:
-              productName ||
-              product ||
-              "10-beurtenkaart",
+          product:
+            productName ||
+            product ||
+            "10-beurtenkaart",
 
-            level,
+          level,
 
-            total_credits: 10,
-            remaining_credits: 10,
+          total_credits: 10,
+          remaining_credits: 10,
 
-            total_sessions: 10,
-            remaining_sessions: 10,
+          total_sessions: 10,
+          remaining_sessions: 10,
 
-            status: "active",
-            payment_id: cleanedPaymentId,
-          });
+          status: "active",
+
+          payment_id:
+            cleanedPaymentId,
+        });
 
       if (passInsertError) {
         console.error(
@@ -578,7 +654,9 @@ export async function fulfillWebshopOrder({
       error: discountReadError,
     } = await supabaseAdmin
       .from("discount_codes")
-      .select("used_count, max_uses, active")
+      .select(
+        "used_count, max_uses, active"
+      )
       .eq("id", discountId)
       .maybeSingle();
 
@@ -589,11 +667,14 @@ export async function fulfillWebshopOrder({
       );
     } else if (discountCodeRow) {
       const currentUses = Math.max(
-        toSafeNumber(discountCodeRow.used_count),
+        toSafeNumber(
+          discountCodeRow.used_count
+        ),
         0
       );
 
-      const newUsedCount = currentUses + 1;
+      const newUsedCount =
+        currentUses + 1;
 
       const maxUses =
         discountCodeRow.max_uses === null
@@ -608,17 +689,20 @@ export async function fulfillWebshopOrder({
         Number.isFinite(maxUses) &&
         newUsedCount >= maxUses;
 
-      const { error: discountUpdateError } =
-        await supabaseAdmin
-          .from("discount_codes")
-          .update({
-            used_count: newUsedCount,
+      const {
+        error: discountUpdateError,
+      } = await supabaseAdmin
+        .from("discount_codes")
+        .update({
+          used_count: newUsedCount,
 
-            active: shouldDeactivate
-              ? false
-              : Boolean(discountCodeRow.active),
-          })
-          .eq("id", discountId);
+          active: shouldDeactivate
+            ? false
+            : Boolean(
+                discountCodeRow.active
+              ),
+        })
+        .eq("id", discountId);
 
       if (discountUpdateError) {
         console.error(
@@ -630,15 +714,19 @@ export async function fulfillWebshopOrder({
   }
 
   /*
-   * Betaling als afgehandeld opslaan.
+   * Betaling als afgehandeld markeren.
    */
-  const { error: paymentUpdateError } =
-    await supabaseAdmin
-      .from("webshop_payments")
-      .update({
-        status: "paid",
-      })
-      .eq("payment_id", cleanedPaymentId);
+  const {
+    error: paymentUpdateError,
+  } = await supabaseAdmin
+    .from("webshop_payments")
+    .update({
+      status: "paid",
+    })
+    .eq(
+      "payment_id",
+      cleanedPaymentId
+    );
 
   if (paymentUpdateError) {
     console.error(

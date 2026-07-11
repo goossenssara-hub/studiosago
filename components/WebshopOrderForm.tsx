@@ -86,6 +86,15 @@ const PRODUCT_CONFIG: Record<
   },
 };
 
+const SCHOOL_YEAR_OPTIONS = [
+  "1e leerjaar",
+  "2e leerjaar",
+  "3e leerjaar",
+  "4e leerjaar",
+  "5e leerjaar",
+  "6e leerjaar",
+] as const;
+
 function roundCurrency(value: number): number {
   return (
     Math.round(
@@ -146,7 +155,7 @@ export default function WebshopOrderForm({
   const [phone, setPhone] =
     useState("");
 
-  const [studentAge, setStudentAge] =
+  const [studentBirthDate, setStudentBirthDate] =
     useState("");
 
   const [schoolYear, setSchoolYear] =
@@ -378,6 +387,20 @@ export default function WebshopOrderForm({
     }
 
     if (
+      productConfig.requiresStudentData &&
+      !studentBirthDate
+    ) {
+      return "Vul de geboortedatum van de leerling in.";
+    }
+
+    if (
+      productConfig.requiresStudentData &&
+      !schoolYear
+    ) {
+      return "Kies het leerjaar van de leerling.";
+    }
+
+    if (
       product === "tekstcorrectie" &&
       Number(wordCount) <= 0
     ) {
@@ -452,7 +475,7 @@ export default function WebshopOrderForm({
           phone: phone.trim(),
 
           studentAge:
-            studentAge.trim(),
+            studentBirthDate.trim(),
 
           schoolYear:
             schoolYear.trim(),
@@ -504,7 +527,7 @@ export default function WebshopOrderForm({
             phone: phone.trim(),
 
             studentAge:
-              studentAge.trim(),
+              studentBirthDate.trim(),
 
             schoolYear:
               schoolYear.trim(),
@@ -741,34 +764,53 @@ export default function WebshopOrderForm({
               <>
                 <label className="webshop-field">
                   <span>
-                    Leeftijd leerling
+                    Geboortedatum leerling *
                   </span>
 
                   <input
-                    type="text"
-                    value={studentAge}
+                    type="date"
+                    value={studentBirthDate}
                     onChange={(event) =>
-                      setStudentAge(
+                      setStudentBirthDate(
                         event.target.value
                       )
                     }
+                    max={new Date()
+                      .toISOString()
+                      .split("T")[0]}
+                    required
                   />
                 </label>
 
                 <label className="webshop-field">
                   <span>
-                    Leerjaar of studiejaar
+                    Leerjaar *
                   </span>
 
-                  <input
-                    type="text"
+                  <select
                     value={schoolYear}
                     onChange={(event) =>
                       setSchoolYear(
                         event.target.value
                       )
                     }
-                  />
+                    required
+                  >
+                    <option value="">
+                      Kies een leerjaar
+                    </option>
+
+                    {SCHOOL_YEAR_OPTIONS.map(
+                      (year) => (
+                        <option
+                          key={year}
+                          value={year}
+                        >
+                          {year}
+                        </option>
+                      )
+                    )}
+                  </select>
                 </label>
 
                 <label className="webshop-field webshop-field-full">

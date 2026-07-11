@@ -27,10 +27,6 @@ type CheckoutRequestBody = {
 
   discountCode?: string;
 
-  /*
-   * Deze velden mogen vanuit het formulier worden meegestuurd,
-   * maar de prijs wordt hieronder altijd opnieuw op de server bepaald.
-   */
   amount?: string | number;
   originalAmount?: string | number;
 
@@ -63,6 +59,12 @@ type DiscountCodeRow = {
   active: boolean;
 };
 
+type DiscountResult = {
+  discountId: string | null;
+  discountCode: string;
+  discountAmount: number;
+};
+
 const TEN_SESSION_PRODUCTS: Record<
   string,
   TenSessionProduct
@@ -92,6 +94,12 @@ function normalizeEmail(value: unknown): string {
 
 function normalizeCode(value: unknown): string {
   return clean(value).toUpperCase();
+}
+
+function normalizeName(value: unknown): string {
+  return clean(value)
+    .toLowerCase()
+    .replace(/\s+/g, " ");
 }
 
 function roundCurrency(value: number): number {
@@ -155,39 +163,39 @@ function discountMatchesProduct({
   discountProduct: string | null;
   requestedProduct: string;
 }): boolean {
-  const normalizedDiscountProduct = clean(
+  const configured = clean(
     discountProduct
   ).toLowerCase();
 
+  const requested = clean(
+    requestedProduct
+  ).toLowerCase();
+
   if (
-    !normalizedDiscountProduct ||
-    normalizedDiscountProduct === "all" ||
-    normalizedDiscountProduct === "alle" ||
-    normalizedDiscountProduct === "alles" ||
-    normalizedDiscountProduct === "*"
+    !configured ||
+    configured === "all" ||
+    configured === "alle" ||
+    configured === "alles" ||
+    configured === "*"
   ) {
     return true;
   }
 
-  if (
-    normalizedDiscountProduct ===
-    requestedProduct.toLowerCase()
-  ) {
+  if (configured === requested) {
     return true;
   }
 
-  /*
-   * Hiermee kan een algemene code voor alle tienbeurtenkaarten
-   * ook op lager én secundair toegepast worden.
-   */
-  return (
-    normalizedDiscountProduct ===
-      "10-beurtenkaart" ||
-    normalizedDiscountProduct ===
-      "tienbeurtenkaart" ||
-    normalizedDiscountProduct ===
-      "ten-beurtenkaart"
-  );
+  const isGeneralPassCode =
+    configured === "10-beurtenkaart" ||
+    configured === "tienbeurtenkaart" ||
+    configured === "ten-beurtenkaart";
+
+  const isRequestedPass =
+    requested.includes("10-beurtenkaart") ||
+    requested.includes("tienbeurtenkaart") ||
+    requested.includes("ten-beurtenkaart");
+
+  return isGeneralPassCode && isRequestedPass;
 }
 
 async function findAndValidateDiscount({
@@ -206,11 +214,7 @@ async function findAndValidateDiscount({
   parentName: string;
   studentName: string;
   originalAmount: number;
-}): Promise<{
-  discountId: string | null;
-  discountCode: string;
-  discountAmount: number;
-}> {
+}): Promise<DiscountResult> {
   if (!code) {
     return {
       discountId: null,
@@ -269,14 +273,19 @@ async function findAndValidateDiscount({
     );
   }
 
-  if (
-    row.valid_until &&
-    new Date(row.valid_until).getTime() <
-      Date.now()
-  ) {
-    throw new Error(
-      "Deze kortingscode is vervallen."
+  if (row.valid_until) {
+    const validUntil = new Date(
+      row.valid_until
     );
+
+    if (
+      Number.isFinite(validUntil.getTime()) &&
+      validUntil.getTime() < Date.now()
+    ) {
+      throw new Error(
+        "Deze kortingscode is vervallen."
+      );
+    }
   }
 
   const usedCount = Math.max(
@@ -317,15 +326,14 @@ async function findAndValidateDiscount({
     );
   }
 
-  const requiredCustomerName = clean(
-    row.customer_name
-  ).toLowerCase();
+  const requiredCustomerName =
+    normalizeName(row.customer_name);
 
   const normalizedParentName =
-    parentName.toLowerCase();
+    normalizeName(parentName);
 
   const normalizedStudentName =
-    studentName.toLowerCase();
+    normalizeName(studentName);
 
   const customerNameMatches =
     !requiredCustomerName ||
@@ -360,22 +368,62 @@ async function findAndValidateDiscount({
       discountValue,
     });
 
-  /*
-   * Een kortingsbedrag mag nooit hoger zijn
-   * dan de prijs van het product.
-   */
   const discountAmount = Math.min(
     calculatedDiscount,
     originalAmount
   );
 
   return {
-    discountId: row.id,
+    discountId: String(row.id),
     discountCode: normalizeCode(row.code),
     discountAmount: roundCurrency(
       discountAmount
     ),
   };
+}
+
+/*
+ * De bestaande tabel webshop_payments bevat volgens je
+ * Supabase-overzicht enkel deze relevante velden:
+ *
+ * payment_id, product, email, status en created_at.
+ *
+ * created_at wordt automatisch door Supabase ingevuld.
+ * Daarom slaan we hier bewust geen onbekende kolommen op.
+ */
+async function saveWebshopPayment({
+  supabaseAdmin,
+  paymentId,
+  product,
+  email,
+  status,
+}: {
+  supabaseAdmin: any;
+  paymentId: string;
+  product: string;
+  email: string;
+  status: string;
+}): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from("webshop_payments")
+    .insert({
+      payment_id: paymentId,
+      product,
+      email,
+      status,
+    });
+
+  if (error) {
+    console.error(
+      "WEBSHOP PAYMENT INSERT ERROR:",
+      error
+    );
+
+    throw new Error(
+      error.message ||
+        "De bestelling kon niet opgeslagen worden."
+    );
+  }
 }
 
 export async function POST(
@@ -396,9 +444,7 @@ export async function POST(
           error:
             "Deze tienbeurtenkaart bestaat niet.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
@@ -455,9 +501,7 @@ export async function POST(
           error:
             "Vul de naam van de ouder of klant in.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
@@ -468,9 +512,7 @@ export async function POST(
           error:
             "Vul de naam van de leerling in.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
@@ -481,29 +523,17 @@ export async function POST(
           error:
             "Vul een geldig e-mailadres in.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
     const supabaseAdmin =
       getSupabaseAdmin();
 
-    /*
-     * De basisprijs wordt altijd hier bepaald.
-     * Een gebruiker kan dus niet zelf een lager bedrag
-     * vanuit de browser meesturen.
-     */
-    const originalAmount = roundCurrency(
-      product.price
-    );
+    const originalAmount =
+      roundCurrency(product.price);
 
-    let discountResult: {
-      discountId: string | null;
-      discountCode: string;
-      discountAmount: number;
-    };
+    let discountResult: DiscountResult;
 
     try {
       discountResult =
@@ -525,9 +555,7 @@ export async function POST(
               ? discountError.message
               : "De kortingscode is niet geldig.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
@@ -550,19 +578,7 @@ export async function POST(
         : "mollie";
 
     const baseUrl = getBaseUrl(request);
-
-    /*
-     * Dit ID gebruiken we ook voor gratis bestellingen,
-     * zodat iedere bestelling een unieke referentie heeft.
-     */
-    const checkoutId =
-      crypto.randomUUID();
-
-    const freePaymentId = `${
-      paymentMethod === "waardebon"
-        ? "voucher"
-        : "free"
-    }_${checkoutId}`;
+    const checkoutId = crypto.randomUUID();
 
     const metadata: WebshopOrderMetadata = {
       checkoutId,
@@ -599,63 +615,31 @@ export async function POST(
       isFreeOrder,
     };
 
-    /*
-     * Gratis bestelling:
-     * geen betaling bij Mollie aanmaken.
-     */
     if (isFreeOrder) {
-      const {
-        error: freePaymentInsertError,
-      } = await supabaseAdmin
-        .from("webshop_payments")
-        .insert({
-          payment_id: freePaymentId,
-          checkout_id: checkoutId,
+      const freePaymentId = `${
+        paymentMethod === "waardebon"
+          ? "voucher"
+          : "free"
+      }_${checkoutId}`;
 
-          product: product.key,
-          product_name: product.name,
-
-          amount: finalAmount,
-          original_amount: originalAmount,
-
-          discount_id:
-            discountResult.discountId,
-
-          discount_code:
-            discountResult.discountCode ||
-            null,
-
-          discount_amount:
-            discountResult.discountAmount,
-
-          customer_name: parentName,
-          student_name: studentName,
-          customer_email: email,
-          customer_phone: phone,
-
-          status: "paid",
-          payment_method: paymentMethod,
-
-          metadata,
-        });
-
-      if (freePaymentInsertError) {
-        console.error(
-          "FREE TEN SESSION PAYMENT INSERT ERROR:",
-          freePaymentInsertError
-        );
-
-        throw new Error(
-          "De gratis bestelling kon niet opgeslagen worden."
-        );
-      }
-
+      /*
+       * Eerst de bestelling, boeking en beurtenkaart verwerken.
+       * Daarna registreren we de betaling in webshop_payments.
+       */
       const fulfillment =
         await fulfillWebshopOrder({
           supabaseAdmin,
           paymentId: freePaymentId,
           metadata,
         });
+
+      await saveWebshopPayment({
+        supabaseAdmin,
+        paymentId: freePaymentId,
+        product: product.key,
+        email,
+        status: "paid",
+      });
 
       return NextResponse.json(
         {
@@ -678,9 +662,7 @@ export async function POST(
           message:
             "Je bestelling werd correct geregistreerd. Er is geen online betaling nodig.",
         },
-        {
-          status: 200,
-        }
+        { status: 200 }
       );
     }
 
@@ -699,9 +681,7 @@ export async function POST(
           error:
             "De betaalomgeving is momenteel niet correct ingesteld.",
         },
-        {
-          status: 500,
-        }
+        { status: 500 }
       );
     }
 
@@ -742,56 +722,13 @@ export async function POST(
       );
     }
 
-    const {
-      error: paymentInsertError,
-    } = await supabaseAdmin
-      .from("webshop_payments")
-      .insert({
-        payment_id: payment.id,
-        checkout_id: checkoutId,
-
-        product: product.key,
-        product_name: product.name,
-
-        amount: finalAmount,
-        original_amount: originalAmount,
-
-        discount_id:
-          discountResult.discountId,
-
-        discount_code:
-          discountResult.discountCode ||
-          null,
-
-        discount_amount:
-          discountResult.discountAmount,
-
-        customer_name: parentName,
-        student_name: studentName,
-        customer_email: email,
-        customer_phone: phone,
-
-        status: payment.status,
-        payment_method: "mollie",
-
-        metadata,
-      });
-
-    if (paymentInsertError) {
-      console.error(
-        "TEN SESSION PAYMENT INSERT ERROR:",
-        paymentInsertError
-      );
-
-      /*
-       * De Mollie-betaling bestaat al, maar onze lokale
-       * registratie mislukte. Daarom sturen we de klant
-       * niet door naar de betaalpagina.
-       */
-      throw new Error(
-        "De betaling werd aangemaakt, maar kon niet lokaal opgeslagen worden."
-      );
-    }
+    await saveWebshopPayment({
+      supabaseAdmin,
+      paymentId: payment.id,
+      product: product.key,
+      email,
+      status: payment.status,
+    });
 
     return NextResponse.json(
       {
@@ -812,9 +749,7 @@ export async function POST(
           discountResult.discountAmount
         ),
       },
-      {
-        status: 201,
-      }
+      { status: 201 }
     );
   } catch (error) {
     console.error(
@@ -825,15 +760,12 @@ export async function POST(
     return NextResponse.json(
       {
         success: false,
-
         error:
           error instanceof Error
             ? error.message
             : "Er ging iets mis bij het aanmaken van de bestelling.",
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 }

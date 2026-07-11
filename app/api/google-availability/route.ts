@@ -12,20 +12,14 @@ function normalizeSlots(value: unknown): string[] {
     return [];
   }
 
-  return value
+  const slots = value
     .map((slot) => {
       if (typeof slot === "string") {
         return slot.trim();
       }
 
-      if (
-        slot &&
-        typeof slot === "object"
-      ) {
-        const item = slot as Record<
-          string,
-          unknown
-        >;
+      if (slot && typeof slot === "object") {
+        const item = slot as Record<string, unknown>;
 
         return clean(
           item.time ??
@@ -39,6 +33,22 @@ function normalizeSlots(value: unknown): string[] {
       return "";
     })
     .filter(Boolean);
+
+  return Array.from(new Set(slots)).sort((a, b) =>
+    a.localeCompare(b, "nl-BE", {
+      numeric: true,
+    })
+  );
+}
+
+function formatDateForBelgium(date: string): string {
+  const [year, month, day] = date.split("-");
+
+  if (!year || !month || !day) {
+    return date;
+  }
+
+  return `${day}-${month}-${year}`;
 }
 
 export async function GET(
@@ -46,8 +56,7 @@ export async function GET(
 ): Promise<NextResponse> {
   try {
     const scriptUrl = clean(
-      process.env
-        .GOOGLE_APPS_SCRIPT_AVAILABILITY_URL
+      process.env.GOOGLE_APPS_SCRIPT_AVAILABILITY_URL
     );
 
     if (!scriptUrl) {
@@ -74,9 +83,7 @@ export async function GET(
     );
 
     const duration = clean(
-      requestUrl.searchParams.get(
-        "duration"
-      ) || "60"
+      requestUrl.searchParams.get("duration") || "60"
     );
 
     const type = clean(
@@ -96,21 +103,35 @@ export async function GET(
       );
     }
 
-    /*
-     * Een HTML-dateveld stuurt YYYY-MM-DD.
-     * We geven zowel date als selectedDate mee,
-     * zodat het Apps Script beide kan herkennen.
-     */
+    const formattedDate =
+      formatDateForBelgium(date);
+
     const googleUrl = new URL(scriptUrl);
 
+    /*
+     * We sturen meerdere parameternamen en datumformaten mee.
+     * Daardoor blijft deze route werken wanneer het Apps Script
+     * YYYY-MM-DD of DD-MM-YYYY verwacht.
+     */
+    googleUrl.searchParams.set("date", date);
     googleUrl.searchParams.set(
-      "date",
+      "selectedDate",
       date
     );
 
     googleUrl.searchParams.set(
-      "selectedDate",
-      date
+      "formattedDate",
+      formattedDate
+    );
+
+    googleUrl.searchParams.set(
+      "dateBE",
+      formattedDate
+    );
+
+    googleUrl.searchParams.set(
+      "displayDate",
+      formattedDate
     );
 
     googleUrl.searchParams.set(
@@ -120,6 +141,11 @@ export async function GET(
 
     googleUrl.searchParams.set(
       "type",
+      type
+    );
+
+    googleUrl.searchParams.set(
+      "appointmentType",
       type
     );
 
@@ -146,8 +172,13 @@ export async function GET(
     if (!googleResponse.ok) {
       console.error(
         "GOOGLE AVAILABILITY HTTP ERROR:",
-        googleResponse.status,
-        responseText.slice(0, 500)
+        {
+          status: googleResponse.status,
+          statusText:
+            googleResponse.statusText,
+          response:
+            responseText.slice(0, 500),
+        }
       );
 
       return NextResponse.json(
@@ -185,12 +216,8 @@ export async function GET(
     }
 
     const result =
-      data &&
-      typeof data === "object"
-        ? (data as Record<
-            string,
-            unknown
-          >)
+      data && typeof data === "object"
+        ? (data as Record<string, unknown>)
         : {};
 
     const nestedData =
@@ -202,25 +229,42 @@ export async function GET(
           >)
         : {};
 
+    const nestedResult =
+      result.result &&
+      typeof result.result === "object"
+        ? (result.result as Record<
+            string,
+            unknown
+          >)
+        : {};
+
     /*
-     * Ondersteunt onder andere:
+     * Ondersteunde antwoordformaten:
+     *
      * { slots: [...] }
      * { availableSlots: [...] }
      * { times: [...] }
+     * { availability: [...] }
      * { data: { slots: [...] } }
+     * { result: { slots: [...] } }
      */
     const slots = normalizeSlots(
       result.slots ??
         result.availableSlots ??
         result.times ??
+        result.availability ??
         nestedData.slots ??
-        nestedData.availableSlots
+        nestedData.availableSlots ??
+        nestedData.times ??
+        nestedResult.slots ??
+        nestedResult.availableSlots
     );
 
     console.log(
       "GOOGLE AVAILABILITY RESULT:",
       {
         date,
+        formattedDate,
         duration,
         type,
         slotCount: slots.length,
@@ -231,6 +275,8 @@ export async function GET(
     return NextResponse.json(
       {
         slots,
+        date,
+        formattedDate,
       },
       {
         status: 200,

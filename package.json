@@ -9,6 +9,7 @@
     "lint": "echo \"Skipping lint\""
   },
   "dependencies": {
+    "@mollie/api-client": "^4.6.0",
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.110.0",
     "@swc/helpers": "^0.5.23",

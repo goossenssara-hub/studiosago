@@ -435,10 +435,7 @@ export default function AfspraakMakenClient({ pass, email }: Props) {
               <span>1</span>
               <div>
                 <h2>Wie en wanneer?</h2>
-                <p>
-                  Niet-beschikbare datums zijn grijs en kunnen niet
-                  aangeklikt worden.
-                </p>
+                <p>Vul je gegevens in en kies een vrij moment.</p>
               </div>
             </div>
 
@@ -525,28 +522,40 @@ export default function AfspraakMakenClient({ pass, email }: Props) {
                 </div>
               </div>
 
-              <div className={styles.calendarCard}>
-                <div className={styles.calendarHeader}>
-                  <button
-                    type="button"
-                    onClick={() => changeMonth(-1)}
-                    aria-label="Vorige maand"
-                  >
-                    ‹
-                  </button>
+              <div className={styles.calendarColumn}>
+                <div className={styles.selectedDateField}>
+                  <span>Datum *</span>
+                  <div>
+                    {selectedDate
+                      ? formatSelectedDate(selectedDate)
+                      : "Kies een datum in de kalender"}
+                  </div>
+                </div>
 
+                <div className={styles.calendarCard}>
+                <div className={styles.calendarHeader}>
                   <strong>
                     {MONTH_NAMES[calendarMonth.getMonth()]}{" "}
                     {calendarMonth.getFullYear()}
                   </strong>
 
-                  <button
-                    type="button"
-                    onClick={() => changeMonth(1)}
-                    aria-label="Volgende maand"
-                  >
-                    ›
-                  </button>
+                  <div className={styles.calendarControls}>
+                    <button
+                      type="button"
+                      onClick={() => changeMonth(-1)}
+                      aria-label="Vorige maand"
+                    >
+                      ‹
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => changeMonth(1)}
+                      aria-label="Volgende maand"
+                    >
+                      ›
+                    </button>
+                  </div>
                 </div>
 
                 <div className={styles.weekdays}>
@@ -606,6 +615,7 @@ export default function AfspraakMakenClient({ pass, email }: Props) {
                       Geen vrije datums in deze maand.
                     </p>
                   )}
+                </div>
               </div>
             </div>
           </section>
@@ -651,6 +661,20 @@ export default function AfspraakMakenClient({ pass, email }: Props) {
                     </span>
                   </button>
                 ))}
+
+                {["15:30", "17:00", "18:30"]
+                  .filter((slot) => !availableSlots.includes(slot))
+                  .map((slot) => (
+                    <button
+                      key={slot}
+                      type="button"
+                      className={styles.slotButtonUnavailable}
+                      disabled
+                    >
+                      <strong>{slot}</strong>
+                      <span>Niet beschikbaar</span>
+                    </button>
+                  ))}
               </div>
             ) : (
               <div className={styles.emptySlots}>

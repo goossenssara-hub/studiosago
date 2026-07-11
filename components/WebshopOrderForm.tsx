@@ -264,6 +264,25 @@ export default function WebshopOrderForm({
         }
       );
 
+      const contentType =
+        response.headers.get("content-type") || "";
+
+      if (!contentType.includes("application/json")) {
+        const responseText = await response.text();
+
+        console.error(
+          "DISCOUNT API GAF GEEN JSON TERUG:",
+          response.status,
+          responseText.slice(0, 300)
+        );
+
+        throw new Error(
+          response.status === 404
+            ? "De kortingscode-route werd niet gevonden."
+            : "De server gaf een ongeldig antwoord terug."
+        );
+      }
+
       const data = await response.json();
 
       if (!response.ok) {
@@ -448,8 +467,14 @@ export default function WebshopOrderForm({
           isFreeOrder,
         };
 
+      const checkoutEndpoint =
+        product === "10-beurtenkaart-lager" ||
+        product === "10-beurtenkaart-secundair"
+          ? "/api/checkout/ten-beurtenkaart"
+          : "/api/mollie/create-payment";
+
       const response = await fetch(
-        "/api/mollie/create-payment",
+        checkoutEndpoint,
         {
           method: "POST",
           headers: {
@@ -461,6 +486,35 @@ export default function WebshopOrderForm({
             productName:
               productConfig.name,
 
+            parentName:
+              parentName.trim(),
+
+            studentName:
+              studentName.trim(),
+
+            email:
+              email
+                .trim()
+                .toLowerCase(),
+
+            phone: phone.trim(),
+
+            studentAge:
+              studentAge.trim(),
+
+            schoolYear:
+              schoolYear.trim(),
+
+            school: school.trim(),
+
+            notes: notes.trim(),
+
+            discountCode:
+              discount?.discountCode ||
+              discountCode
+                .trim()
+                .toUpperCase(),
+
             amount:
               finalAmount.toFixed(2),
 
@@ -471,6 +525,25 @@ export default function WebshopOrderForm({
           }),
         }
       );
+
+      const contentType =
+        response.headers.get("content-type") || "";
+
+      if (!contentType.includes("application/json")) {
+        const responseText = await response.text();
+
+        console.error(
+          "CHECKOUT API GAF GEEN JSON TERUG:",
+          response.status,
+          responseText.slice(0, 300)
+        );
+
+        throw new Error(
+          response.status === 404
+            ? "De betaalroute werd niet gevonden."
+            : "De server gaf een ongeldig antwoord terug."
+        );
+      }
 
       const data =
         (await response.json()) as CheckoutResponse;

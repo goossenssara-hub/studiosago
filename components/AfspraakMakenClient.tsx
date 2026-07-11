@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import styles from "./AfspraakMakenClient.module.css";
+import styles from "./afspraken.css";
 
 type Pass = {
   id: string;

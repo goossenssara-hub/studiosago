@@ -33,7 +33,7 @@
 @import "./styles/loginpagina.css";
 @import "./styles/statusvolzet.css";
 @import "./styles/discount-codes-admin.css";
-@import "./styles/afspraken.css";
+@import "./styles/AfspraakMakenClient.module.css";
 
 
 @font-face {

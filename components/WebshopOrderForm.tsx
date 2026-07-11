@@ -259,6 +259,10 @@ export default function WebshopOrderForm({
             product,
             email:
               email.trim().toLowerCase(),
+            parentName:
+              parentName.trim(),
+            studentName:
+              studentName.trim(),
             amount: originalAmount,
           }),
         }
@@ -560,10 +564,7 @@ export default function WebshopOrderForm({
         data.redirectUrl ||
         data.url;
 
-      if (
-        checkoutUrl &&
-        !isFreeOrder
-      ) {
+      if (checkoutUrl) {
         window.location.href =
           checkoutUrl;
 

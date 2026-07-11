@@ -145,3 +145,16 @@
     justify-content: flex-start;
   }
 }
+.dashboard-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.pass-empty-message {
+  margin: 16px 0 0;
+  color: rgba(3, 54, 99, 0.62);
+  font-size: 14px;
+  font-weight: 700;
+}

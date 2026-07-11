@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type Booking = {
   id: string;
@@ -33,6 +33,23 @@ type AppointmentsResponse = {
   details?: string;
 };
 
+type BackfillResult = {
+  bookingId?: string;
+  success?: boolean;
+  skipped?: boolean;
+  message?: string;
+  error?: string;
+  googleEventId?: string | null;
+  googleEventUrl?: string | null;
+  googleMeetUrl?: string | null;
+};
+
+type BackfillResponse = {
+  success?: boolean;
+  results?: BackfillResult[];
+  error?: string;
+};
+
 function formatDate(booking: Booking): string {
   const value =
     booking.appointment_date ||
@@ -42,16 +59,9 @@ function formatDate(booking: Booking): string {
     return "Datum onbekend";
   }
 
-  /*
-   * Voor appointment_date voegen we een lokaal uur toe,
-   * zodat de datum niet door een tijdzone verschuift.
-   */
-  const date =
-    booking.appointment_date
-      ? new Date(
-          `${booking.appointment_date}T12:00:00`
-        )
-      : new Date(value);
+  const date = booking.appointment_date
+    ? new Date(`${booking.appointment_date}T12:00:00`)
+    : new Date(value);
 
   return date.toLocaleDateString("nl-BE", {
     weekday: "long",
@@ -96,6 +106,25 @@ function translateStatus(
   }
 }
 
+async function readJsonResponse<T>(
+  response: Response
+): Promise<T> {
+  const contentType =
+    response.headers.get("content-type") || "";
+
+  if (
+    !contentType.includes(
+      "application/json"
+    )
+  ) {
+    throw new Error(
+      "De server gaf geen geldig antwoord terug."
+    );
+  }
+
+  return (await response.json()) as T;
+}
+
 export default function CustomerAppointments() {
   const [bookings, setBookings] =
     useState<Booking[]>([]);
@@ -108,6 +137,23 @@ export default function CustomerAppointments() {
 
   const [cancellingId, setCancellingId] =
     useState<string | null>(null);
+
+  const [syncingGoogle, setSyncingGoogle] =
+    useState(false);
+
+  const [syncMessage, setSyncMessage] =
+    useState("");
+
+  const unsyncedBookings = useMemo(
+    () =>
+      bookings.filter(
+        (booking) =>
+          !booking.google_event_id &&
+          Boolean(booking.appointment_date) &&
+          Boolean(booking.appointment_time)
+      ),
+    [bookings]
+  );
 
   const loadBookings = useCallback(async () => {
     setLoading(true);
@@ -125,21 +171,10 @@ export default function CustomerAppointments() {
         }
       );
 
-      const contentType =
-        response.headers.get("content-type") || "";
-
-      if (
-        !contentType.includes(
-          "application/json"
-        )
-      ) {
-        throw new Error(
-          "De server gaf geen geldig antwoord terug."
-        );
-      }
-
       const result =
-        (await response.json()) as AppointmentsResponse;
+        await readJsonResponse<AppointmentsResponse>(
+          response
+        );
 
       if (!response.ok) {
         throw new Error(
@@ -174,6 +209,107 @@ export default function CustomerAppointments() {
     void loadBookings();
   }, [loadBookings]);
 
+  async function syncExistingBookings() {
+    if (unsyncedBookings.length === 0) {
+      setSyncMessage(
+        "Alle afspraken zijn al gekoppeld aan Google Agenda."
+      );
+      return;
+    }
+
+    setSyncingGoogle(true);
+    setSyncMessage("");
+
+    try {
+      const response = await fetch(
+        "/api/customer/appointments/backfill-google",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            bookingIds:
+              unsyncedBookings.map(
+                (booking) => booking.id
+              ),
+          }),
+        }
+      );
+
+      const result =
+        await readJsonResponse<BackfillResponse>(
+          response
+        );
+
+      if (!response.ok) {
+        throw new Error(
+          result.error ||
+            "De afspraken konden niet met Google Agenda gekoppeld worden."
+        );
+      }
+
+      const results = Array.isArray(
+        result.results
+      )
+        ? result.results
+        : [];
+
+      const succeeded = results.filter(
+        (item) =>
+          item.success === true &&
+          item.skipped !== true
+      ).length;
+
+      const skipped = results.filter(
+        (item) => item.skipped === true
+      ).length;
+
+      const failed = results.filter(
+        (item) => item.success !== true
+      );
+
+      if (failed.length > 0) {
+        const failureMessages = failed
+          .map((item) => item.error)
+          .filter(Boolean)
+          .join(" ");
+
+        setSyncMessage(
+          `${succeeded} afspraak/afspraken gekoppeld, ${skipped} overgeslagen en ${failed.length} mislukt.${
+            failureMessages
+              ? ` ${failureMessages}`
+              : ""
+          }`
+        );
+      } else {
+        setSyncMessage(
+          `${succeeded} afspraak/afspraken succesvol gekoppeld aan Google Agenda.${
+            skipped > 0
+              ? ` ${skipped} afspraak/afspraken waren al gekoppeld.`
+              : ""
+          }`
+        );
+      }
+
+      await loadBookings();
+    } catch (error) {
+      console.error(
+        "SYNC GOOGLE BOOKINGS ERROR:",
+        error
+      );
+
+      setSyncMessage(
+        error instanceof Error
+          ? error.message
+          : "De afspraken konden niet gekoppeld worden."
+      );
+    } finally {
+      setSyncingGoogle(false);
+    }
+  }
+
   async function cancelBooking(
     booking: Booking
   ) {
@@ -200,15 +336,10 @@ export default function CustomerAppointments() {
         }
       );
 
-      const contentType =
-        response.headers.get("content-type") || "";
-
       const result =
-        contentType.includes(
-          "application/json"
-        )
-          ? await response.json()
-          : {};
+        await readJsonResponse<{
+          error?: string;
+        }>(response);
 
       if (!response.ok) {
         throw new Error(
@@ -278,133 +409,188 @@ export default function CustomerAppointments() {
   }
 
   return (
-    <div className="agenda-list">
-      {bookings.map((booking) => {
-        const calendarUrl =
-          booking.google_event_url;
+    <div className="customer-appointments">
+      {unsyncedBookings.length > 0 && (
+        <section className="google-sync-card">
+          <div>
+            <strong>
+              Google Agenda nog niet gekoppeld
+            </strong>
 
-        const meetUrl =
-          booking.google_meet_url ||
-          (
-            booking.appointment_type ===
-              "digital"
-              ? booking.google_event_link
-              : null
-          );
+            <p>
+              {unsyncedBookings.length === 1
+                ? "Er staat 1 afspraak klaar om met Google Agenda te synchroniseren."
+                : `Er staan ${unsyncedBookings.length} afspraken klaar om met Google Agenda te synchroniseren.`}
+            </p>
+          </div>
 
-        return (
-          <article
-            className="agenda-item"
-            key={booking.id}
+          <button
+            type="button"
+            className="google-sync-button"
+            onClick={syncExistingBookings}
+            disabled={syncingGoogle}
           >
-            <div className="appointment-card-header">
-              <div>
-                <strong>
-                  {booking.title ||
-                    "Afspraak Studio SaGo"}
-                </strong>
+            {syncingGoogle
+              ? "Afspraken koppelen..."
+              : "Koppelen aan Google Agenda"}
+          </button>
 
-                <p className="appointment-type-label">
-                  {booking.appointment_type ===
-                  "digital"
-                    ? "💻 Digitale begeleiding"
-                    : "🏠 Begeleiding aan huis"}
-                </p>
+          {syncMessage && (
+            <p className="google-sync-message">
+              {syncMessage}
+            </p>
+          )}
+        </section>
+      )}
+
+      <div className="agenda-list">
+        {bookings.map((booking) => {
+          const calendarUrl =
+            booking.google_event_url;
+
+          const meetUrl =
+            booking.google_meet_url ||
+            (
+              booking.appointment_type ===
+                "digital"
+                ? booking.google_event_link
+                : null
+            );
+
+          const isGoogleLinked =
+            Boolean(
+              booking.google_event_id ||
+                booking.google_event_url
+            );
+
+          return (
+            <article
+              className="agenda-item"
+              key={booking.id}
+            >
+              <div className="appointment-card-header">
+                <div>
+                  <strong>
+                    {booking.title ||
+                      "Afspraak Studio SaGo"}
+                  </strong>
+
+                  <p className="appointment-type-label">
+                    {booking.appointment_type ===
+                    "digital"
+                      ? "💻 Digitale begeleiding"
+                      : "🏠 Begeleiding aan huis"}
+                  </p>
+                </div>
+
+                <div className="appointment-badges">
+                  <span
+                    className={`appointment-status-badge ${
+                      booking.status ||
+                      "unknown"
+                    }`}
+                  >
+                    {booking.status ===
+                      "confirmed" && "✓ "}
+
+                    {booking.status ===
+                      "pending" && "◷ "}
+
+                    {translateStatus(
+                      booking.status
+                    )}
+                  </span>
+
+                  <span
+                    className={`google-status-badge ${
+                      isGoogleLinked
+                        ? "linked"
+                        : "not-linked"
+                    }`}
+                  >
+                    {isGoogleLinked
+                      ? "Google gekoppeld"
+                      : "Nog niet gekoppeld"}
+                  </span>
+                </div>
               </div>
 
-              <span
-                className={`appointment-status-badge ${
-                  booking.status ||
-                  "unknown"
-                }`}
-              >
-                {booking.status ===
-                  "confirmed" && "✓ "}
+              <div className="appointment-details">
+                <p>
+                  <span>📅</span>
+                  {formatDate(booking)}
+                </p>
 
-                {booking.status ===
-                  "pending" && "◷ "}
+                <p>
+                  <span>🕒</span>
+                  {formatTime(booking)}
+                </p>
 
-                {translateStatus(
-                  booking.status
-                )}
-              </span>
-            </div>
+                {booking.appointment_type ===
+                  "home" &&
+                  (
+                    booking.customer_address ||
+                    booking.location
+                  ) && (
+                    <p>
+                      <span>🏠</span>
+                      {booking.customer_address ||
+                        booking.location}
+                    </p>
+                  )}
 
-            <div className="appointment-details">
-              <p>
-                <span>📅</span>
-                {formatDate(booking)}
-              </p>
-
-              <p>
-                <span>🕒</span>
-                {formatTime(booking)}
-              </p>
-
-              {booking.appointment_type ===
-                "home" &&
-                (
-                  booking.customer_address ||
-                  booking.location
-                ) && (
+                {booking.notes && (
                   <p>
-                    <span>🏠</span>
-                    {booking.customer_address ||
-                      booking.location}
+                    <span>📝</span>
+                    {booking.notes}
                   </p>
                 )}
+              </div>
 
-              {booking.notes && (
-                <p>
-                  <span>📝</span>
-                  {booking.notes}
-                </p>
-              )}
-            </div>
-
-            <div className="appointment-actions">
-              {calendarUrl && (
-                <a
-                  href={calendarUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="appointment-action secondary"
-                >
-                  Open in Google Agenda
-                </a>
-              )}
-
-              {booking.appointment_type ===
-                "digital" &&
-                meetUrl && (
+              <div className="appointment-actions">
+                {calendarUrl && (
                   <a
-                    href={meetUrl}
+                    href={calendarUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="appointment-action meet"
+                    className="appointment-action secondary"
                   >
-                    Deelnemen via Google Meet
+                    Open in Google Agenda
                   </a>
                 )}
 
-              <button
-                type="button"
-                className="cancel-bookings"
-                onClick={() =>
-                  cancelBooking(booking)
-                }
-                disabled={
-                  cancellingId === booking.id
-                }
-              >
-                {cancellingId === booking.id
-                  ? "Annuleren..."
-                  : "Afspraak annuleren"}
-              </button>
-            </div>
-          </article>
-        );
-      })}
+                {booking.appointment_type ===
+                  "digital" &&
+                  meetUrl && (
+                    <a
+                      href={meetUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="appointment-action meet"
+                    >
+                      Deelnemen via Google Meet
+                    </a>
+                  )}
+
+                <button
+                  type="button"
+                  className="cancel-bookings"
+                  onClick={() =>
+                    cancelBooking(booking)
+                  }
+                  disabled={
+                    cancellingId === booking.id
+                  }
+                >
+                  {cancellingId === booking.id
+                    ? "Annuleren..."
+                    : "Afspraak annuleren"}
+                </button>
+              </div>
+            </article>
+          );
+        })}
+      </div>
     </div>
   );
 }

@@ -132,8 +132,7 @@ async function getDiscount({
   let discountAmount = discountValue;
 
   if (code.discount_type === "percentage") {
-    discountAmount =
-      amount * (discountValue / 100);
+    discountAmount = amount * (discountValue / 100);
   }
 
   discountAmount = roundCurrency(
@@ -211,6 +210,25 @@ export async function POST(request: Request) {
       formData.get("text_type") || ""
     ).trim();
 
+    /*
+     * Optionele velden om een dienst rechtstreeks gratis
+     * aan te bieden, bijvoorbeeld vanuit je admin.
+     *
+     * De frontend kan dan meesturen:
+     * is_free_order = true
+     * payment_method = gratis
+     */
+    const requestedFreeOrder =
+      String(
+        formData.get("is_free_order") || ""
+      ).toLowerCase() === "true";
+
+    const requestedPaymentMethod = String(
+      formData.get("payment_method") || ""
+    )
+      .trim()
+      .toLowerCase();
+
     if (!product) {
       return NextResponse.json(
         {
@@ -234,9 +252,7 @@ export async function POST(request: Request) {
     let amountNumber = 0;
 
     if (product === "tekstcorrectie") {
-      const wordCount = Number(
-        wordCountValue || 0
-      );
+      const wordCount = Number(wordCountValue || 0);
 
       if (
         !Number.isFinite(wordCount) ||
@@ -304,9 +320,16 @@ export async function POST(request: Request) {
       amount: amountNumber,
     });
 
-    const finalAmountNumber = roundCurrency(
-      discount.finalAmount
-    );
+    /*
+     * Een dienst kan gratis worden door:
+     *
+     * 1. een kortingscode of waardebon die het volledige
+     *    bedrag dekt;
+     * 2. is_free_order=true, bijvoorbeeld vanuit je admin.
+     */
+    const finalAmountNumber = requestedFreeOrder
+      ? 0
+      : roundCurrency(discount.finalAmount);
 
     if (
       !Number.isFinite(finalAmountNumber) ||
@@ -338,51 +361,62 @@ export async function POST(request: Request) {
     const checkoutId = crypto.randomUUID();
 
     /*
-     * VOLLEDIGE WAARDEBON
+     * GRATIS BESTELLING
      *
      * Mollie ondersteunt geen betaling van €0,00.
-     * Daarom slaan we de aankoop rechtstreeks als betaald op
-     * en voeren we dezelfde verwerking uit als bij een
-     * normale betaalde Molliebetaling.
+     * Daarom wordt elke gratis dienst rechtstreeks als
+     * betaald en bevestigd verwerkt.
      */
     if (finalAmountNumber === 0) {
-      if (
-        !discount.hasDiscount ||
-        !discount.discountId
-      ) {
-        return NextResponse.json(
-          {
-            error:
-              "Een bestelling van €0,00 is alleen mogelijk met een geldige waardebon.",
-          },
-          { status: 400 }
-        );
-      }
+      const isVoucherOrder =
+        discount.hasDiscount &&
+        Boolean(discount.discountId);
 
-      const voucherPaymentId =
-        `voucher_${checkoutId}`;
+      const paymentMethod =
+        requestedPaymentMethod ||
+        (isVoucherOrder ? "waardebon" : "gratis");
 
-      const { error: saveVoucherError } =
+      const freePaymentId = isVoucherOrder
+        ? `voucher_${checkoutId}`
+        : `free_${checkoutId}`;
+
+      /*
+       * Wanneer de dienst handmatig gratis wordt aangeboden,
+       * is de volledige productprijs de effectieve korting.
+       */
+      const effectiveDiscountAmount = isVoucherOrder
+        ? discount.discountAmount
+        : amountNumber;
+
+      const effectiveDiscountCode = isVoucherOrder
+        ? discount.discountCode
+        : "";
+
+      const effectiveDiscountId = isVoucherOrder
+        ? discount.discountId
+        : null;
+
+      const { error: saveFreeOrderError } =
         await supabaseAdmin
           .from("webshop_payments")
           .insert({
             checkout_id: checkoutId,
-            payment_id: voucherPaymentId,
+            payment_id: freePaymentId,
             product,
             email,
             status: "paid",
           });
 
-      if (saveVoucherError) {
+      if (saveFreeOrderError) {
         console.error(
-          "VOUCHER PAYMENT SAVE ERROR:",
-          saveVoucherError
+          "FREE ORDER PAYMENT SAVE ERROR:",
+          saveFreeOrderError
         );
 
         return NextResponse.json(
           {
             error:
-              "De bestelling met waardebon kon niet opgeslagen worden.",
+              "De gratis bestelling kon niet opgeslagen worden.",
           },
           { status: 500 }
         );
@@ -391,9 +425,11 @@ export async function POST(request: Request) {
       try {
         await fulfillWebshopOrder({
           supabaseAdmin,
-          paymentId: voucherPaymentId,
+          paymentId: freePaymentId,
+
           metadata: {
             checkoutId,
+
             product,
             productName,
 
@@ -401,17 +437,23 @@ export async function POST(request: Request) {
             originalAmount:
               amountNumber.toFixed(2),
 
-            discountId: discount.discountId,
+            discountId:
+              effectiveDiscountId,
+
             discountCode:
-              discount.discountCode,
+              effectiveDiscountCode,
+
             discountAmount:
-              discount.discountAmount.toFixed(2),
+              effectiveDiscountAmount.toFixed(2),
+
+            isFreeOrder: true,
+            paymentMethod,
 
             parentName,
+            studentName,
             email,
             phone,
 
-            studentName,
             studentAge,
             schoolYear,
             school,
@@ -419,13 +461,11 @@ export async function POST(request: Request) {
             wordCount: wordCountValue,
             textType,
             notes,
-
-            paymentMethod: "waardebon",
           },
         });
       } catch (fulfillError) {
         console.error(
-          "VOUCHER ORDER FULFILL ERROR:",
+          "FREE ORDER FULFILL ERROR:",
           fulfillError
         );
 
@@ -434,14 +474,14 @@ export async function POST(request: Request) {
           .update({
             status: "failed",
           })
-          .eq("payment_id", voucherPaymentId);
+          .eq("payment_id", freePaymentId);
 
         return NextResponse.json(
           {
             error:
               fulfillError instanceof Error
                 ? fulfillError.message
-                : "De bestelling met waardebon kon niet verwerkt worden.",
+                : "De gratis bestelling kon niet verwerkt worden.",
           },
           { status: 500 }
         );
@@ -451,20 +491,29 @@ export async function POST(request: Request) {
         url:
           `${siteUrl}/betaling/status?checkoutId=${checkoutId}`,
 
-        hasDiscount: true,
-        fullyPaidWithVoucher: true,
+        hasDiscount:
+          isVoucherOrder,
+
+        isFreeOrder: true,
+
+        fullyPaidWithVoucher:
+          isVoucherOrder,
+
+        paymentMethod,
 
         discountAmount:
-          discount.discountAmount,
+          effectiveDiscountAmount,
 
-        originalAmount: amountNumber,
+        originalAmount:
+          amountNumber,
+
         finalAmount: 0,
       });
     }
 
     /*
-     * Alleen wanneer er nog een positief bedrag betaald
-     * moet worden, maken we een Molliebetaling aan.
+     * Alleen wanneer er nog een positief bedrag moet worden
+     * betaald, wordt een Molliebetaling aangemaakt.
      */
     const mollieApiKey =
       process.env.MOLLIE_API_KEY;
@@ -505,6 +554,7 @@ export async function POST(request: Request) {
 
       metadata: {
         checkoutId,
+
         product,
         productName,
 
@@ -512,17 +562,23 @@ export async function POST(request: Request) {
         originalAmount:
           amountNumber.toFixed(2),
 
-        discountId: discount.discountId,
+        discountId:
+          discount.discountId,
+
         discountCode:
           discount.discountCode,
+
         discountAmount:
           discount.discountAmount.toFixed(2),
 
+        isFreeOrder: false,
+        paymentMethod: "mollie",
+
         parentName,
+        studentName,
         email,
         phone,
 
-        studentName,
         studentAge,
         schoolYear,
         school,
@@ -530,8 +586,6 @@ export async function POST(request: Request) {
         wordCount: wordCountValue,
         textType,
         notes,
-
-        paymentMethod: "mollie",
       },
     };
 
@@ -543,7 +597,8 @@ export async function POST(request: Request) {
         discount.discountCode,
       discountAmount:
         discount.discountAmount.toFixed(2),
-      finalAmount: mollieAmount,
+      finalAmount:
+        mollieAmount,
     });
 
     const response = await fetch(
@@ -554,16 +609,21 @@ export async function POST(request: Request) {
         headers: {
           Authorization:
             `Bearer ${mollieApiKey}`,
+
           "Content-Type":
             "application/json",
-          "Idempotency-Key": checkoutId,
+
+          "Idempotency-Key":
+            checkoutId,
         },
 
-        body: JSON.stringify(paymentBody),
+        body:
+          JSON.stringify(paymentBody),
       }
     );
 
-    const payment = await response.json();
+    const payment =
+      await response.json();
 
     if (!response.ok) {
       console.error(
@@ -611,10 +671,15 @@ export async function POST(request: Request) {
       await supabaseAdmin
         .from("webshop_payments")
         .insert({
-          checkout_id: checkoutId,
-          payment_id: payment.id,
+          checkout_id:
+            checkoutId,
+
+          payment_id:
+            payment.id,
+
           product,
           email,
+
           status:
             payment.status || "open",
         });
@@ -629,21 +694,34 @@ export async function POST(request: Request) {
         {
           error:
             "De betaling werd aangemaakt, maar kon niet in de database worden opgeslagen.",
-          details: saveError.message,
-          hint: saveError.hint,
-          code: saveError.code,
+
+          details:
+            saveError.message,
+
+          hint:
+            saveError.hint,
+
+          code:
+            saveError.code,
         },
         { status: 500 }
       );
     }
 
     return NextResponse.json({
-      url: checkoutUrl,
+      url:
+        checkoutUrl,
 
       hasDiscount:
         discount.hasDiscount,
 
-      fullyPaidWithVoucher: false,
+      isFreeOrder: false,
+
+      fullyPaidWithVoucher:
+        false,
+
+      paymentMethod:
+        "mollie",
 
       discountAmount:
         discount.discountAmount,

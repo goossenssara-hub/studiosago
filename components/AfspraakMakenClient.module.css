@@ -1,9 +1,11 @@
 .page {
+  --accent: var(--season-accent, #28b9aa);
+  --navy: #033663;
   position: relative;
   z-index: 8;
   width: 100%;
   min-height: 100vh;
-  padding: 42px 24px 110px;
+  padding: 34px 20px 96px;
 }
 
 .shell {
@@ -13,83 +15,74 @@
 
 .header {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 220px;
-  gap: 28px;
+  grid-template-columns: minmax(0, 1fr) 190px;
+  gap: 24px;
   align-items: end;
-  margin-bottom: 26px;
+  margin-bottom: 22px;
 }
 
 .eyebrow {
-  margin: 0 0 8px;
-  color: var(--teal, #28b9aa);
-  font-size: 13px;
+  margin: 0 0 7px;
+  color: var(--accent);
+  font-size: 12px;
   font-weight: 900;
-  letter-spacing: 0.14em;
+  letter-spacing: .16em;
   text-transform: uppercase;
 }
 
 .header h1 {
   margin: 0;
-  color: var(--navy, #033663);
+  color: var(--navy);
   font-family: "StudioTitle", sans-serif;
-  font-size: clamp(38px, 5vw, 64px);
-  line-height: 1.02;
+  font-size: clamp(42px, 5vw, 66px);
+  line-height: 1;
   font-weight: 950;
 }
 
 .intro {
-  max-width: 680px;
-  margin: 14px 0 0;
-  color: rgba(3, 54, 99, 0.72);
-  font-size: 17px;
-  line-height: 1.6;
+  max-width: 700px;
+  margin: 12px 0 0;
+  color: rgba(3, 54, 99, .68);
+  font-size: 16px;
+  line-height: 1.55;
   font-weight: 650;
 }
 
 .passCard {
   display: flex;
+  min-height: 132px;
+  padding: 20px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 150px;
-  padding: 22px;
-  border: 1px solid rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255,255,255,.85);
   border-radius: 26px;
-  background:
-    linear-gradient(
-      145deg,
-      rgba(40, 185, 170, 0.16),
-      rgba(255, 255, 255, 0.92)
-    );
-  box-shadow: 0 18px 44px rgba(3, 54, 99, 0.12);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  background: linear-gradient(145deg, rgba(40,185,170,.12), rgba(255,255,255,.96));
+  box-shadow: 0 18px 48px rgba(3,54,99,.1);
   text-align: center;
 }
 
 .passCard span,
 .passCard small {
-  color: rgba(3, 54, 99, 0.7);
-  font-weight: 750;
+  color: rgba(3,54,99,.62);
+  font-weight: 700;
 }
 
 .passCard strong {
-  margin: 4px 0 2px;
-  color: var(--navy, #033663);
-  font-size: 46px;
+  margin: 3px 0;
+  color: var(--navy);
+  font-size: 42px;
   line-height: 1;
-  font-weight: 950;
 }
 
 .errorMessage {
-  margin-bottom: 22px;
-  padding: 16px 18px;
-  border: 1px solid rgba(251, 103, 48, 0.24);
+  margin-bottom: 18px;
+  padding: 15px 17px;
+  border: 1px solid rgba(251,103,48,.24);
   border-radius: 16px;
-  background: rgba(251, 103, 48, 0.1);
-  color: var(--orange-deep, #fb6730);
+  background: rgba(251,103,48,.09);
+  color: #fb6730;
   font-weight: 800;
-  line-height: 1.5;
 }
 
 .form {
@@ -99,104 +92,107 @@
 
 .formCard {
   padding: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.74);
-  border-radius: 28px;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 20px 52px rgba(3, 54, 99, 0.12);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255,255,255,.9);
+  border-radius: 30px;
+  background: rgba(255,255,255,.95);
+  box-shadow: 0 18px 46px rgba(3,54,99,.1);
 }
 
 .sectionHeading {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
-  margin-bottom: 22px;
+  gap: 13px;
+  margin-bottom: 24px;
 }
 
 .sectionHeading > span {
   display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
   place-items: center;
-  width: 36px;
-  height: 36px;
-  flex: 0 0 36px;
   border-radius: 50%;
-  background: var(--teal, #28b9aa);
-  color: white;
+  background: var(--accent);
+  color: #fff;
   font-size: 15px;
   font-weight: 950;
 }
 
 .sectionHeading h2 {
   margin: 0;
-  color: var(--navy, #033663);
-  font-size: 23px;
-  line-height: 1.2;
+  color: var(--navy);
+  font-size: 27px;
+  line-height: 1.15;
   font-weight: 950;
 }
 
 .sectionHeading p {
   margin: 5px 0 0;
-  color: rgba(3, 54, 99, 0.62);
+  color: rgba(3,54,99,.56);
   font-size: 14px;
   line-height: 1.5;
   font-weight: 650;
 }
 
-.grid {
+.bookingLayout {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, .92fr) minmax(420px, 1.08fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.detailsColumn,
+.calendarColumn {
+  display: grid;
   gap: 18px;
 }
 
-.field {
+.field,
+.selectedDateField {
   display: flex;
-  min-width: 0;
   flex-direction: column;
   gap: 8px;
 }
 
-.field > span {
-  color: var(--navy, #033663);
-  font-size: 14px;
+.field > span,
+.selectedDateField > span {
+  color: var(--navy);
+  font-size: 13px;
   font-weight: 850;
-}
-
-.field small {
-  color: rgba(3, 54, 99, 0.58);
-  font-size: 12px;
-  line-height: 1.45;
 }
 
 .field input,
 .field select,
-.field textarea {
+.field textarea,
+.selectedDateField > div {
   width: 100%;
-  min-width: 0;
-  border: 1px solid rgba(3, 54, 99, 0.14);
+  border: 1px solid rgba(3,54,99,.14);
   border-radius: 15px;
-  background: rgba(255, 255, 255, 0.97);
-  color: var(--navy, #033663);
+  background: #fff;
+  color: var(--navy);
   font: inherit;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 650;
   outline: none;
-  box-shadow: 0 8px 22px rgba(3, 54, 99, 0.045);
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease,
-    transform 0.2s ease;
+  box-shadow: 0 7px 18px rgba(3,54,99,.04);
 }
 
 .field input,
-.field select {
+.field select,
+.selectedDateField > div {
   min-height: 52px;
   padding: 0 15px;
 }
 
+.selectedDateField > div {
+  display: flex;
+  align-items: center;
+  color: rgba(3,54,99,.72);
+}
+
 .field textarea {
-  min-height: 132px;
-  padding: 15px;
+  min-height: 120px;
+  padding: 14px;
   resize: vertical;
   line-height: 1.55;
 }
@@ -204,153 +200,346 @@
 .field input:focus,
 .field select:focus,
 .field textarea:focus {
-  border-color: var(--teal, #28b9aa);
-  box-shadow:
-    0 0 0 4px rgba(40, 185, 170, 0.13),
-    0 12px 28px rgba(3, 54, 99, 0.07);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(40,185,170,.12);
 }
 
-.field input:disabled,
-.field select:disabled {
-  cursor: not-allowed;
-  opacity: 0.58;
-  background: rgba(245, 247, 249, 0.9);
+.field small {
+  color: rgba(3,54,99,.52);
+  font-size: 12px;
 }
 
-.full {
-  grid-column: 1 / -1;
+.calendarHelp {
+  display: grid;
+  gap: 5px;
+  padding: 18px;
+  border: 1px solid rgba(40,185,170,.22);
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgba(40,185,170,.08), rgba(255,255,255,.94));
+}
+
+.calendarHelp strong {
+  color: var(--navy);
+  font-size: 14px;
+}
+
+.calendarHelp span {
+  color: rgba(3,54,99,.62);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .checkboxCard {
   display: flex;
+  gap: 11px;
   align-items: flex-start;
-  gap: 12px;
-  margin-top: 18px;
-  padding: 15px 16px;
-  border-radius: 16px;
-  background: rgba(40, 185, 170, 0.08);
-  color: var(--navy, #033663);
-  font-size: 14px;
-  line-height: 1.55;
+  padding: 14px 15px;
+  border-radius: 15px;
+  background: rgba(40,185,170,.08);
+  color: var(--navy);
+  font-size: 13px;
+  line-height: 1.5;
   font-weight: 700;
 }
 
 .checkboxCard input,
 .policyText input {
-  width: 20px;
-  height: 20px;
-  margin-top: 1px;
-  flex: 0 0 20px;
-  accent-color: var(--teal, #28b9aa);
+  width: 19px;
+  height: 19px;
+  flex: 0 0 19px;
+  accent-color: var(--accent);
+}
+
+.calendarCard {
+  padding: 20px;
+  border: 1px solid rgba(3,54,99,.1);
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(3,54,99,.07);
+}
+
+.calendarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.calendarHeader strong {
+  color: var(--navy);
+  font-size: 17px;
+  text-transform: capitalize;
+}
+
+.calendarControls {
+  display: flex;
+  gap: 8px;
+}
+
+.calendarControls button {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid rgba(3,54,99,.1);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--navy);
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.calendarControls button:hover {
+  border-color: var(--accent);
+  background: rgba(40,185,170,.08);
+}
+
+.weekdays,
+.calendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0,1fr));
+  gap: 7px;
+}
+
+.weekdays {
+  margin-bottom: 8px;
+}
+
+.weekdays span {
+  padding: 6px 0;
+  color: rgba(3,54,99,.5);
+  text-align: center;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.calendarLoading {
+  opacity: .45;
+  pointer-events: none;
+}
+
+.calendarDay {
+  aspect-ratio: 1;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: rgba(3,54,99,.035);
+  color: rgba(3,54,99,.25);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: not-allowed;
+}
+
+.outsideMonth {
+  opacity: .28;
+}
+
+.availableDay {
+  border-color: rgba(40,185,170,.38);
+  background: linear-gradient(145deg, rgba(40,185,170,.11), #fff);
+  color: var(--navy);
+  cursor: pointer;
+  box-shadow: 0 5px 14px rgba(40,185,170,.1);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.availableDay:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 9px 20px rgba(40,185,170,.16);
+}
+
+.selectedDay {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 9px 22px rgba(40,185,170,.28);
+}
+
+.calendarStatus {
+  margin: 14px 0 0;
+  color: rgba(3,54,99,.5);
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.slotGrid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0,1fr));
+  gap: 12px;
+}
+
+.slotButton,
+.slotButtonUnavailable {
+  display: grid;
+  gap: 5px;
+  min-height: 84px;
+  padding: 13px 10px;
+  border-radius: 16px;
+  font: inherit;
+  text-align: center;
+}
+
+.slotButton {
+  border: 1px solid rgba(40,185,170,.5);
+  background: linear-gradient(145deg, rgba(40,185,170,.08), #fff);
+  color: var(--navy);
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(3,54,99,.055);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.slotButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 26px rgba(40,185,170,.16);
+}
+
+.slotButtonUnavailable {
+  border: 1px solid rgba(3,54,99,.08);
+  background: rgba(3,54,99,.035);
+  color: rgba(3,54,99,.28);
+  cursor: not-allowed;
+}
+
+.slotButton strong,
+.slotButtonUnavailable strong {
+  font-size: 18px;
+}
+
+.slotButton span,
+.slotButtonUnavailable span {
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.slotButton span {
+  color: rgba(3,54,99,.55);
+}
+
+.slotButtonSelected {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.slotButtonSelected span {
+  color: rgba(255,255,255,.88);
+}
+
+.loadingSlots,
+.emptySlots {
+  padding: 24px;
+  border: 1px dashed rgba(3,54,99,.14);
+  border-radius: 16px;
+  background: rgba(3,54,99,.02);
+  color: rgba(3,54,99,.58);
+  text-align: center;
+  font-weight: 700;
+}
+
+.bufferNote {
+  margin-top: 14px;
+  padding: 13px 15px;
+  border-radius: 14px;
+  background: rgba(3,54,99,.04);
+  color: rgba(3,54,99,.62);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.full {
+  width: 100%;
 }
 
 .policyCard {
   display: grid;
-  grid-template-columns: 72px minmax(0, 1fr);
-  gap: 18px;
+  grid-template-columns: 64px minmax(0,1fr);
+  gap: 16px;
   align-items: center;
-  padding: 22px 24px;
-  border: 1px solid rgba(254, 160, 32, 0.2);
-  border-radius: 22px;
-  background:
-    linear-gradient(
-      145deg,
-      rgba(254, 160, 32, 0.12),
-      rgba(255, 255, 255, 0.9)
-    );
-  box-shadow: 0 16px 38px rgba(3, 54, 99, 0.08);
+  padding: 20px 22px;
+  border: 1px solid rgba(254,160,32,.2);
+  border-radius: 20px;
+  background: linear-gradient(145deg, rgba(254,160,32,.11), rgba(255,255,255,.92));
+  box-shadow: 0 14px 34px rgba(3,54,99,.07);
 }
 
 .policyIcon {
   display: grid;
+  width: 64px;
+  height: 64px;
   place-items: center;
-  width: 72px;
-  height: 72px;
-  border-radius: 20px;
-  background:
-    linear-gradient(
-      135deg,
-      var(--orange, #fea020),
-      var(--orange-deep, #fb6730)
-    );
-  color: white;
-  font-size: 21px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #fea020, #fb6730);
+  color: #fff;
+  font-size: 19px;
   font-weight: 950;
 }
 
 .policyText {
   display: flex;
+  gap: 11px;
   align-items: flex-start;
-  gap: 12px;
-  color: var(--navy, #033663);
-  font-size: 15px;
-  line-height: 1.55;
+  color: var(--navy);
+  font-size: 14px;
+  line-height: 1.5;
   font-weight: 750;
 }
 
 .actions {
   display: flex;
   justify-content: flex-end;
-  gap: 14px;
+  gap: 12px;
 }
 
 .primaryButton,
 .secondaryButton {
-  min-height: 54px;
-  padding: 0 26px;
-  border-radius: 16px;
+  min-height: 52px;
+  padding: 0 24px;
+  border-radius: 15px;
   font: inherit;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 900;
   cursor: pointer;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
-    opacity 0.2s ease;
 }
 
 .primaryButton {
-  min-width: 250px;
+  min-width: 240px;
   border: 0;
-  background:
-    linear-gradient(
-      135deg,
-      var(--orange, #fea020),
-      var(--orange-deep, #fb6730)
-    );
-  color: white;
-  box-shadow: 0 14px 30px rgba(251, 103, 48, 0.22);
+  background: linear-gradient(135deg, #fea020, #fb6730);
+  color: #fff;
+  box-shadow: 0 12px 28px rgba(251,103,48,.2);
 }
 
 .secondaryButton {
-  border: 1px solid rgba(3, 54, 99, 0.14);
-  background: rgba(255, 255, 255, 0.9);
-  color: var(--navy, #033663);
-}
-
-.primaryButton:hover:not(:disabled),
-.secondaryButton:hover:not(:disabled) {
-  transform: translateY(-2px);
-}
-
-.primaryButton:hover:not(:disabled) {
-  box-shadow: 0 18px 36px rgba(251, 103, 48, 0.28);
+  border: 1px solid rgba(3,54,99,.13);
+  background: rgba(255,255,255,.95);
+  color: var(--navy);
 }
 
 .primaryButton:disabled,
 .secondaryButton:disabled {
   cursor: not-allowed;
-  opacity: 0.58;
+  opacity: .5;
 }
 
-@media (max-width: 780px) {
+@media (max-width: 940px) {
+  .bookingLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .slotGrid {
+    grid-template-columns: repeat(3, minmax(0,1fr));
+  }
+}
+
+@media (max-width: 760px) {
   .page {
-    padding: 28px 16px 80px;
+    padding: 26px 14px 76px;
   }
 
   .header {
     grid-template-columns: 1fr;
-    align-items: start;
   }
 
   .passCard {
@@ -359,28 +548,13 @@
     text-align: left;
   }
 
-  .grid {
-    grid-template-columns: 1fr;
-  }
-
-  .full {
-    grid-column: auto;
-  }
-
   .formCard {
-    padding: 22px;
-    border-radius: 23px;
+    padding: 20px;
+    border-radius: 24px;
   }
 
   .policyCard {
     grid-template-columns: 1fr;
-  }
-
-  .policyIcon {
-    width: 58px;
-    height: 58px;
-    border-radius: 16px;
-    font-size: 18px;
   }
 
   .actions {
@@ -390,24 +564,29 @@
   .primaryButton,
   .secondaryButton {
     width: 100%;
-    min-width: 0;
   }
 }
 
-@media (max-width: 460px) {
-  .page {
-    padding-inline: 12px;
-  }
-
+@media (max-width: 500px) {
   .header h1 {
-    font-size: 40px;
+    font-size: 42px;
   }
 
-  .formCard {
-    padding: 18px;
+  .calendarCard {
+    padding: 14px;
   }
 
-  .sectionHeading h2 {
-    font-size: 20px;
+  .weekdays,
+  .calendarGrid {
+    gap: 4px;
+  }
+
+  .calendarDay {
+    border-radius: 9px;
+    font-size: 12px;
+  }
+
+  .slotGrid {
+    grid-template-columns: repeat(2, minmax(0,1fr));
   }
 }

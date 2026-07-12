@@ -118,13 +118,6 @@
   pointer-events: none;
 }
 
-.customer-pass-decoration--one {
-  right: -105px;
-  bottom: -125px;
-  width: 270px;
-  height: 270px;
-  background: rgba(var(--pass-accent-rgb), 0.055);
-}
 
 .customer-pass-decoration--two {
   top: 35%;
@@ -539,5 +532,395 @@
   .customer-passes-policy {
     align-items: flex-start;
     text-align: left;
+  }
+}
+/* =========================================================
+   RESPONSIEVE BEURTENKAARTEN – ALLES ZICHTBAAR HOUDEN
+   ========================================================= */
+
+.dashboard-passes-card {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: clamp(20px, 3vw, 36px);
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+.customer-passes-section {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin-top: 0;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+.customer-passes-heading {
+  width: 100%;
+  min-width: 0;
+}
+
+.customer-passes-heading > div {
+  min-width: 0;
+}
+
+.customer-passes-heading h2 {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  line-height: 1.05;
+}
+
+/*
+ * Binnen het klantendashboard standaard één kaart per rij.
+ * Zo blijven de prijs, rondjes, teksten en knop volledig zichtbaar.
+ */
+.customer-passes-grid {
+  display: grid;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 26px;
+  box-sizing: border-box;
+}
+
+.customer-pass-card {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: clamp(22px, 3.5vw, 36px);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Bovenste gedeelte met titel en prijs */
+.customer-pass-top {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 20px;
+}
+
+.customer-pass-top > div:first-child {
+  min-width: 0;
+}
+
+.customer-pass-card h3 {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: auto;
+  font-size: clamp(1.65rem, 4vw, 2.35rem);
+  line-height: 1.08;
+}
+
+.customer-pass-subtitle {
+  width: 100%;
+  max-width: 650px;
+  font-size: clamp(0.95rem, 2vw, 1.08rem);
+  line-height: 1.55;
+}
+
+.customer-pass-price {
+  position: static;
+  min-width: max-content;
+  max-width: 100%;
+  padding: 12px 18px;
+  white-space: nowrap;
+  font-size: clamp(1.2rem, 3vw, 1.75rem);
+  box-sizing: border-box;
+}
+
+/* Rondjes altijd binnen de beschikbare breedte */
+.customer-pass-stamps,
+.customer-pass-card--small .customer-pass-stamps,
+.customer-pass-card--large .customer-pass-stamps {
+  display: grid;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: clamp(8px, 1.6vw, 15px);
+  margin-top: 30px;
+  box-sizing: border-box;
+}
+
+.customer-pass-stamp {
+  width: 100%;
+  min-width: 0;
+  max-width: 84px;
+  justify-self: center;
+  aspect-ratio: 1;
+  box-sizing: border-box;
+}
+
+.customer-pass-stamp-image {
+  display: block;
+  width: 82%;
+  height: 82%;
+  max-width: 68px;
+  max-height: 68px;
+  object-fit: contain;
+}
+
+/* Voortgangsinformatie */
+.customer-pass-progress {
+  width: 100%;
+  min-width: 0;
+}
+
+.customer-pass-progress-information {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.customer-pass-progress-information span {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.customer-pass-progress-information span:last-child {
+  text-align: right;
+}
+
+.customer-pass-progress-track {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Onderkant met status en knop */
+.customer-pass-footer {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.customer-pass-status {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.customer-pass-button {
+  min-width: max-content;
+  max-width: 100%;
+  flex: 0 0 auto;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+/*
+ * Alleen op écht brede schermen twee kaarten naast elkaar.
+ * Binnen het gewone dashboard blijft het meestal één kaart per rij.
+ */
+@media (min-width: 1500px) {
+  .customer-passes-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .customer-pass-card {
+    padding: 28px;
+  }
+
+  .customer-pass-card h3 {
+    font-size: clamp(1.55rem, 2vw, 2rem);
+  }
+
+  .customer-pass-price {
+    padding: 11px 14px;
+    font-size: 1.35rem;
+  }
+}
+
+@media (max-width: 760px) {
+  .dashboard-passes-card {
+    padding: 18px;
+  }
+
+  .customer-passes-heading {
+    gap: 11px;
+  }
+
+  .customer-passes-heading h2 {
+    font-size: clamp(1.8rem, 9vw, 2.6rem);
+  }
+
+  .customer-passes-eyebrow {
+    font-size: 0.7rem;
+  }
+
+  .customer-pass-card {
+    padding: 20px;
+    border-radius: 24px;
+  }
+
+  .customer-pass-top {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .customer-pass-price {
+    justify-self: start;
+    font-size: 1.25rem;
+  }
+
+  .customer-pass-stamps,
+  .customer-pass-card--small .customer-pass-stamps,
+  .customer-pass-card--large .customer-pass-stamps {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .customer-pass-stamp {
+    max-width: 66px;
+  }
+
+  .customer-pass-progress-information {
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .customer-pass-progress-information span:last-child {
+    text-align: left;
+  }
+
+  .customer-pass-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .customer-pass-status {
+    width: 100%;
+  }
+
+  .customer-pass-button {
+    width: 100%;
+    min-width: 0;
+    white-space: normal;
+  }
+}
+
+@media (max-width: 430px) {
+  .dashboard-passes-card {
+    padding: 14px;
+  }
+
+  .customer-pass-card {
+    padding: 17px;
+    border-radius: 20px;
+  }
+
+  .customer-pass-card h3 {
+    font-size: 1.55rem;
+  }
+
+  .customer-pass-subtitle {
+    font-size: 0.9rem;
+  }
+
+  .customer-pass-stamps,
+  .customer-pass-card--small .customer-pass-stamps,
+  .customer-pass-card--large .customer-pass-stamps {
+    gap: 5px;
+  }
+
+  .customer-pass-stamp {
+    max-width: 55px;
+    font-size: 0.75rem;
+    border-width: 1.5px;
+  }
+
+  .customer-pass-stamp-image {
+    width: 86%;
+    height: 86%;
+  }
+}
+.customer-pass-card h3 {
+    line-height: 1.05;
+    max-width: 520px;
+    text-wrap: balance;
+}
+/* Titel altijd mooi op twee afzonderlijke regels */
+
+.customer-pass-title {
+  display: flex;
+  max-width: 100%;
+  flex-direction: column;
+  gap: 4px;
+  line-height: 1.05;
+}
+
+.customer-pass-title-main,
+.customer-pass-title-education {
+  display: block;
+  max-width: 100%;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
+}
+
+.customer-pass-title-education {
+  color: var(--pass-navy);
+}
+
+/* Oude decoratieve cirkels volledig verbergen */
+
+.customer-pass-decoration,
+.customer-pass-decoration--one,
+.customer-pass-decoration--two {
+  display: none !important;
+}
+
+/* Geen grote cirkel meer in de achtergrond rechtsonder */
+
+.customer-pass-card {
+  background:
+    radial-gradient(
+      circle at 70% 15%,
+      rgba(255, 255, 255, 0.95),
+      transparent 31%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(var(--pass-accent-rgb), 0.09),
+      rgba(255, 255, 255, 0.96) 47%,
+      rgba(var(--pass-accent-rgb), 0.045)
+    );
+}
+@media (min-width: 901px) {
+  .dashboard-section-card--passes
+    .customer-passes-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-section-card--passes
+    .customer-pass-card {
+    min-width: 0;
+  }
+
+  .dashboard-section-card--passes
+    .customer-pass-stamps,
+  .dashboard-section-card--passes
+    .customer-pass-card--small
+    .customer-pass-stamps,
+  .dashboard-section-card--passes
+    .customer-pass-card--large
+    .customer-pass-stamps {
+    grid-template-columns:
+      repeat(5, minmax(0, 1fr));
   }
 }

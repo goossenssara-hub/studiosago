@@ -7,47 +7,112 @@ import "@/app/styles/customer-pass-cards.css";
 export type CustomerPass = {
   id: string;
 
-  // Naam van de kaart
+  product?: string | null;
   title?: string | null;
   product_name?: string | null;
 
-  // Bijvoorbeeld: lager of secundair
   education_level?: string | null;
   level?: string | null;
 
-  // Totaal aantal beurten
   total_credits?: number | null;
   total_sessions?: number | null;
 
-  // Resterende beurten
   remaining_credits?: number | null;
   remaining_sessions?: number | null;
 
-  // Eventueel rechtstreeks opgeslagen gebruikte beurten
   used_credits?: number | null;
 
-  price?: number | null;
+  price?: number | string | null;
+  amount?: number | string | null;
+
   status?: string | null;
+  created_at?: string | null;
 };
 
 type CustomerPassCardsProps = {
   passes: CustomerPass[];
 };
 
-function getTotalCredits(pass: CustomerPass) {
-  return Number(
-    pass.total_credits ??
-      pass.total_sessions ??
-      (pass.title?.includes("5-beurtenkaart") ? 5 : 10)
+type PassLevel = "primary" | "secondary";
+
+type PassTitle = {
+  main: string;
+  education: string;
+};
+
+function normalizeText(value: unknown) {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase();
+}
+
+function getPassName(pass: CustomerPass) {
+  return (
+    pass.product ||
+    pass.title ||
+    pass.product_name ||
+    "Beurtenkaart"
   );
 }
 
-function getRemainingCredits(pass: CustomerPass, totalCredits: number) {
-  const remaining = Number(
-    pass.remaining_credits ?? pass.remaining_sessions ?? totalCredits
+function getTotalCredits(pass: CustomerPass) {
+  const savedTotal = Number(
+    pass.total_sessions ??
+      pass.total_credits
   );
 
-  return Math.max(0, Math.min(totalCredits, remaining));
+  if (
+    Number.isFinite(savedTotal) &&
+    savedTotal > 0
+  ) {
+    return savedTotal;
+  }
+
+  const passName = normalizeText(
+    getPassName(pass)
+  );
+
+  if (
+    passName.includes("5-beurten") ||
+    passName.includes("5 beurten")
+  ) {
+    return 5;
+  }
+
+  if (
+    passName.includes("6-beurten") ||
+    passName.includes("6 beurten")
+  ) {
+    return 6;
+  }
+
+  if (
+    passName.includes("10-beurten") ||
+    passName.includes("10 beurten")
+  ) {
+    return 10;
+  }
+
+  return 10;
+}
+
+function getRemainingCredits(
+  pass: CustomerPass,
+  totalCredits: number
+) {
+  const savedRemaining = Number(
+    pass.remaining_sessions ??
+      pass.remaining_credits
+  );
+
+  if (!Number.isFinite(savedRemaining)) {
+    return totalCredits;
+  }
+
+  return Math.max(
+    0,
+    Math.min(totalCredits, savedRemaining)
+  );
 }
 
 function getUsedCredits(
@@ -55,44 +120,100 @@ function getUsedCredits(
   totalCredits: number,
   remainingCredits: number
 ) {
-  if (pass.used_credits !== null && pass.used_credits !== undefined) {
-    return Math.max(0, Math.min(totalCredits, Number(pass.used_credits)));
+  const savedUsed = Number(
+    pass.used_credits
+  );
+
+  if (Number.isFinite(savedUsed)) {
+    return Math.max(
+      0,
+      Math.min(totalCredits, savedUsed)
+    );
   }
 
-  return Math.max(0, totalCredits - remainingCredits);
+  return Math.max(
+    0,
+    totalCredits - remainingCredits
+  );
 }
 
-function getLevel(pass: CustomerPass) {
-  const value = String(
-    pass.education_level ??
-      pass.level ??
-      pass.product_name ??
-      pass.title ??
-      ""
-  ).toLowerCase();
+function getLevel(
+  pass: CustomerPass
+): PassLevel {
+  const value = normalizeText(
+    [
+      pass.education_level,
+      pass.level,
+      pass.product,
+      pass.title,
+      pass.product_name,
+    ]
+      .filter(Boolean)
+      .join(" ")
+  );
 
-  if (value.includes("secundair") || value.includes("middelbaar")) {
+  if (
+    value.includes("secundair") ||
+    value.includes("middelbaar")
+  ) {
     return "secondary";
   }
 
   return "primary";
 }
 
+function parsePrice(
+  value: number | string | null | undefined
+) {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+    return null;
+  }
+
+  if (typeof value === "number") {
+    return Number.isFinite(value)
+      ? value
+      : null;
+  }
+
+  const normalized = value
+    .replace("€", "")
+    .replace(/\s/g, "")
+    .replace(",", ".");
+
+  const parsed = Number(normalized);
+
+  return Number.isFinite(parsed)
+    ? parsed
+    : null;
+}
+
 function getPassPrice(
   pass: CustomerPass,
   totalCredits: number,
-  level: "primary" | "secondary"
+  level: PassLevel
 ) {
-  if (pass.price !== null && pass.price !== undefined) {
-    return Number(pass.price);
+  const savedPrice =
+    parsePrice(pass.price) ??
+    parsePrice(pass.amount);
+
+  if (savedPrice !== null) {
+    return savedPrice;
   }
 
   if (totalCredits === 5) {
-    return level === "secondary" ? 180 : 165;
+    return level === "secondary"
+      ? 180
+      : 165;
   }
 
   if (totalCredits === 10) {
-    return level === "secondary" ? 380 : 320;
+    return level === "secondary"
+      ? 380
+      : 320;
   }
 
   return null;
@@ -101,15 +222,57 @@ function getPassPrice(
 function getPassTitle(
   pass: CustomerPass,
   totalCredits: number,
-  level: "primary" | "secondary"
-) {
-  if (pass.title) {
-    return pass.title;
+  level: PassLevel
+): PassTitle {
+  const savedTitle = String(
+    getPassName(pass)
+  ).trim();
+
+  const education =
+    level === "secondary"
+      ? "Secundair onderwijs"
+      : "Lager onderwijs";
+
+  if (
+    savedTitle &&
+    savedTitle !== "Beurtenkaart"
+  ) {
+    const cleanedMain = savedTitle
+      .replace(/lager onderwijs/gi, "")
+      .replace(/secundair onderwijs/gi, "")
+      .replace(/middelbaar onderwijs/gi, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    return {
+      main:
+        cleanedMain ||
+        `${totalCredits}-beurtenkaart`,
+      education,
+    };
   }
 
-  return `${totalCredits}-beurtenkaart ${
-    level === "secondary" ? "Secundair onderwijs" : "Lager onderwijs"
-  }`;
+  return {
+    main: `${totalCredits}-beurtenkaart`,
+    education,
+  };
+}
+
+function getSubtitle(level: PassLevel) {
+  if (level === "secondary") {
+    return "Persoonlijke begeleiding bij studeren, plannen en leren.";
+  }
+
+  return "Persoonlijke begeleiding op maat van jouw kind.";
+}
+
+function formatPrice(price: number) {
+  return new Intl.NumberFormat("nl-BE", {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(price);
 }
 
 export default function CustomerPassCards({
@@ -119,24 +282,41 @@ export default function CustomerPassCards({
     return (
       <section className="customer-passes-section">
         <div className="customer-passes-heading">
-          <span className="customer-passes-heading-icon" aria-hidden="true">
+          <span
+            className="customer-passes-heading-icon"
+            aria-hidden="true"
+          >
             🎟️
           </span>
 
           <div>
-            <p className="customer-passes-eyebrow">Begeleiding</p>
+            <p className="customer-passes-eyebrow">
+              Begeleiding
+            </p>
+
             <h2>Mijn beurtenkaarten</h2>
           </div>
         </div>
 
         <div className="customer-passes-empty">
-          <div className="customer-passes-empty-icon">🎫</div>
-          <h3>Nog geen actieve beurtenkaart</h3>
+          <div className="customer-passes-empty-icon">
+            🎫
+          </div>
+
+          <h3>
+            Nog geen actieve beurtenkaart
+          </h3>
+
           <p>
-            Zodra je een beurtenkaart aankoopt, verschijnt die hier automatisch.
+            Zodra je een beurtenkaart
+            aankoopt, verschijnt die hier
+            automatisch.
           </p>
 
-          <Link href="/webshop" className="customer-pass-shop-button">
+          <Link
+            href="/webshop"
+            className="customer-pass-shop-button"
+          >
             Bekijk de beurtenkaarten
           </Link>
         </div>
@@ -147,38 +327,72 @@ export default function CustomerPassCards({
   return (
     <section className="customer-passes-section">
       <div className="customer-passes-heading">
-        <span className="customer-passes-heading-icon" aria-hidden="true">
+        <span
+          className="customer-passes-heading-icon"
+          aria-hidden="true"
+        >
           🎟️
         </span>
 
         <div>
-          <p className="customer-passes-eyebrow">Begeleiding</p>
+          <p className="customer-passes-eyebrow">
+            Begeleiding
+          </p>
+
           <h2>Mijn beurtenkaarten</h2>
         </div>
       </div>
 
       <div className="customer-passes-grid">
         {passes.map((pass) => {
-          const totalCredits = getTotalCredits(pass);
-          const remainingCredits = getRemainingCredits(pass, totalCredits);
-          const usedCredits = getUsedCredits(
-            pass,
-            totalCredits,
-            remainingCredits
-          );
+          const totalCredits =
+            getTotalCredits(pass);
+
+          const remainingCredits =
+            getRemainingCredits(
+              pass,
+              totalCredits
+            );
+
+          const usedCredits =
+            getUsedCredits(
+              pass,
+              totalCredits,
+              remainingCredits
+            );
 
           const level = getLevel(pass);
-          const price = getPassPrice(pass, totalCredits, level);
-          const title = getPassTitle(pass, totalCredits, level);
+
+          const price = getPassPrice(
+            pass,
+            totalCredits,
+            level
+          );
+
+          const title = getPassTitle(
+            pass,
+            totalCredits,
+            level
+          );
 
           const progressPercentage =
-            totalCredits > 0 ? (usedCredits / totalCredits) * 100 : 0;
+            totalCredits > 0
+              ? (usedCredits /
+                  totalCredits) *
+                100
+              : 0;
 
-          const isFinished = remainingCredits <= 0;
+          const normalizedStatus =
+            normalizeText(pass.status);
+
+          const isFinished =
+            remainingCredits <= 0;
+
           const isInactive =
-            pass.status === "inactive" ||
-            pass.status === "expired" ||
-            pass.status === "cancelled";
+            normalizedStatus === "inactive" ||
+            normalizedStatus === "expired" ||
+            normalizedStatus === "cancelled" ||
+            normalizedStatus === "canceled";
 
           return (
             <article
@@ -191,33 +405,43 @@ export default function CustomerPassCards({
                 totalCredits <= 6
                   ? "customer-pass-card--small"
                   : "customer-pass-card--large",
-                isFinished ? "customer-pass-card--finished" : "",
-                isInactive ? "customer-pass-card--inactive" : "",
+                isFinished
+                  ? "customer-pass-card--finished"
+                  : "",
+                isInactive
+                  ? "customer-pass-card--inactive"
+                  : "",
               ]
                 .filter(Boolean)
                 .join(" ")}
             >
-              <div className="customer-pass-decoration customer-pass-decoration--one" />
-              <div className="customer-pass-decoration customer-pass-decoration--two" />
-
               <div className="customer-pass-top">
                 <div>
                   <span className="customer-pass-type">
-                    {totalCredits} beurten
+                    {totalCredits}{" "}
+                    {totalCredits === 1
+                      ? "beurt"
+                      : "beurten"}
                   </span>
 
-                  <h3>{title}</h3>
+                  <h3 className="customer-pass-title">
+                    <span className="customer-pass-title-main">
+                      {title.main}
+                    </span>
+
+                    <span className="customer-pass-title-education">
+                      {title.education}
+                    </span>
+                  </h3>
 
                   <p className="customer-pass-subtitle">
-                    {level === "secondary"
-                      ? "Persoonlijke begeleiding bij studeren, plannen en leren."
-                      : "Persoonlijke begeleiding op maat van jouw kind."}
+                    {getSubtitle(level)}
                   </p>
                 </div>
 
                 {price !== null && (
                   <div className="customer-pass-price">
-                    €{price.toLocaleString("nl-BE")}
+                    {formatPrice(price)}
                   </div>
                 )}
               </div>
@@ -226,34 +450,44 @@ export default function CustomerPassCards({
                 className="customer-pass-stamps"
                 aria-label={`${usedCredits} van de ${totalCredits} beurten gebruikt`}
               >
-                {Array.from({ length: totalCredits }).map((_, index) => {
-                  const isUsed = index < usedCredits;
+                {Array.from({
+                  length: totalCredits,
+                }).map((_, index) => {
+                  const isUsed =
+                    index < usedCredits;
+
+                  const creditNumber =
+                    index + 1;
 
                   return (
                     <div
-                      key={`${pass.id}-credit-${index}`}
+                      key={`${pass.id}-credit-${creditNumber}`}
                       className={[
                         "customer-pass-stamp",
-                        isUsed ? "customer-pass-stamp--used" : "",
+                        isUsed
+                          ? "customer-pass-stamp--used"
+                          : "",
                       ]
                         .filter(Boolean)
                         .join(" ")}
                       title={
                         isUsed
-                          ? `Beurt ${index + 1} is gebruikt of ingeboekt`
-                          : `Beurt ${index + 1} is nog beschikbaar`
+                          ? `Beurt ${creditNumber} is gebruikt of ingeboekt`
+                          : `Beurt ${creditNumber} is nog beschikbaar`
                       }
                     >
                       {isUsed ? (
                         <Image
                           src="/assets/leerling-login/student-circle.png"
-                          alt={`Stempel voor beurt ${index + 1}`}
+                          alt={`Studio SaGo-stempel voor beurt ${creditNumber}`}
                           width={74}
                           height={74}
                           className="customer-pass-stamp-image"
                         />
                       ) : (
-                        <span>{index + 1}</span>
+                        <span>
+                          {creditNumber}
+                        </span>
                       )}
                     </div>
                   );
@@ -263,19 +497,31 @@ export default function CustomerPassCards({
               <div className="customer-pass-progress">
                 <div className="customer-pass-progress-information">
                   <span>
-                    <strong>{usedCredits}</strong> van de {totalCredits} beurten
+                    <strong>
+                      {usedCredits}
+                    </strong>{" "}
+                    van de {totalCredits}{" "}
+                    {totalCredits === 1
+                      ? "beurt"
+                      : "beurten"}{" "}
                     gebruikt
                   </span>
 
                   <span>
-                    <strong>{remainingCredits}</strong>{" "}
-                    {remainingCredits === 1 ? "beurt" : "beurten"} beschikbaar
+                    <strong>
+                      {remainingCredits}
+                    </strong>{" "}
+                    {remainingCredits === 1
+                      ? "beurt"
+                      : "beurten"}{" "}
+                    beschikbaar
                   </span>
                 </div>
 
                 <div
                   className="customer-pass-progress-track"
                   role="progressbar"
+                  aria-label="Gebruikte beurten"
                   aria-valuemin={0}
                   aria-valuemax={totalCredits}
                   aria-valuenow={usedCredits}
@@ -283,7 +529,13 @@ export default function CustomerPassCards({
                   <div
                     className="customer-pass-progress-value"
                     style={{
-                      width: `${Math.min(100, progressPercentage)}%`,
+                      width: `${Math.max(
+                        0,
+                        Math.min(
+                          100,
+                          progressPercentage
+                        )
+                      )}%`,
                     }}
                   />
                 </div>
@@ -294,7 +546,8 @@ export default function CustomerPassCards({
                   <span
                     className={[
                       "customer-pass-status-dot",
-                      isFinished || isInactive
+                      isFinished ||
+                      isInactive
                         ? "customer-pass-status-dot--inactive"
                         : "",
                     ]
@@ -305,24 +558,38 @@ export default function CustomerPassCards({
                   {isInactive
                     ? "Niet actief"
                     : isFinished
-                    ? "Volledig gebruikt"
-                    : "Actieve beurtenkaart"}
+                      ? "Volledig gebruikt"
+                      : "Actieve beurtenkaart"}
                 </div>
 
-                {!isFinished && !isInactive ? (
+                {!isFinished &&
+                !isInactive ? (
                   <Link
                     href={`/afspraak-maken?passId=${encodeURIComponent(
                       pass.id
                     )}`}
                     className="customer-pass-button"
                   >
-                    <span>Afspraak plannen</span>
-                    <span aria-hidden="true">→</span>
+                    <span>
+                      Afspraak plannen
+                    </span>
+
+                    <span aria-hidden="true">
+                      →
+                    </span>
                   </Link>
                 ) : (
-                  <Link href="/webshop" className="customer-pass-button">
-                    <span>Nieuwe kaart kopen</span>
-                    <span aria-hidden="true">→</span>
+                  <Link
+                    href="/webshop"
+                    className="customer-pass-button"
+                  >
+                    <span>
+                      Nieuwe kaart kopen
+                    </span>
+
+                    <span aria-hidden="true">
+                      →
+                    </span>
                   </Link>
                 )}
               </div>
@@ -332,13 +599,20 @@ export default function CustomerPassCards({
       </div>
 
       <div className="customer-passes-policy">
-        <span className="customer-passes-policy-icon" aria-hidden="true">
+        <span
+          className="customer-passes-policy-icon"
+          aria-hidden="true"
+        >
           ↩
         </span>
 
         <p>
-          Bij een annulatie van minstens <strong>72 uur op voorhand</strong>{" "}
-          wordt de beurt automatisch teruggezet op je kaart.
+          Bij een annulatie van minstens{" "}
+          <strong>
+            72 uur op voorhand
+          </strong>{" "}
+          wordt de beurt automatisch
+          teruggezet op je kaart.
         </p>
       </div>
     </section>

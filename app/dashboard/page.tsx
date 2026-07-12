@@ -10,13 +10,39 @@ import CustomerPassCards from "@/components/dashboard/CustomerPassCards";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
+import "@/app/styles/dashboard.css";
+
 const dashboardSections = [
-  { id: "profiel", title: "Mijn profiel" },
-  { id: "afspraken", title: "Mijn afspraken" },
-  { id: "beurtenkaarten", title: "Mijn beurtenkaarten" },
-  { id: "kinderen", title: "Mijn kinderen" },
-  { id: "documenten", title: "Mijn documenten" },
-  { id: "webshop", title: "Webshop" },
+  {
+    id: "overzicht",
+    title: "Overzicht",
+    icon: "⌂",
+  },
+  {
+    id: "afspraken",
+    title: "Afspraken",
+    icon: "📅",
+  },
+  {
+    id: "beurtenkaarten",
+    title: "Beurtenkaarten",
+    icon: "🎟️",
+  },
+  {
+    id: "kinderen",
+    title: "Kinderen",
+    icon: "👧",
+  },
+  {
+    id: "documenten",
+    title: "Documenten",
+    icon: "📄",
+  },
+  {
+    id: "webshop",
+    title: "Webshop",
+    icon: "🛒",
+  },
 ];
 
 export default async function DashboardPage() {
@@ -30,46 +56,49 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const email = user.email.trim().toLowerCase();
-  const supabaseAdmin = getSupabaseAdmin();
+  const email = user.email
+    .trim()
+    .toLowerCase();
 
-  const { data: profile } = await supabaseAdmin
-    .from("customer_profiles")
-    .select("*")
-    .eq("email", email)
-    .maybeSingle();
+  const supabaseAdmin =
+    getSupabaseAdmin();
+
+  const { data: profile } =
+    await supabaseAdmin
+      .from("customer_profiles")
+      .select("*")
+      .eq("email", email)
+      .maybeSingle();
 
   if (!profile) {
     redirect("/profiel-aanvullen");
   }
 
-  const { data: students } = await supabaseAdmin
-    .from("students")
-    .select("*")
-    .eq("parent_email", email)
-    .eq("active", true)
-    .order("name", {
-      ascending: true,
-    });
+  const { data: studentsData } =
+    await supabaseAdmin
+      .from("students")
+      .select("*")
+      .eq("parent_email", email)
+      .eq("active", true)
+      .order("name", {
+        ascending: true,
+      });
 
-  /*
-   * Dit zijn de echte beurtenkaarten uit Supabase.
-   * Je hoeft dus geen tijdelijke const passes = [...] toe te voegen.
-   */
-  const { data: passesData } = await supabaseAdmin
-    .from("passes")
-    .select("*")
-    .eq("customer_email", email)
-    .eq("status", "active")
-    .order("created_at", {
-      ascending: false,
-    });
+  const { data: passesData } =
+    await supabaseAdmin
+      .from("passes")
+      .select("*")
+      .eq("customer_email", email)
+      .eq("status", "active")
+      .order("created_at", {
+        ascending: false,
+      });
 
-  /*
-   * We zetten null om naar een lege array.
-   * Daardoor kunnen we overal veilig passes.length gebruiken.
-   */
-  const passes = passesData ?? [];
+  const students =
+    studentsData ?? [];
+
+  const passes =
+    passesData ?? [];
 
   const firstName =
     profile.first_name ||
@@ -94,190 +123,339 @@ export default async function DashboardPage() {
       .join(" "),
   ].filter(Boolean);
 
+  const firstPassId =
+    passes[0]?.id;
+
+  const appointmentLink =
+    firstPassId
+      ? `/afspraak-maken?passId=${firstPassId}`
+      : "/webshop";
+
   return (
     <PageShell>
-      <main className="legal-page dashboard-page">
-        <section className="subpage-hero">
-          <p className="eyebrow">
-            Klantendashboard
-          </p>
+      <main className="customer-dashboard">
+        <section className="dashboard-welcome">
+          <div>
+            <p className="dashboard-eyebrow">
+              Klantendashboard
+            </p>
 
-          <h1>
-            Welkom bij Studio SaGo
-          </h1>
+            <h1>
+              Welkom,{" "}
+              {firstName ||
+                displayName}
+            </h1>
 
-          <p>
-            Ingelogd als:{" "}
-            <strong>{displayName}</strong>
-          </p>
+            <p>
+              Beheer hier je afspraken,
+              beurtenkaarten, kinderen en
+              documenten.
+            </p>
+          </div>
+
+          <div className="dashboard-welcome-actions">
+            <Link
+              href={appointmentLink}
+              className="dashboard-main-button"
+            >
+              <span>＋</span>
+
+              {firstPassId
+                ? "Afspraak plannen"
+                : "Beurtenkaart bekijken"}
+            </Link>
+
+            <Link
+              href="/profiel-aanvullen"
+              className="dashboard-secondary-button"
+            >
+              Profiel beheren
+            </Link>
+          </div>
         </section>
 
-        <section className="legal-hub">
-          <aside className="legal-menu">
-            <p>Dashboard</p>
+        <section className="dashboard-layout">
+          <aside className="dashboard-sidebar">
+            <div className="dashboard-sidebar-profile">
+              <div className="dashboard-avatar">
+                {firstName
+                  ? firstName
+                      .charAt(0)
+                      .toUpperCase()
+                  : "S"}
+              </div>
 
-            {dashboardSections.map((section) => (
-              <a
-                key={section.id}
-                href={`#${section.id}`}
-              >
-                {section.title}
-              </a>
-            ))}
+              <div>
+                <strong>
+                  {displayName}
+                </strong>
+
+                <span>
+                  {profile.email}
+                </span>
+              </div>
+            </div>
+
+            <nav
+              className="dashboard-navigation"
+              aria-label="Dashboardnavigatie"
+            >
+              {dashboardSections.map(
+                (section) => (
+                  <a
+                    key={section.id}
+                    href={`#${section.id}`}
+                  >
+                    <span
+                      aria-hidden="true"
+                    >
+                      {section.icon}
+                    </span>
+
+                    {section.title}
+                  </a>
+                )
+              )}
+            </nav>
+
+            <Link
+              href="/webshop"
+              className="dashboard-sidebar-shop"
+            >
+              <span>🛒</span>
+              Naar de webshop
+            </Link>
           </aside>
 
-          <div className="legal-documents">
-            <article
-              id="profiel"
-              className="legal-card"
+          <div className="dashboard-content">
+            <section
+              id="overzicht"
+              className="dashboard-summary-grid"
             >
-              <p className="legal-date">
-                Mijn gegevens
-              </p>
+              <article className="dashboard-summary-card dashboard-summary-card--profile">
+                <div className="dashboard-card-heading">
+                  <span className="dashboard-card-icon">
+                    👤
+                  </span>
 
-              <h2>
-                👤 Mijn profiel
-              </h2>
+                  <div>
+                    <p>Persoonlijke gegevens</p>
+                    <h2>Mijn profiel</h2>
+                  </div>
+                </div>
 
-              <p>
-                <strong>{displayName}</strong>
+                <div className="dashboard-profile-details">
+                  <strong>
+                    {displayName}
+                  </strong>
 
-                <br />
+                  <span>
+                    {profile.email}
+                  </span>
 
-                {profile.email}
-              </p>
+                  {addressParts.length >
+                    0 && (
+                    <span>
+                      {addressParts.join(
+                        ", "
+                      )}
+                    </span>
+                  )}
+                </div>
 
-              {addressParts.length > 0 && (
-                <p>{addressParts.join(", ")}</p>
-              )}
-
-              <Link
-                href="/profiel-aanvullen"
-                className="primary-action"
-              >
-                Profiel beheren
-              </Link>
-            </article>
-
-            <article
-              id="afspraken"
-              className="legal-card"
-            >
-              <h2>
-                📅 Mijn afspraken
-              </h2>
-
-              <CustomerAppointments />
-
-              <div className="dashboard-card-actions">
                 <Link
-                  href={
-                    passes.length > 0
-                      ? `/afspraak-maken?passId=${passes[0].id}`
-                      : "/webshop"
-                  }
-                  className="primary-action"
+                  href="/profiel-aanvullen"
+                  className="dashboard-card-link"
                 >
-                  {passes.length > 0
-                    ? "Nieuwe afspraak plannen"
-                    : "Beurtenkaart bekijken"}
+                  Profiel beheren
+                  <span>→</span>
+                </Link>
+              </article>
+
+              <article
+                id="kinderen"
+                className="dashboard-summary-card dashboard-summary-card--children"
+              >
+                <div className="dashboard-card-heading">
+                  <span className="dashboard-card-icon">
+                    👧
+                  </span>
+
+                  <div>
+                    <p>
+                      Gekoppelde leerlingen
+                    </p>
+
+                    <h2>
+                      Mijn kinderen
+                    </h2>
+                  </div>
+                </div>
+
+                {students.length > 0 ? (
+                  <div className="dashboard-children-list">
+                    {students
+                      .slice(0, 3)
+                      .map((student) => (
+                        <div
+                          key={
+                            student.id
+                          }
+                          className="dashboard-child-row"
+                        >
+                          <div className="dashboard-child-avatar">
+                            {String(
+                              student.name ||
+                                "L"
+                            )
+                              .charAt(0)
+                              .toUpperCase()}
+                          </div>
+
+                          <div>
+                            <strong>
+                              {
+                                student.name
+                              }
+                            </strong>
+
+                            <span>
+                              {[
+                                student.grade,
+                                student.school,
+                              ]
+                                .filter(
+                                  Boolean
+                                )
+                                .join(" · ")}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                ) : (
+                  <p className="dashboard-muted">
+                    Er zijn nog geen
+                    leerlingen toegevoegd.
+                  </p>
+                )}
+
+                <Link
+                  href="/profiel-aanvullen"
+                  className="dashboard-card-link"
+                >
+                  Gegevens aanpassen
+                  <span>→</span>
+                </Link>
+              </article>
+            </section>
+
+            <section
+              id="afspraken"
+              className="dashboard-section-card dashboard-section-card--wide"
+            >
+              <div className="dashboard-section-header">
+                <div className="dashboard-card-heading">
+                  <span className="dashboard-card-icon dashboard-card-icon--orange">
+                    📅
+                  </span>
+
+                  <div>
+                    <p>
+                      Planning en begeleiding
+                    </p>
+
+                    <h2>
+                      Mijn afspraken
+                    </h2>
+                  </div>
+                </div>
+
+                <Link
+                  href={appointmentLink}
+                  className="dashboard-small-button"
+                >
+                  Nieuwe afspraak
                 </Link>
               </div>
-            </article>
+
+              <CustomerAppointments />
+            </section>
 
             <section
               id="beurtenkaarten"
-              className="legal-card dashboard-passes-card"
+              className="dashboard-section-card dashboard-section-card--passes"
             >
-              <CustomerPassCards passes={passes} />
+              <CustomerPassCards
+                passes={passes}
+              />
             </section>
 
-            <article
-              id="kinderen"
-              className="legal-card"
-            >
-              <h2>
-                👧 Mijn kinderen
-              </h2>
+            <section className="dashboard-bottom-grid">
+              <article
+                id="documenten"
+                className="dashboard-summary-card dashboard-summary-card--documents"
+              >
+                <div className="dashboard-card-heading">
+                  <span className="dashboard-card-icon dashboard-card-icon--purple">
+                    📄
+                  </span>
 
-              {students?.length ? (
-                <div className="dashboard-list">
-                  {students.map((student) => (
-                    <div
-                      key={student.id}
-                      className="mini-profile-card"
-                    >
-                      <h3>{student.name}</h3>
+                  <div>
+                    <p>
+                      Facturen en bestanden
+                    </p>
 
-                      <p>
-                        {student.grade}
-
-                        {student.school
-                          ? ` · ${student.school}`
-                          : ""}
-                      </p>
-
-                      {student.education_level && (
-                        <p>
-                          Niveau:{" "}
-                          {student.education_level}
-                        </p>
-                      )}
-                    </div>
-                  ))}
+                    <h2>
+                      Mijn documenten
+                    </h2>
+                  </div>
                 </div>
-              ) : (
-                <p>
-                  Er zijn nog geen leerlingen
-                  toegevoegd.
+
+                <p className="dashboard-muted">
+                  Hier verschijnen je
+                  facturen, downloads en
+                  andere documenten.
                 </p>
-              )}
 
-              <br />
+                <span className="dashboard-coming-soon">
+                  Binnenkort beschikbaar
+                </span>
+              </article>
 
-              <Link
-                href="/profiel-aanvullen"
-                className="primary-action"
+              <article
+                id="webshop"
+                className="dashboard-summary-card dashboard-summary-card--shop"
               >
-                Gegevens aanpassen
-              </Link>
-            </article>
+                <div className="dashboard-card-heading">
+                  <span className="dashboard-card-icon dashboard-card-icon--teal">
+                    🛒
+                  </span>
 
-            <article
-              id="documenten"
-              className="legal-card"
-            >
-              <h2>
-                📄 Mijn documenten
-              </h2>
+                  <div>
+                    <p>
+                      Begeleiding en aanbod
+                    </p>
 
-              <p>
-                Hier verschijnen later facturen,
-                afspraken en downloads.
-              </p>
-            </article>
+                    <h2>Webshop</h2>
+                  </div>
+                </div>
 
-            <article
-              id="webshop"
-              className="legal-card"
-            >
-              <h2>
-                🛒 Webshop
-              </h2>
+                <p className="dashboard-muted">
+                  Bekijk beurtenkaarten,
+                  workshops en educatieve
+                  materialen.
+                </p>
 
-              <p>
-                Bekijk beurtenkaarten, workshops,
-                digitale producten en andere
-                educatieve materialen.
-              </p>
-
-              <Link
-                href="/webshop"
-                className="primary-action"
-              >
-                Naar webshop
-              </Link>
-            </article>
+                <Link
+                  href="/webshop"
+                  className="dashboard-card-link"
+                >
+                  Naar de webshop
+                  <span>→</span>
+                </Link>
+              </article>
+            </section>
           </div>
         </section>
       </main>

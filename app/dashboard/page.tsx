@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import PageShell from "@/components/PageShell";
 import CustomerAppointments from "@/components/CustomerAppointments";
+import CustomerPassCards from "@/components/dashboard/CustomerPassCards";
 
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
@@ -51,7 +52,11 @@ export default async function DashboardPage() {
       ascending: true,
     });
 
-  const { data: passes } = await supabaseAdmin
+  /*
+   * Dit zijn de echte beurtenkaarten uit Supabase.
+   * Je hoeft dus geen tijdelijke const passes = [...] toe te voegen.
+   */
+  const { data: passesData } = await supabaseAdmin
     .from("passes")
     .select("*")
     .eq("customer_email", email)
@@ -59,6 +64,12 @@ export default async function DashboardPage() {
     .order("created_at", {
       ascending: false,
     });
+
+  /*
+   * We zetten null om naar een lege array.
+   * Daardoor kunnen we overal veilig passes.length gebruiken.
+   */
+  const passes = passesData ?? [];
 
   const firstName =
     profile.first_name ||
@@ -97,9 +108,7 @@ export default async function DashboardPage() {
 
           <p>
             Ingelogd als:{" "}
-            <strong>
-              {displayName}
-            </strong>
+            <strong>{displayName}</strong>
           </p>
         </section>
 
@@ -107,16 +116,14 @@ export default async function DashboardPage() {
           <aside className="legal-menu">
             <p>Dashboard</p>
 
-            {dashboardSections.map(
-              (section) => (
-                <a
-                  key={section.id}
-                  href={`#${section.id}`}
-                >
-                  {section.title}
-                </a>
-              )
-            )}
+            {dashboardSections.map((section) => (
+              <a
+                key={section.id}
+                href={`#${section.id}`}
+              >
+                {section.title}
+              </a>
+            ))}
           </aside>
 
           <div className="legal-documents">
@@ -133,9 +140,7 @@ export default async function DashboardPage() {
               </h2>
 
               <p>
-                <strong>
-                  {displayName}
-                </strong>
+                <strong>{displayName}</strong>
 
                 <br />
 
@@ -143,9 +148,7 @@ export default async function DashboardPage() {
               </p>
 
               {addressParts.length > 0 && (
-                <p>
-                  {addressParts.join(", ")}
-                </p>
+                <p>{addressParts.join(", ")}</p>
               )}
 
               <Link
@@ -169,126 +172,25 @@ export default async function DashboardPage() {
               <div className="dashboard-card-actions">
                 <Link
                   href={
-                    passes &&
                     passes.length > 0
                       ? `/afspraak-maken?passId=${passes[0].id}`
                       : "/webshop"
                   }
                   className="primary-action"
                 >
-                  {passes &&
-                  passes.length > 0
+                  {passes.length > 0
                     ? "Nieuwe afspraak plannen"
                     : "Beurtenkaart bekijken"}
                 </Link>
               </div>
             </article>
 
-            <article
+            <section
               id="beurtenkaarten"
-              className="legal-card"
+              className="legal-card dashboard-passes-card"
             >
-              <h2>
-                🎟️ Mijn beurtenkaarten
-              </h2>
-
-              {!passes ||
-              passes.length === 0 ? (
-                <>
-                  <p>
-                    Je hebt momenteel geen
-                    actieve beurtenkaart.
-                  </p>
-
-                  <Link
-                    href="/webshop"
-                    className="primary-action"
-                  >
-                    Beurtenkaart kopen
-                  </Link>
-                </>
-              ) : (
-                <div className="dashboard-list">
-                  {passes.map((pass) => {
-                    const total =
-                      Number(
-                        pass.total_sessions ??
-                          pass.total_credits ??
-                          0
-                      );
-
-                    const remaining =
-                      Number(
-                        pass.remaining_sessions ??
-                          pass.remaining_credits ??
-                          0
-                      );
-
-                    const percentage =
-                      total > 0
-                        ? Math.max(
-                            0,
-                            Math.min(
-                              100,
-                              Math.round(
-                                (remaining /
-                                  total) *
-                                  100
-                              )
-                            )
-                          )
-                        : 0;
-
-                    return (
-                      <div
-                        key={pass.id}
-                        className="lesson-card-mini"
-                      >
-                        <h3>
-                          {pass.product ||
-                            pass.title ||
-                            "Beurtenkaart"}
-                        </h3>
-
-                        <p>
-                          Nog{" "}
-                          <strong>
-                            {remaining}
-                          </strong>{" "}
-                          van de{" "}
-                          <strong>
-                            {total}
-                          </strong>{" "}
-                          beurten beschikbaar.
-                        </p>
-
-                        <div className="lesson-progress">
-                          <span
-                            style={{
-                              width: `${percentage}%`,
-                            }}
-                          />
-                        </div>
-
-                        {remaining > 0 ? (
-                          <Link
-                            href={`/afspraak-maken?passId=${pass.id}`}
-                            className="primary-action"
-                          >
-                            Afspraak plannen
-                          </Link>
-                        ) : (
-                          <p className="pass-empty-message">
-                            Deze beurtenkaart is
-                            volledig opgebruikt.
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </article>
+              <CustomerPassCards passes={passes} />
+            </section>
 
             <article
               id="kinderen"
@@ -298,44 +200,37 @@ export default async function DashboardPage() {
                 👧 Mijn kinderen
               </h2>
 
-              {!students ||
-              students.length === 0 ? (
+              {students?.length ? (
+                <div className="dashboard-list">
+                  {students.map((student) => (
+                    <div
+                      key={student.id}
+                      className="mini-profile-card"
+                    >
+                      <h3>{student.name}</h3>
+
+                      <p>
+                        {student.grade}
+
+                        {student.school
+                          ? ` · ${student.school}`
+                          : ""}
+                      </p>
+
+                      {student.education_level && (
+                        <p>
+                          Niveau:{" "}
+                          {student.education_level}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
                 <p>
                   Er zijn nog geen leerlingen
                   toegevoegd.
                 </p>
-              ) : (
-                <div className="dashboard-list">
-                  {students.map(
-                    (student) => (
-                      <div
-                        key={student.id}
-                        className="mini-profile-card"
-                      >
-                        <h3>
-                          {student.name}
-                        </h3>
-
-                        <p>
-                          {student.grade}
-
-                          {student.school
-                            ? ` · ${student.school}`
-                            : ""}
-                        </p>
-
-                        {student.education_level && (
-                          <p>
-                            Niveau:{" "}
-                            {
-                              student.education_level
-                            }
-                          </p>
-                        )}
-                      </div>
-                    )
-                  )}
-                </div>
               )}
 
               <br />
@@ -357,9 +252,8 @@ export default async function DashboardPage() {
               </h2>
 
               <p>
-                Hier verschijnen later
-                facturen, afspraken en
-                downloads.
+                Hier verschijnen later facturen,
+                afspraken en downloads.
               </p>
             </article>
 
@@ -372,10 +266,9 @@ export default async function DashboardPage() {
               </h2>
 
               <p>
-                Bekijk beurtenkaarten,
-                workshops, digitale producten
-                en andere educatieve
-                materialen.
+                Bekijk beurtenkaarten, workshops,
+                digitale producten en andere
+                educatieve materialen.
               </p>
 
               <Link

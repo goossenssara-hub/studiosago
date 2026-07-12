@@ -1,0 +1,543 @@
+:root {
+  --pass-navy: #033663;
+  --pass-teal: #28b9aa;
+  --pass-orange: #fea020;
+  --pass-deep-orange: #fb6730;
+  --pass-purple: #9b81b8;
+  --pass-blue: #458fe3;
+  --pass-cream: #fffdf4;
+  --pass-border: #dce5ee;
+  --pass-muted: #587393;
+  --pass-white: #ffffff;
+}
+
+.customer-passes-section {
+  width: 100%;
+  margin-top: 28px;
+}
+
+.customer-passes-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.customer-passes-heading-icon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  place-items: center;
+  border-radius: 16px;
+  background: linear-gradient(
+    135deg,
+    rgba(251, 103, 48, 0.14),
+    rgba(254, 160, 32, 0.18)
+  );
+  box-shadow: inset 0 0 0 1px rgba(251, 103, 48, 0.12);
+  font-size: 23px;
+}
+
+.customer-passes-heading h2 {
+  margin: 0;
+  color: var(--pass-navy);
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+
+.customer-passes-eyebrow {
+  margin: 0 0 3px;
+  color: var(--pass-teal);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.customer-passes-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.customer-pass-card {
+  --pass-accent: var(--pass-teal);
+  --pass-accent-rgb: 40, 185, 170;
+
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  padding: 28px;
+  overflow: hidden;
+  border: 1px solid rgba(var(--pass-accent-rgb), 0.27);
+  border-radius: 30px;
+  background:
+    radial-gradient(
+      circle at 100% 100%,
+      rgba(var(--pass-accent-rgb), 0.16),
+      transparent 31%
+    ),
+    radial-gradient(
+      circle at 70% 15%,
+      rgba(255, 255, 255, 0.95),
+      transparent 31%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(var(--pass-accent-rgb), 0.09),
+      rgba(255, 255, 255, 0.96) 47%,
+      rgba(var(--pass-accent-rgb), 0.065)
+    );
+  box-shadow:
+    0 18px 42px rgba(3, 54, 99, 0.08),
+    0 4px 12px rgba(3, 54, 99, 0.04);
+}
+
+.customer-pass-card--primary {
+  --pass-accent: var(--pass-teal);
+  --pass-accent-rgb: 40, 185, 170;
+}
+
+.customer-pass-card--secondary {
+  --pass-accent: var(--pass-purple);
+  --pass-accent-rgb: 155, 129, 184;
+}
+
+.customer-pass-card--inactive {
+  filter: grayscale(0.25);
+  opacity: 0.78;
+}
+
+.customer-pass-decoration {
+  position: absolute;
+  z-index: -1;
+  border: 1px solid rgba(var(--pass-accent-rgb), 0.12);
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.customer-pass-decoration--one {
+  right: -105px;
+  bottom: -125px;
+  width: 270px;
+  height: 270px;
+  background: rgba(var(--pass-accent-rgb), 0.055);
+}
+
+.customer-pass-decoration--two {
+  top: 35%;
+  right: 9%;
+  width: 58px;
+  height: 58px;
+  border-style: dashed;
+  opacity: 0.55;
+}
+
+.customer-pass-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 22px;
+}
+
+.customer-pass-type {
+  display: inline-flex;
+  align-items: center;
+  min-height: 29px;
+  margin-bottom: 12px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  color: var(--pass-white);
+  background: var(--pass-accent);
+  box-shadow: 0 7px 18px rgba(var(--pass-accent-rgb), 0.2);
+  font-size: 0.7rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.customer-pass-card h3 {
+  max-width: 520px;
+  margin: 0;
+  color: var(--pass-navy);
+  font-size: clamp(1.45rem, 2.3vw, 2.05rem);
+  font-weight: 850;
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+}
+
+.customer-pass-subtitle {
+  max-width: 520px;
+  margin: 13px 0 0;
+  color: var(--pass-muted);
+  font-size: 0.98rem;
+  line-height: 1.55;
+}
+
+.customer-pass-price {
+  flex: 0 0 auto;
+  min-width: 91px;
+  padding: 11px 15px;
+  border-radius: 14px;
+  color: var(--pass-white);
+  background: linear-gradient(
+    135deg,
+    var(--pass-accent),
+    rgba(var(--pass-accent-rgb), 0.72)
+  );
+  box-shadow: 0 10px 22px rgba(var(--pass-accent-rgb), 0.2);
+  font-size: 1.45rem;
+  font-weight: 850;
+  line-height: 1;
+  text-align: center;
+}
+
+.customer-pass-stamps {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(48px, 1fr));
+  gap: 12px;
+  margin-top: 30px;
+}
+
+.customer-pass-card--small .customer-pass-stamps {
+  grid-template-columns: repeat(5, minmax(54px, 74px));
+}
+
+.customer-pass-stamp {
+  position: relative;
+  display: grid;
+  aspect-ratio: 1;
+  min-width: 0;
+  place-items: center;
+  overflow: hidden;
+  border: 2px dashed rgba(var(--pass-accent-rgb), 0.48);
+  border-radius: 50%;
+  color: rgba(var(--pass-accent-rgb), 0.85);
+  background: rgba(255, 255, 255, 0.64);
+  font-size: clamp(0.84rem, 1.4vw, 1.05rem);
+  font-weight: 800;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    background 180ms ease;
+}
+
+.customer-pass-stamp:not(.customer-pass-stamp--used):hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 8px 16px rgba(var(--pass-accent-rgb), 0.1);
+}
+
+.customer-pass-stamp--used {
+  border-style: solid;
+  border-color: rgba(var(--pass-accent-rgb), 0.28);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow:
+    0 7px 16px rgba(var(--pass-accent-rgb), 0.12),
+    inset 0 0 0 3px rgba(var(--pass-accent-rgb), 0.06);
+  transform: rotate(-3deg);
+}
+
+.customer-pass-stamp--used:nth-child(even) {
+  transform: rotate(3deg);
+}
+
+.customer-pass-stamp-image {
+  width: 88%;
+  height: 88%;
+  object-fit: contain;
+  filter: saturate(0.92);
+}
+
+.customer-pass-progress {
+  margin-top: 27px;
+}
+
+.customer-pass-progress-information {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 10px;
+  color: var(--pass-muted);
+  font-size: 0.86rem;
+}
+
+.customer-pass-progress-information strong {
+  color: var(--pass-navy);
+  font-weight: 850;
+}
+
+.customer-pass-progress-track {
+  width: 100%;
+  height: 9px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(var(--pass-accent-rgb), 0.15);
+}
+
+.customer-pass-progress-value {
+  height: 100%;
+  min-width: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    var(--pass-accent),
+    rgba(var(--pass-accent-rgb), 0.72)
+  );
+  box-shadow: 0 0 14px rgba(var(--pass-accent-rgb), 0.25);
+  transition: width 420ms ease;
+}
+
+.customer-pass-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(var(--pass-accent-rgb), 0.14);
+}
+
+.customer-pass-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--pass-muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.customer-pass-status-dot {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 9px;
+  border-radius: 50%;
+  background: var(--pass-teal);
+  box-shadow: 0 0 0 5px rgba(40, 185, 170, 0.12);
+}
+
+.customer-pass-status-dot--inactive {
+  background: #a9b5c1;
+  box-shadow: 0 0 0 5px rgba(169, 181, 193, 0.14);
+}
+
+.customer-pass-button,
+.customer-pass-shop-button {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  padding: 12px 20px;
+  border: 0;
+  border-radius: 16px;
+  color: var(--pass-white);
+  background: linear-gradient(
+    135deg,
+    var(--pass-deep-orange),
+    var(--pass-orange)
+  );
+  box-shadow: 0 12px 23px rgba(251, 103, 48, 0.18);
+  font-size: 0.93rem;
+  font-weight: 800;
+  line-height: 1;
+  text-decoration: none;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.customer-pass-button:hover,
+.customer-pass-shop-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 28px rgba(251, 103, 48, 0.25);
+}
+
+.customer-pass-button:focus-visible,
+.customer-pass-shop-button:focus-visible {
+  outline: 3px solid rgba(254, 160, 32, 0.32);
+  outline-offset: 3px;
+}
+
+.customer-passes-policy {
+  display: flex;
+  max-width: 880px;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 24px auto 0;
+  padding: 15px 20px;
+  border: 1px solid rgba(40, 185, 170, 0.17);
+  border-radius: 18px;
+  color: var(--pass-muted);
+  background: rgba(255, 255, 255, 0.77);
+  box-shadow: 0 9px 25px rgba(3, 54, 99, 0.045);
+  font-size: 0.89rem;
+  text-align: center;
+}
+
+.customer-passes-policy p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.customer-passes-policy strong {
+  color: var(--pass-navy);
+}
+
+.customer-passes-policy-icon {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--pass-teal);
+  background: rgba(40, 185, 170, 0.13);
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.customer-passes-empty {
+  display: grid;
+  min-height: 320px;
+  place-items: center;
+  padding: 38px 24px;
+  border: 1px dashed rgba(3, 54, 99, 0.17);
+  border-radius: 28px;
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(40, 185, 170, 0.1),
+      transparent 36%
+    ),
+    rgba(255, 255, 255, 0.72);
+  text-align: center;
+}
+
+.customer-passes-empty-icon {
+  display: grid;
+  width: 68px;
+  height: 68px;
+  place-items: center;
+  margin-bottom: 4px;
+  border-radius: 22px;
+  background: rgba(254, 160, 32, 0.14);
+  font-size: 2rem;
+}
+
+.customer-passes-empty h3 {
+  margin: 8px 0 0;
+  color: var(--pass-navy);
+  font-size: 1.35rem;
+}
+
+.customer-passes-empty p {
+  max-width: 470px;
+  margin: 4px 0 18px;
+  color: var(--pass-muted);
+  line-height: 1.55;
+}
+
+@media (max-width: 1050px) {
+  .customer-passes-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .customer-pass-card--small .customer-pass-stamps {
+    grid-template-columns: repeat(5, minmax(48px, 72px));
+  }
+}
+
+@media (max-width: 700px) {
+  .customer-passes-section {
+    margin-top: 21px;
+  }
+
+  .customer-passes-heading {
+    align-items: flex-start;
+  }
+
+  .customer-passes-heading-icon {
+    width: 43px;
+    height: 43px;
+    flex-basis: 43px;
+    border-radius: 14px;
+  }
+
+  .customer-pass-card {
+    padding: 21px;
+    border-radius: 23px;
+  }
+
+  .customer-pass-top {
+    gap: 12px;
+  }
+
+  .customer-pass-price {
+    min-width: 74px;
+    padding: 10px 11px;
+    border-radius: 12px;
+    font-size: 1.12rem;
+  }
+
+  .customer-pass-subtitle {
+    font-size: 0.9rem;
+  }
+
+  .customer-pass-stamps,
+  .customer-pass-card--small .customer-pass-stamps {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 24px;
+  }
+
+  .customer-pass-progress-information {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .customer-pass-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .customer-pass-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 430px) {
+  .customer-pass-card {
+    padding: 18px;
+  }
+
+  .customer-pass-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .customer-pass-card h3 {
+    font-size: 1.35rem;
+  }
+
+  .customer-pass-stamps,
+  .customer-pass-card--small .customer-pass-stamps {
+    gap: 6px;
+  }
+
+  .customer-pass-stamp {
+    border-width: 1.5px;
+    font-size: 0.75rem;
+  }
+
+  .customer-passes-policy {
+    align-items: flex-start;
+    text-align: left;
+  }
+}

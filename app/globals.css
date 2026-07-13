@@ -40,6 +40,11 @@
 @import "./styles/appointment-order.css";
 @import "./styles/appointment-premium-glass.css";
 @import "./styles/account-activation.css";
+@import "./styles/oefenpagina-middelbaar.css";
+@import "./styles/oefenen-middelbaar.css";
+@import "./styles/dashboard-knop.css";
+
+
 
 @font-face {
   font-family: "StudioFont";

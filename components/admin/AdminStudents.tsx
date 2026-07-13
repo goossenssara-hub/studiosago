@@ -4,8 +4,11 @@ import {
   ChangeEvent,
   FormEvent,
   useEffect,
+  useRef,
   useState,
 } from "react";
+import { usePathname } from "next/navigation";
+import { createPortal } from "react-dom";
 
 type Student = {
   id: string;
@@ -101,11 +104,17 @@ function formatDate(date: string | null) {
 }
 
 export default function AdminStudents() {
+  const pathname = usePathname();
+  const messageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedStudent, setSelectedStudent] =
     useState<Student | null>(null);
 
   const [showAddForm, setShowAddForm] = useState(false);
+  const [portalReady, setPortalReady] = useState(false);
   const [form, setForm] = useState<StudentForm>(emptyForm);
 
   const [loading, setLoading] = useState(true);
@@ -113,6 +122,23 @@ export default function AdminStudents() {
 
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+
+  function clearMessageTimer() {
+    if (messageTimerRef.current) {
+      clearTimeout(messageTimerRef.current);
+      messageTimerRef.current = null;
+    }
+  }
+
+  function showTemporaryMessage(nextMessage: string) {
+    clearMessageTimer();
+    setMessage(nextMessage);
+
+    messageTimerRef.current = setTimeout(() => {
+      setMessage("");
+      messageTimerRef.current = null;
+    }, 5 * 60 * 1000);
+  }
 
   async function loadStudents() {
     setLoading(true);
@@ -148,6 +174,43 @@ export default function AdminStudents() {
     loadStudents();
   }, []);
 
+  useEffect(() => {
+    setPortalReady(true);
+  }, []);
+
+  useEffect(() => {
+    clearMessageTimer();
+    setMessage("");
+  }, [pathname]);
+
+  useEffect(() => {
+    return () => {
+      clearMessageTimer();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!showAddForm) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape" && !saving) {
+        setShowAddForm(false);
+        setForm(emptyForm);
+        setErrorMessage("");
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [showAddForm, saving]);
+
   function updateField(
     event: ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -182,6 +245,7 @@ export default function AdminStudents() {
       parent_relation: "Vader",
     });
 
+    clearMessageTimer();
     setMessage("");
     setErrorMessage("");
     setShowAddForm(true);
@@ -221,7 +285,7 @@ export default function AdminStudents() {
 
       setShowAddForm(false);
       setForm(emptyForm);
-      setMessage(
+      showTemporaryMessage(
         `${data.student?.name || "De leerling"} werd toegevoegd.`
       );
 
@@ -245,6 +309,7 @@ export default function AdminStudents() {
     if (!confirmDelete) return;
 
     setErrorMessage("");
+    clearMessageTimer();
     setMessage("");
 
     try {
@@ -264,7 +329,7 @@ export default function AdminStudents() {
       }
 
       setSelectedStudent(null);
-      setMessage("De leerling werd verwijderd.");
+      showTemporaryMessage("De leerling werd verwijderd.");
 
       await loadStudents();
     } catch (error) {
@@ -290,7 +355,14 @@ export default function AdminStudents() {
         <button
           type="button"
           className="primary-action student-add-button"
-          onClick={openAddForm}
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            openAddForm();
+          }}
+          onPointerUp={(event) => {
+            event.stopPropagation();
+          }}
         >
           + Nieuwe leerling
         </button>
@@ -548,8 +620,9 @@ export default function AdminStudents() {
         </div>
       )}
 
-      {showAddForm && (
-        <div
+      {portalReady && showAddForm &&
+        createPortal(
+          <div
           className="student-modal-backdrop"
           role="presentation"
           onMouseDown={(event) => {
@@ -563,6 +636,7 @@ export default function AdminStudents() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="add-student-title"
+            onMouseDown={(event) => event.stopPropagation()}
           >
             <div className="student-modal-header">
               <div>
@@ -981,8 +1055,9 @@ export default function AdminStudents() {
               </div>
             </form>
           </div>
-        </div>
-      )}
+        </div>,
+          document.body
+        )}
     </div>
   );
 }

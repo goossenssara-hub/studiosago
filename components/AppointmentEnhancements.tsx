@@ -75,6 +75,10 @@ type UploadResponse = {
 type FeedbackResponse = {
   success?: boolean;
   error?: string;
+  message?: string;
+  appointmentArchived?: boolean;
+  appointmentDeleted?: boolean;
+  documentsMoved?: number;
 };
 
 function clean(
@@ -503,10 +507,7 @@ export default function AppointmentEnhancements({
   const [
     now,
     setNow,
-  ] = useState(
-    () =>
-      Date.now(),
-  );
+  ] = useState(0);
 
   const [
     uploading,
@@ -581,13 +582,21 @@ export default function AppointmentEnhancements({
     );
 
   const countdown =
-    useMemo(
-      () =>
-        getCountdown(
+    useMemo<CountdownResult>(
+      () => {
+        if (now === 0) {
+          return {
+            text: "Afspraak laden...",
+            tone: "future",
+          };
+        }
+
+        return getCountdown(
           start,
           end,
           now,
-        ),
+        );
+      },
       [
         start,
         end,
@@ -596,6 +605,7 @@ export default function AppointmentEnhancements({
     );
 
   const appointmentFinished =
+    now > 0 &&
     Boolean(
       end,
     ) &&
@@ -620,6 +630,10 @@ export default function AppointmentEnhancements({
 
   useEffect(
     () => {
+      setNow(
+        Date.now(),
+      );
+
       const timer =
         window.setInterval(
           () => {
@@ -828,11 +842,36 @@ export default function AppointmentEnhancements({
         );
       }
 
-      setMessage(
-        "Bedankt! Je feedback werd opgeslagen.",
+      const documentsMoved =
+        Math.max(
+          0,
+          result.documentsMoved ??
+            0,
+        );
+
+      const documentMessage =
+        documentsMoved > 0
+          ? `\n\n${documentsMoved} ${
+              documentsMoved === 1
+                ? "document werd"
+                : "documenten werden"
+            } bewaard bij Documenten.`
+          : "";
+
+      window.alert(
+        `Bedankt voor je feedback! ⭐\n\nJe feedback werd opgeslagen en de afspraak wordt uit je overzicht verwijderd.${documentMessage}`,
       );
 
-      await onChanged?.();
+      try {
+        await onChanged?.();
+      } catch (refreshError) {
+        console.error(
+          "APPOINTMENT REFRESH AFTER FEEDBACK ERROR:",
+          refreshError,
+        );
+      }
+
+      window.location.reload();
     } catch (
       error
     ) {

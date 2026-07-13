@@ -1,237 +1,868 @@
-
 /* =========================================================
-   Premium afspraakfuncties
+   Studio SaGo — Premium afsprakenkaart
    ========================================================= */
 
-.appointment-premium-panel {
-  display: grid;
-  gap: 14px;
-  margin-top: 16px;
+:root {
+  --sago-premium-navy: #033663;
+  --sago-premium-teal: #28b9aa;
+  --sago-premium-orange: #fea020;
+  --sago-premium-deep-orange: #fb6730;
+  --sago-premium-purple: #9b81b8;
+  --sago-premium-green: #54955c;
+  --sago-premium-muted: #66819d;
+  --sago-premium-shadow: 0 22px 60px rgba(3, 54, 99, 0.1);
 }
 
-.appointment-premium-grid {
+/* =========================================================
+   Lijst en hoofdkaart
+   ========================================================= */
+
+.customer-appointments .agenda-list {
+  gap: 24px;
+  align-items: start;
+}
+
+.customer-appointments .agenda-item {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  padding: clamp(22px, 2.3vw, 32px);
+  border: 1px solid rgba(3, 54, 99, 0.09);
+  border-radius: 30px;
+  background:
+    radial-gradient(
+      circle at 92% 5%,
+      rgba(40, 185, 170, 0.1),
+      transparent 24%
+    ),
+    radial-gradient(
+      circle at 8% 95%,
+      rgba(254, 160, 32, 0.09),
+      transparent 25%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.97),
+      rgba(255, 253, 244, 0.92)
+    );
+  box-shadow: var(--sago-premium-shadow);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  container-type: inline-size;
+}
+
+.customer-appointments .agenda-item::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 34px;
+  right: 34px;
+  height: 4px;
+  border-radius: 0 0 999px 999px;
+  background: linear-gradient(
+    90deg,
+    var(--sago-premium-teal),
+    var(--sago-premium-orange)
+  );
+}
+
+/* =========================================================
+   Kaartkop
+   ========================================================= */
+
+.customer-appointments .appointment-card-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  width: 100%;
+  padding-bottom: 22px;
+  border-bottom: 1px solid rgba(3, 54, 99, 0.09);
+}
+
+.customer-appointments .appointment-card-header > * {
+  min-width: 0;
+}
+
+.customer-appointments .appointment-title {
+  max-width: none;
+  margin: 0;
+  color: var(--sago-premium-navy);
+  font-size: clamp(1.7rem, 2.2vw, 2.35rem);
+  font-weight: 500;
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
+}
+
+.customer-appointments .appointment-type-label {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 12px;
+  padding: 9px 13px;
+  border-radius: 999px;
+  color: var(--sago-premium-muted);
+  background: rgba(3, 54, 99, 0.05);
+  font-size: 0.9rem;
+  font-weight: 750;
+  line-height: 1.35;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+/* =========================================================
+   Statusbadges
+   ========================================================= */
+
+.customer-appointments .appointment-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 9px;
+  width: 100%;
+  min-width: 0;
+}
+
+.customer-appointments .appointment-status-badge,
+.customer-appointments .google-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  max-width: 100%;
+  padding: 9px 14px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 850;
+  line-height: 1.25;
+  text-align: center;
+  white-space: normal;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+}
+
+.customer-appointments .appointment-status-badge.confirmed,
+.customer-appointments .appointment-status-badge.approved {
+  color: #087b72;
+  background: rgba(40, 185, 170, 0.13);
+}
+
+.customer-appointments .google-status-badge.linked {
+  color: #3d7848;
+  background: rgba(84, 149, 92, 0.12);
+}
+
+.customer-appointments .google-status-badge.not-linked {
+  color: #9a5c0b;
+  background: rgba(254, 160, 32, 0.14);
+}
+
+/* =========================================================
+   Datum, tijd en onderwerp
+   ========================================================= */
+
+.customer-appointments .appointment-details {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(120px, 0.8fr);
+  gap: 12px;
+  width: 100%;
+  margin-top: 20px;
+  padding: 0;
+  border: 0;
+}
+
+.customer-appointments .appointment-details p {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+  min-height: 88px;
+  margin: 0;
+  padding: 15px 16px;
+  border: 1px solid rgba(3, 54, 99, 0.08);
+  border-radius: 17px;
+  color: var(--sago-premium-navy);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 10px 24px rgba(3, 54, 99, 0.045);
+}
+
+.customer-appointments .appointment-details p:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+  min-height: 76px;
+}
+
+.customer-appointments .appointment-detail-icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  place-items: center;
+  border-radius: 13px;
+  background: rgba(40, 185, 170, 0.11);
+  font-size: 1rem;
+}
+
+.customer-appointments
+  .appointment-details
+  p:nth-child(2)
+  .appointment-detail-icon {
+  background: rgba(254, 160, 32, 0.13);
+}
+
+.customer-appointments
+  .appointment-details
+  p:nth-child(3)
+  .appointment-detail-icon {
+  background: rgba(155, 129, 184, 0.13);
+}
+
+.customer-appointments
+  .appointment-details
+  p:nth-child(4)
+  .appointment-detail-icon {
+  background: rgba(251, 103, 48, 0.1);
+}
+
+.customer-appointments .appointment-details p > span:last-child {
+  min-width: 0;
+  color: var(--sago-premium-navy);
+  font-size: clamp(0.92rem, 1.15vw, 1.08rem);
+  line-height: 1.5;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
+}
+
+/* Datum mag enkel op natuurlijke plaatsen afbreken */
+.customer-appointments .appointment-details p:first-child > span:last-child {
+  white-space: normal;
+}
+
+/* Uur blijft netjes op één regel */
+.customer-appointments .appointment-details p:nth-child(2) > span:last-child {
+  white-space: nowrap;
+}
+
+/* =========================================================
+   Extra afspraakervaring
+   ========================================================= */
+
+.customer-appointments .appointment-experience {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  margin-top: 20px;
+}
+
+.customer-appointments .appointment-countdown {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0;
+  padding: 11px 15px;
+  border: 1px solid rgba(40, 185, 170, 0.14);
+  border-radius: 999px;
+  color: #087b72;
+  background: linear-gradient(
+    135deg,
+    rgba(40, 185, 170, 0.13),
+    rgba(255, 255, 255, 0.86)
+  );
+  box-shadow: 0 10px 24px rgba(40, 185, 170, 0.08);
+  font-size: 0.84rem;
+  line-height: 1.35;
+}
+
+.customer-appointments .appointment-countdown strong {
+  font-weight: 900;
+}
+
+.customer-appointments .appointment-countdown--soon {
+  color: #9a5c0b;
+  border-color: rgba(254, 160, 32, 0.2);
+  background: linear-gradient(
+    135deg,
+    rgba(254, 160, 32, 0.15),
+    rgba(255, 255, 255, 0.9)
+  );
+}
+
+.customer-appointments .appointment-countdown--live {
+  color: #a33d24;
+  border-color: rgba(251, 103, 48, 0.18);
+  background: linear-gradient(
+    135deg,
+    rgba(251, 103, 48, 0.14),
+    rgba(255, 255, 255, 0.9)
+  );
+}
+
+.customer-appointments .appointment-countdown--past {
+  color: #087b72;
+}
+
+/* =========================================================
+   Begeleider en duur
+   ========================================================= */
+
+.customer-appointments .appointment-extra-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 
-.appointment-premium-card {
-  padding: 16px;
-  border: 1px solid rgba(3, 54, 99, 0.09);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.78);
-}
-
-.appointment-instructor-card {
+.customer-appointments .appointment-extra-card {
   display: flex;
   align-items: center;
   gap: 13px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid rgba(3, 54, 99, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 12px 28px rgba(3, 54, 99, 0.045);
 }
 
-.appointment-instructor-avatar {
+.customer-appointments .appointment-extra-card > span {
   display: grid;
-  width: 52px;
-  height: 52px;
-  flex: 0 0 52px;
-  overflow: hidden;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
   place-items: center;
-  border-radius: 17px;
-  background: rgba(40, 185, 170, 0.12);
-  font-size: 1.4rem;
+  border-radius: 14px;
+  background: rgba(155, 129, 184, 0.13);
+  font-size: 1.15rem;
 }
 
-.appointment-instructor-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.customer-appointments .appointment-extra-card:nth-child(2) > span {
+  background: rgba(254, 160, 32, 0.14);
 }
 
-.appointment-instructor-card small,
-.appointment-premium-heading small {
+.customer-appointments .appointment-extra-card > div {
+  min-width: 0;
+}
+
+.customer-appointments .appointment-extra-card small {
   display: block;
-  margin-bottom: 3px;
-  color: var(--dashboard-muted);
+  margin-bottom: 4px;
+  color: var(--sago-premium-muted);
   font-size: 0.68rem;
   font-weight: 850;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
-.appointment-instructor-card strong,
-.appointment-instructor-card span {
+.customer-appointments .appointment-extra-card strong {
   display: block;
+  color: var(--sago-premium-navy);
+  font-size: 0.94rem;
+  line-height: 1.35;
+  overflow-wrap: break-word;
 }
 
-.appointment-instructor-card strong,
-.appointment-premium-heading strong {
-  color: var(--dashboard-navy);
-  font-size: 0.9rem;
+.customer-appointments .appointment-extra-card div > span {
+  display: block;
+  margin-top: 3px;
+  color: var(--sago-premium-muted);
+  font-size: 0.76rem;
 }
 
-.appointment-instructor-card span {
-  margin-top: 2px;
-  color: var(--dashboard-muted);
-  font-size: 0.72rem;
-}
+/* =========================================================
+   Locatie
+   ========================================================= */
 
-.appointment-premium-heading {
+.customer-appointments .appointment-location-card {
   display: flex;
   align-items: center;
-  gap: 11px;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid rgba(3, 54, 99, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
 }
 
-.appointment-premium-heading > span {
-  font-size: 1.2rem;
-}
-
-.appointment-pass-progress {
-  height: 8px;
-  margin-top: 13px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: rgba(3, 54, 99, 0.08);
-}
-
-.appointment-pass-progress span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(
-    90deg,
-    var(--dashboard-teal),
-    var(--dashboard-orange)
-  );
-}
-
-.appointment-premium-card > p {
-  margin: 9px 0 0;
-  color: var(--dashboard-muted);
-  font-size: 0.75rem;
-}
-
-.appointment-homework-card ul {
-  display: grid;
-  gap: 6px;
-  margin: 13px 0 0;
-  padding: 0;
-  list-style: none;
-  color: var(--dashboard-muted);
-  font-size: 0.8rem;
-}
-
-.appointment-payment-actions,
-.appointment-calendar-actions {
+.customer-appointments .appointment-location-card > div {
   display: flex;
-  flex-wrap: wrap;
-  gap: 9px;
-  margin-top: 13px;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
 }
 
-.appointment-payment-actions a,
-.appointment-calendar-actions a {
+.customer-appointments .appointment-location-card > div > span {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  place-items: center;
+  border-radius: 14px;
+  background: rgba(251, 103, 48, 0.1);
+}
+
+.customer-appointments .appointment-location-card small {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--sago-premium-muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.customer-appointments .appointment-location-card strong {
+  display: block;
+  color: var(--sago-premium-navy);
+  font-size: 0.9rem;
+  line-height: 1.4;
+  overflow-wrap: break-word;
+}
+
+.customer-appointments .appointment-location-card a {
   display: inline-flex;
-  min-height: 40px;
   align-items: center;
   justify-content: center;
-  padding: 9px 13px;
-  border-radius: 12px;
-  color: white;
-  background: var(--dashboard-navy);
-  font-size: 0.75rem;
-  font-weight: 800;
+  min-height: 42px;
+  flex: 0 0 auto;
+  padding: 10px 14px;
+  border-radius: 13px;
+  color: #fff;
+  background: var(--sago-premium-navy);
+  font-size: 0.76rem;
+  font-weight: 850;
+  text-align: center;
   text-decoration: none;
 }
 
-.appointment-payment-actions span {
-  align-self: center;
-  color: var(--dashboard-muted);
-  font-size: 0.72rem;
+/* =========================================================
+   Bestanden, lesverslag en feedback
+   ========================================================= */
+
+.customer-appointments .appointment-files,
+.customer-appointments .appointment-report,
+.customer-appointments .appointment-feedback {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid rgba(3, 54, 99, 0.08);
+  border-radius: 20px;
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.82),
+    rgba(255, 253, 244, 0.72)
+  );
+  box-shadow: 0 12px 30px rgba(3, 54, 99, 0.045);
 }
 
-.appointment-message-list {
+.customer-appointments .appointment-subheading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-width: 0;
+}
+
+.customer-appointments .appointment-subheading > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.customer-appointments .appointment-subheading > div > span {
   display: grid;
-  gap: 9px;
-  max-height: 260px;
-  margin-top: 14px;
-  overflow-y: auto;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  place-items: center;
+  border-radius: 14px;
+  background: rgba(40, 185, 170, 0.12);
+  font-size: 1.1rem;
 }
 
-.appointment-message {
-  width: min(88%, 430px);
-  padding: 11px 13px;
-  border-radius: 15px;
+.customer-appointments .appointment-subheading strong {
+  display: block;
+  color: var(--sago-premium-navy);
+  font-size: 0.95rem;
 }
 
-.appointment-message--admin {
-  justify-self: start;
-  background: rgba(40, 185, 170, 0.11);
-}
-
-.appointment-message--customer {
-  justify-self: end;
-  background: rgba(3, 54, 99, 0.07);
-}
-
-.appointment-message strong {
-  color: var(--dashboard-navy);
-  font-size: 0.72rem;
-}
-
-.appointment-message p {
-  margin: 4px 0 0;
-  color: var(--dashboard-muted);
-  font-size: 0.78rem;
+.customer-appointments .appointment-subheading p {
+  margin: 3px 0 0;
+  color: var(--sago-premium-muted);
+  font-size: 0.76rem;
   line-height: 1.45;
 }
 
-.appointment-message time {
-  display: block;
-  margin-top: 5px;
-  color: rgba(91, 117, 144, 0.75);
-  font-size: 0.64rem;
+.customer-appointments .appointment-upload-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  flex: 0 0 auto;
+  padding: 10px 14px;
+  border-radius: 13px;
+  color: #fff;
+  background: linear-gradient(
+    135deg,
+    var(--sago-premium-teal),
+    #1f9f94
+  );
+  box-shadow: 0 10px 22px rgba(40, 185, 170, 0.18);
+  font-size: 0.76rem;
+  font-weight: 850;
+  text-align: center;
+  cursor: pointer;
 }
 
-.appointment-message-form {
+.customer-appointments .appointment-upload-button input {
+  display: none;
+}
+
+.customer-appointments .appointment-empty-inline {
+  margin: 14px 0 0;
+  padding: 13px 14px;
+  border-radius: 14px;
+  color: var(--sago-premium-muted);
+  background: rgba(3, 54, 99, 0.04);
+  font-size: 0.78rem;
+}
+
+.customer-appointments .appointment-file-list {
   display: grid;
   gap: 9px;
-  margin-top: 13px;
+  margin-top: 14px;
 }
 
-.appointment-message-form textarea {
-  width: 100%;
-  min-height: 84px;
-  resize: vertical;
-  padding: 12px;
-  border: 1px solid rgba(3, 54, 99, 0.12);
-  border-radius: 13px;
-  color: var(--dashboard-navy);
-  background: #fff;
-  font: inherit;
+.customer-appointments .appointment-file {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+  padding: 12px 13px;
+  border: 1px solid rgba(3, 54, 99, 0.07);
+  border-radius: 14px;
+  color: var(--sago-premium-navy);
+  background: rgba(255, 255, 255, 0.72);
+  text-decoration: none;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.customer-appointments .appointment-file:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(3, 54, 99, 0.08);
+}
+
+.customer-appointments .appointment-file > span:nth-child(2) {
+  min-width: 0;
+}
+
+.customer-appointments .appointment-file strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.customer-appointments .appointment-file small {
+  display: block;
+  margin-top: 3px;
+  color: var(--sago-premium-muted);
+}
+
+/* =========================================================
+   Lesverslag
+   ========================================================= */
+
+.customer-appointments .appointment-report-block {
+  margin-top: 16px;
+  padding: 15px;
+  border-radius: 15px;
+  background: rgba(3, 54, 99, 0.035);
+}
+
+.customer-appointments .appointment-report-block > strong {
+  color: var(--sago-premium-navy);
+  font-size: 0.83rem;
+}
+
+.customer-appointments .appointment-report-block ul {
+  display: grid;
+  gap: 7px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.customer-appointments .appointment-report-block li {
+  color: var(--sago-premium-muted);
   font-size: 0.8rem;
+  line-height: 1.45;
 }
 
-.appointment-message-form button {
-  width: fit-content;
-  min-height: 42px;
-  padding: 9px 15px;
+.customer-appointments .appointment-report-note {
+  margin: 14px 0 0;
+  padding: 14px;
+  border-radius: 15px;
+  color: var(--sago-premium-navy);
+  background: rgba(40, 185, 170, 0.07);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+/* =========================================================
+   Feedback
+   ========================================================= */
+
+.customer-appointments .appointment-stars {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 16px;
+}
+
+.customer-appointments .appointment-stars button {
+  width: 42px;
+  height: 42px;
+  padding: 0;
   border: 0;
-  border-radius: 13px;
-  color: white;
-  background: var(--dashboard-teal);
+  border-radius: 12px;
+  color: rgba(3, 54, 99, 0.2);
+  background: rgba(3, 54, 99, 0.045);
+  font-size: 1.35rem;
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    color 0.18s ease,
+    background 0.18s ease;
+}
+
+.customer-appointments .appointment-stars button:hover {
+  transform: translateY(-2px);
+}
+
+.customer-appointments .appointment-stars button.is-selected {
+  color: var(--sago-premium-orange);
+  background: rgba(254, 160, 32, 0.12);
+}
+
+.customer-appointments .appointment-feedback textarea {
+  width: 100%;
+  min-height: 110px;
+  margin-top: 14px;
+  padding: 14px;
+  resize: vertical;
+  border: 1px solid rgba(3, 54, 99, 0.1);
+  border-radius: 15px;
+  outline: none;
+  color: var(--sago-premium-navy);
+  background: rgba(255, 255, 255, 0.8);
   font: inherit;
-  font-size: 0.76rem;
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.customer-appointments .appointment-feedback textarea:focus {
+  border-color: rgba(40, 185, 170, 0.55);
+  box-shadow: 0 0 0 4px rgba(40, 185, 170, 0.09);
+}
+
+.customer-appointments .appointment-feedback-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  margin-top: 12px;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 14px;
+  color: #fff;
+  background: var(--sago-premium-navy);
+  font-size: 0.78rem;
   font-weight: 850;
   cursor: pointer;
 }
 
-@media (max-width: 700px) {
-  .appointment-premium-grid {
+.customer-appointments .appointment-feedback-submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.customer-appointments .appointment-experience-message {
+  margin: 0;
+  padding: 13px 14px;
+  border-radius: 14px;
+  color: var(--sago-premium-navy);
+  background: rgba(40, 185, 170, 0.09);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+/* =========================================================
+   Actieknoppen
+   ========================================================= */
+
+.customer-appointments .appointment-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(3, 54, 99, 0.08);
+}
+
+.customer-appointments .appointment-action {
+  width: 100%;
+  min-height: 52px;
+  justify-content: center;
+  border-radius: 16px;
+  font-size: 0.86rem;
+  font-weight: 850;
+}
+
+.customer-appointments .appointment-action.cancel {
+  grid-column: 1 / -1;
+  width: min(100%, 440px);
+}
+
+.customer-appointments .google-sync-card {
+  border: 1px solid rgba(254, 160, 32, 0.18);
+  border-radius: 24px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 253, 244, 0.94),
+    rgba(254, 160, 32, 0.08)
+  );
+  box-shadow: 0 18px 42px rgba(254, 160, 32, 0.08);
+}
+
+/* =========================================================
+   Responsief op basis van de kaartbreedte
+   Dit werkt ook wanneer twee kaarten naast elkaar staan.
+   ========================================================= */
+
+@container (max-width: 540px) {
+  .customer-appointments .appointment-title {
+    font-size: 1.65rem;
+  }
+
+  .customer-appointments .appointment-details {
     grid-template-columns: 1fr;
   }
 
-  .appointment-message-form button,
-  .appointment-payment-actions a,
-  .appointment-calendar-actions a {
+  .customer-appointments .appointment-details p {
+    min-height: 0;
+  }
+
+  .customer-appointments .appointment-details p:last-child:nth-child(odd) {
+    grid-column: auto;
+  }
+
+  .customer-appointments .appointment-extra-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .customer-appointments .appointment-subheading,
+  .customer-appointments .appointment-location-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .customer-appointments .appointment-upload-button,
+  .customer-appointments .appointment-location-card a {
+    width: 100%;
+  }
+
+  .customer-appointments .appointment-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .customer-appointments .appointment-action.cancel {
+    grid-column: auto;
+    width: 100%;
+  }
+}
+
+/* =========================================================
+   Tablet
+   ========================================================= */
+
+@media (max-width: 900px) {
+  .customer-appointments .appointment-badges {
+    justify-content: flex-start;
+  }
+}
+
+/* =========================================================
+   Mobiel
+   ========================================================= */
+
+@media (max-width: 700px) {
+  .customer-appointments .agenda-item {
+    padding: 20px;
+    border-radius: 24px;
+  }
+
+  .customer-appointments .agenda-item::before {
+    left: 22px;
+    right: 22px;
+  }
+
+  .customer-appointments .appointment-card-header {
+    gap: 14px;
+    padding-bottom: 18px;
+  }
+
+  .customer-appointments .appointment-title {
+    font-size: 1.55rem;
+  }
+
+  .customer-appointments .appointment-status-badge,
+  .customer-appointments .google-status-badge {
+    min-height: 38px;
+    padding: 9px 12px;
+    font-size: 0.72rem;
+  }
+
+  .customer-appointments .appointment-details {
+    grid-template-columns: 1fr;
+  }
+
+  .customer-appointments .appointment-details p {
+    min-height: 0;
+  }
+
+  .customer-appointments .appointment-details p:last-child:nth-child(odd) {
+    grid-column: auto;
+  }
+
+  .customer-appointments .appointment-extra-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .customer-appointments .appointment-subheading,
+  .customer-appointments .appointment-location-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .customer-appointments .appointment-upload-button,
+  .customer-appointments .appointment-location-card a {
+    width: 100%;
+  }
+
+  .customer-appointments .appointment-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .customer-appointments .appointment-action.cancel {
+    grid-column: auto;
     width: 100%;
   }
 }

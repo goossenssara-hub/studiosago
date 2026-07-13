@@ -1,0 +1,47 @@
+.dashboard-oefen-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 18px;
+  align-items: center;
+  padding: 24px;
+  border-radius: 28px;
+  text-decoration: none;
+  background:
+    radial-gradient(circle at top right, rgba(254, 160, 32, 0.2), transparent 35%),
+    linear-gradient(135deg, rgba(40, 185, 170, 0.13), rgba(155, 129, 184, 0.12)),
+    #fff;
+  color: #033663;
+  box-shadow: 0 18px 46px rgba(3, 54, 99, 0.1);
+  transition: 0.22s ease;
+}
+
+.dashboard-oefen-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 28px 58px rgba(3, 54, 99, 0.16);
+}
+
+.dashboard-oefen-icon {
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #28b9aa, #033663);
+  font-size: 1.8rem;
+}
+
+.dashboard-oefen-card h3 {
+  margin: 2px 0 7px;
+  font-size: 1.35rem;
+}
+
+.dashboard-oefen-card p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.dashboard-oefen-arrow {
+  font-size: 1.7rem;
+  font-weight: 900;
+  color: #fb6730;
+}

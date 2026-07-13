@@ -33,11 +33,11 @@ export default function EersteMiddelbaarOverzichtClient() {
           </p>
         </div>
         <div className="focus-steps">
-          <span>1. Lees</span>
-          <span>2. Markeer</span>
-          <span>3. Vertel</span>
-          <span>4. Los op</span>
-          <span>5. Controleer</span>
+          <span>Lees</span>
+          <span>Markeer</span>
+          <span>Vertel</span>
+          <span>Los op</span>
+          <span>Controleer</span>
         </div>
       </section>
 

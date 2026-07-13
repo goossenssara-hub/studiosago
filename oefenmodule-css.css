@@ -70,7 +70,7 @@
   height: 470px;
   border-radius: 34px;
   overflow: hidden;
-  background-image: url("/assets/oefenreis-berg-zonder-tekst.png");
+  background-image: url("/assets/oefenreis-berg.png");
   background-size: cover;
   background-position: center;
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.72);
@@ -93,7 +93,7 @@
   opacity: 0.75;
 }
 
-.journey-flag:hover:not(:disabled) {
+.journey-flag:hover {
   transform: translateY(-6px) scale(1.06);
   opacity: 1;
 }
@@ -110,22 +110,55 @@
   opacity: 1;
 }
 
-.journey-flag:disabled {
-  cursor: not-allowed;
-  opacity: 0.35;
-  filter: grayscale(1);
+.journey-flag:nth-child(1) {
+  left: 13%;
+  bottom: 15%;
 }
 
-.journey-flag:nth-child(1) { left: 13%; bottom: 15%; }
-.journey-flag:nth-child(2) { left: 22%; bottom: 21%; }
-.journey-flag:nth-child(3) { left: 31%; bottom: 27%; }
-.journey-flag:nth-child(4) { left: 40%; bottom: 34%; }
-.journey-flag:nth-child(5) { left: 49%; bottom: 42%; }
-.journey-flag:nth-child(6) { left: 56%; bottom: 51%; }
-.journey-flag:nth-child(7) { left: 63%; bottom: 60%; }
-.journey-flag:nth-child(8) { left: 70%; bottom: 68%; }
-.journey-flag:nth-child(9) { left: 77%; bottom: 76%; }
-.journey-flag:nth-child(10) { left: 84%; bottom: 84%; }
+.journey-flag:nth-child(2) {
+  left: 22%;
+  bottom: 21%;
+}
+
+.journey-flag:nth-child(3) {
+  left: 31%;
+  bottom: 27%;
+}
+
+.journey-flag:nth-child(4) {
+  left: 40%;
+  bottom: 34%;
+}
+
+.journey-flag:nth-child(5) {
+  left: 49%;
+  bottom: 42%;
+}
+
+.journey-flag:nth-child(6) {
+  left: 56%;
+  bottom: 51%;
+}
+
+.journey-flag:nth-child(7) {
+  left: 63%;
+  bottom: 60%;
+}
+
+.journey-flag:nth-child(8) {
+  left: 70%;
+  bottom: 68%;
+}
+
+.journey-flag:nth-child(9) {
+  left: 77%;
+  bottom: 76%;
+}
+
+.journey-flag:nth-child(10) {
+  left: 84%;
+  bottom: 84%;
+}
 
 .journey-bottom {
   display: grid;
@@ -178,12 +211,11 @@
 
 .journey-actions {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 14px;
 }
 
-.journey-actions button,
-.bottom-journey-actions button {
+.journey-actions button {
   border: none;
   border-radius: 22px;
   padding: 18px 14px;
@@ -194,38 +226,23 @@
   transition: 0.2s ease;
 }
 
-.journey-actions button:hover:not(:disabled),
-.bottom-journey-actions button:hover:not(:disabled) {
+.journey-actions button:hover:not(:disabled) {
   transform: translateY(-3px);
 }
 
-.journey-actions button.primary,
-.bottom-journey-actions button.primary {
+.journey-actions button.primary {
   background: linear-gradient(135deg, #fea020, #fb6730);
   color: white;
 }
 
-.journey-actions button:nth-child(3),
-.bottom-journey-actions button:nth-child(3) {
-  background: linear-gradient(135deg, #28b9aa, #54955c);
+.journey-actions button:last-child {
+  background: #28b9aa;
   color: white;
 }
 
-.journey-actions button:disabled,
-.bottom-journey-actions button:disabled {
+.journey-actions button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
-}
-
-.level-warning {
-  grid-column: 1 / -1;
-  margin: 4px 0 0;
-  padding: 12px 16px;
-  border-radius: 18px;
-  background: rgba(254, 160, 32, 0.14);
-  color: #fb6730;
-  font-weight: 900;
-  text-align: center;
 }
 
 .exercise-section {
@@ -298,6 +315,38 @@
   color: #033663;
 }
 
+@media (max-width: 1000px) {
+  .oefenpagina {
+    padding: 30px 22px 70px;
+  }
+
+  .journey-header {
+    flex-direction: column;
+  }
+
+  .journey-mountain {
+    height: 330px;
+  }
+
+  .journey-flag {
+    width: 46px;
+    height: 46px;
+    font-size: 0.85rem;
+    border-width: 3px;
+  }
+
+  .journey-bottom {
+    grid-template-columns: 1fr;
+  }
+
+  .journey-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .exercise-grid {
+    grid-template-columns: 1fr;
+  }
+}
 .bottom-journey-actions {
   position: sticky;
   bottom: 18px;
@@ -315,10 +364,31 @@
 }
 
 .bottom-journey-actions button {
+  border: none;
   min-height: 66px;
+  border-radius: 24px;
+  padding: 16px 18px;
+  color: #033663;
   font-size: clamp(0.95rem, 1.4vw, 1.15rem);
+  font-weight: 900;
   line-height: 1.2;
+  cursor: pointer;
+  transition: 0.22s ease;
   box-shadow: 0 12px 28px rgba(3, 54, 99, 0.1);
+}
+
+.bottom-journey-actions button:first-child {
+  background: #f4ecfb;
+}
+
+.bottom-journey-actions button.primary {
+  background: linear-gradient(135deg, #fea020, #fb6730);
+  color: white;
+}
+
+.bottom-journey-actions button:nth-child(3) {
+  background: linear-gradient(135deg, #28b9aa, #54955c);
+  color: white;
 }
 
 .bottom-journey-actions button.refresh {
@@ -326,22 +396,256 @@
   color: white;
 }
 
-@media (max-width: 1000px) {
-  .oefenpagina { padding: 30px 22px 70px; }
-  .journey-header { flex-direction: column; }
-  .journey-mountain { height: 330px; }
-  .journey-flag {
-    width: 46px;
-    height: 46px;
-    font-size: 0.85rem;
-    border-width: 3px;
-  }
-  .journey-bottom,
-  .exercise-grid,
+.bottom-journey-actions button:hover:not(:disabled) {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 38px rgba(3, 54, 99, 0.16);
+}
+
+.bottom-journey-actions button:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  box-shadow: none;
+  filter: grayscale(0.4);
+}
+
+.bottom-journey-actions .level-warning {
+  grid-column: 1 / -1;
+  margin: 4px 0 0;
+  padding: 12px 16px;
+  border-radius: 18px;
+  background: rgba(254, 160, 32, 0.14);
+  color: #fb6730;
+  font-weight: 900;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
   .bottom-journey-actions {
     grid-template-columns: 1fr;
+    bottom: 10px;
+    padding: 14px;
   }
-  .journey-actions { grid-template-columns: 1fr; }
-  .bottom-journey-actions { bottom: 10px; padding: 14px; }
-  .bottom-journey-actions button { min-height: 56px; }
+
+  .bottom-journey-actions button {
+    min-height: 56px;
+  }
+}
+
+.mountain-header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:25px;
+gap:20px;
+flex-wrap:wrap;
+}
+
+.level-selector-button{
+background:#033663;
+color:white;
+border:none;
+padding:12px 22px;
+border-radius:14px;
+font-weight:700;
+cursor:pointer;
+transition:.2s;
+}
+
+.level-selector-button:hover{
+transform:translateY(-2px);
+background:#0b4b84;
+}
+
+.level-grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+gap:16px;
+margin-bottom:35px;
+}
+
+.level-card{
+padding:16px;
+border-radius:18px;
+border:none;
+cursor:pointer;
+background:white;
+box-shadow:0 8px 24px rgba(0,0,0,.08);
+font-weight:700;
+transition:.2s;
+}
+
+.level-card:hover{
+transform:translateY(-3px);
+}
+
+.level-card.active{
+background:#033663;
+color:white;
+}
+
+.level-card.locked{
+opacity:.35;
+cursor:not-allowed;
+}
+.exercise-back {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto 20px;
+  padding: 0 20px;
+}
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #033663;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 10px 30px rgba(3, 54, 99, 0.08);
+  transition: 0.2s;
+}
+
+.back-button:hover {
+  transform: translateX(-3px);
+  background: #033663;
+  color: #fff;
+}
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 16px;
+  border: none;
+  background: #ffffff;
+  color: #033663;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 10px 30px rgba(3, 54, 99, 0.08);
+  transition: 0.2s;
+  cursor: pointer;
+}
+
+.back-button:hover {
+  transform: translateX(-3px);
+  background: #033663;
+  color: #fff;
+}
+.oefenen-overzicht-page {
+  width: 100%;
+}
+
+.leerjaar-section {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto 80px;
+  padding: 0 48px;
+}
+
+.leerjaar-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 32px;
+}
+
+.leerjaar-card,
+.secundair-card {
+  min-height: 210px;
+  padding: 48px 32px;
+  border-radius: 36px;
+  text-decoration: none;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 26px;
+  box-shadow: 0 18px 45px rgba(3, 54, 99, 0.08);
+}
+
+.leerjaar-card.active {
+  background: linear-gradient(135deg, #28b9aa, #033663);
+  color: white;
+}
+
+.leerjaar-card.disabled,
+.secundair-card.disabled {
+  background: rgba(255, 255, 255, 0.72);
+  color: rgba(3, 54, 99, 0.45);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.leerjaar-card h2,
+.secundair-card h2 {
+  margin: 0;
+  font-size: clamp(2rem, 3vw, 3rem);
+}
+
+.leerjaar-card p,
+.secundair-card p {
+  margin: 0;
+  font-size: clamp(1.1rem, 1.7vw, 1.5rem);
+}
+
+.secundair-card {
+  margin-top: 32px;
+}
+
+@media (max-width: 1000px) {
+  .leerjaar-section {
+    padding: 0 28px;
+  }
+
+  .leerjaar-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .leerjaar-section {
+    padding: 0 18px;
+  }
+
+  .leerjaar-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .leerjaar-card,
+  .secundair-card {
+    min-height: 170px;
+    padding: 36px 24px;
+    border-radius: 28px;
+  }
+}
+
+.secundair-card.active-secondary {
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(254, 160, 32, 0.32),
+      transparent 38%
+    ),
+    linear-gradient(135deg, #033663, #9b81b8);
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 18px 42px rgba(3, 54, 99, 0.2);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.secundair-card.active-secondary h2,
+.secundair-card.active-secondary p,
+.secundair-card.active-secondary span,
+.secundair-card.active-secondary small {
+  color: white;
+}
+
+.secundair-card.active-secondary:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 26px 56px rgba(3, 54, 99, 0.24);
 }

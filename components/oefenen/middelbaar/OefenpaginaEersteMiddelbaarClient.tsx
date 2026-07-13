@@ -19,7 +19,11 @@ type Props = {
 
 export default function OefenpaginaEersteMiddelbaarClient({ skill }: Props) {
   const config = getSkillConfig(skill);
-  const storageKey = `sago-oefenklim-eerste-middelbaar-${skill}-v1`;
+
+  // Nieuwe opslagversie: oude algemene oefeningen uit v2 worden niet
+  // opnieuw geladen. Elk onderdeel bouwt daardoor meteen de correcte
+  // oefeningen op met de huidige generator.
+  const storageKey = `sago-oefenklim-eerste-middelbaar-${skill}-v3`;
 
   const [level, setLevel] = useState(1);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -40,7 +44,7 @@ export default function OefenpaginaEersteMiddelbaarClient({ skill }: Props) {
     if (stored) {
       try {
         const data: SecondarySavedData = JSON.parse(stored);
-        const savedLevel = data.level || 1;
+        const savedLevel = Math.max(1, Math.min(10, data.level || 1));
         const savedProgress = data.progress?.[savedLevel];
 
         setLevel(savedLevel);
@@ -309,7 +313,9 @@ export default function OefenpaginaEersteMiddelbaarClient({ skill }: Props) {
       </div>
 
       <section className="oefen-hero">
-        <p className="eyebrow">{config.subject} · Eerste middelbaar</p>
+        <p className="eyebrow">
+          {config.subject} · Eerste middelbaar · Niveau {level}
+        </p>
         <h1>
           {config.icon} {config.title}
         </h1>

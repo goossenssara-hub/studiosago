@@ -5,8 +5,10 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function clean(value: unknown): string {
-  return String(value ?? "").trim();
+function normalizeEmail(value: unknown): string {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase();
 }
 
 export async function GET(): Promise<NextResponse> {
@@ -20,127 +22,114 @@ export async function GET(): Promise<NextResponse> {
 
     if (userError || !user?.email) {
       return NextResponse.json(
-        { success: false, error: "Je bent niet aangemeld." },
-        { status: 401 },
+        {
+          success: false,
+          error: "Je bent niet aangemeld.",
+        },
+        {
+          status: 401,
+        },
       );
     }
 
-    const customerEmail = clean(user.email).toLowerCase();
-    const admin = getSupabaseAdmin();
+    const email = normalizeEmail(user.email);
+    const supabaseAdmin = getSupabaseAdmin();
 
-    const { data: bookings, error: bookingError } = await admin
+    const { data, error } = await supabaseAdmin
       .from("bookings")
-      .select(`
-        id,
-        title,
-        customer_name,
-        customer_email,
-        start_time,
-        end_time,
-        appointment_date,
-        appointment_time,
-        appointment_type,
-        customer_address,
-        location,
-        notes,
-        status,
-        google_event_id,
-        google_event_url,
-        google_event_link,
-        google_meet_url,
-        instructor_name
-      `)
-      .ilike("customer_email", customerEmail)
-      .order("appointment_date", { ascending: true })
-      .order("appointment_time", { ascending: true });
+      .select(
+        `
+          id,
+          title,
+          customer_name,
+          customer_email,
+          start_time,
+          end_time,
+          appointment_date,
+          appointment_time,
+          appointment_type,
+          customer_address,
+          location,
+          notes,
+          status,
+          google_event_id,
+          google_event_url,
+          google_event_link,
+          google_meet_url,
+          customer_archived_at
+        `,
+      )
+      .ilike("customer_email", email)
 
-    if (bookingError) {
-      throw bookingError;
-    }
+      /*
+       * Belangrijk:
+       * afspraken die na feedback werden gearchiveerd,
+       * mogen niet meer in het dashboard verschijnen.
+       */
+      .is("customer_archived_at", null)
 
-    const bookingRows = bookings ?? [];
-    const bookingIds = bookingRows.map((booking) => booking.id);
-
-    if (bookingIds.length === 0) {
-      return NextResponse.json({ success: true, bookings: [] });
-    }
-
-    const [
-      { data: files, error: filesError },
-      { data: reports, error: reportsError },
-      { data: feedback, error: feedbackError },
-    ] = await Promise.all([
-      admin
-        .from("appointment_files")
-        .select("*")
-        .in("booking_id", bookingIds)
-        .order("created_at", { ascending: false }),
-      admin
-        .from("lesson_reports")
-        .select("*")
-        .in("booking_id", bookingIds)
-        .order("created_at", { ascending: false }),
-      admin
-        .from("appointment_feedback")
-        .select("*")
-        .in("booking_id", bookingIds),
-    ]);
-
-    if (filesError) throw filesError;
-    if (reportsError) throw reportsError;
-    if (feedbackError) throw feedbackError;
-
-    const filesByBooking = new Map<string, Array<Record<string, unknown>>>();
-
-    for (const file of files ?? []) {
-      const path = clean(file.storage_path);
-      const { data: signed } = await admin.storage
-        .from("appointment-files")
-        .createSignedUrl(path, 60 * 60);
-
-      const list = filesByBooking.get(file.booking_id) ?? [];
-
-      list.push({
-        ...file,
-        file_url: signed?.signedUrl ?? "",
+      .neq("status", "cancelled")
+      .not("appointment_date", "is", null)
+      .not("appointment_time", "is", null)
+      .order("appointment_date", {
+        ascending: true,
+        nullsFirst: false,
+      })
+      .order("appointment_time", {
+        ascending: true,
+        nullsFirst: false,
       });
 
-      filesByBooking.set(file.booking_id, list);
+    if (error) {
+      console.error(
+        "CUSTOMER APPOINTMENTS DATABASE ERROR:",
+        error,
+      );
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: "De afspraken konden niet geladen worden.",
+          details: error.message,
+        },
+        {
+          status: 500,
+        },
+      );
     }
 
-    const reportByBooking = new Map<string, Record<string, unknown>>();
-    for (const report of reports ?? []) {
-      if (!reportByBooking.has(report.booking_id)) {
-        reportByBooking.set(report.booking_id, report);
-      }
-    }
-
-    const feedbackByBooking = new Map<string, Record<string, unknown>>();
-    for (const item of feedback ?? []) {
-      feedbackByBooking.set(item.booking_id, item);
-    }
-
-    const enrichedBookings = bookingRows.map((booking) => ({
-      ...booking,
-      appointment_files: filesByBooking.get(booking.id) ?? [],
-      lesson_report: reportByBooking.get(booking.id) ?? null,
-      feedback: feedbackByBooking.get(booking.id) ?? null,
-    }));
-
-    return NextResponse.json({
-      success: true,
-      bookings: enrichedBookings,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        bookings: data ?? [],
+      },
+      {
+        status: 200,
+        headers: {
+          "Cache-Control":
+            "no-store, no-cache, must-revalidate, proxy-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      },
+    );
   } catch (error) {
-    console.error("CUSTOMER APPOINTMENTS GET ERROR:", error);
+    console.error(
+      "CUSTOMER APPOINTMENTS ERROR:",
+      error,
+    );
 
     return NextResponse.json(
       {
         success: false,
-        error: "De afspraken konden niet geladen worden.",
-        details: error instanceof Error ? error.message : "Onbekende fout.",
+        error:
+          error instanceof Error
+            ? error.message
+            : "De afspraken konden niet geladen worden.",
       },
-      { status: 500 },
+      {
+        status: 500,
+      },
     );
   }
 }

@@ -1,74 +1,55 @@
 import PageShell from "@/components/PageShell";
-import Link from "next/link";
+import WebshopCategories, {
+  type WebshopService,
+} from "@/components/WebshopCategories";
+import { createClient } from "@/lib/supabase/server";
 
-const products = [
-  {
-    category: "Begeleiding",
-    title: "10-beurtenkaart Lager onderwijs",
-    price: "€320",
-    href: "/webshop/10-beurtenkaart-lager",
-  },
-  {
-    category: "Begeleiding",
-    title: "10-beurtenkaart Secundair onderwijs",
-    price: "€380",
-    href: "/webshop/10-beurtenkaart-secundair",
-  },
-  {
-    category: "Klaar voor de Sprong",
-    title: "Naar het middelbaar",
-    price: "€250",
-    date: "14, 15, 16 & 17 juli",
-    href: "/webshop/klaar-voor-de-sprong-middelbaar",
-  },
-  {
-    category: "Klaar voor de Sprong",
-    title: "Naar het eerste leerjaar",
-    price: "€180",
-    date: "12, 13 & 14 augustus",
-    href: "/webshop/klaar-voor-de-sprong-eerste-leerjaar",
-  },
-  {
-    category: "Tekstcorrectie",
-    title: "Tekst of cursus laten nalezen",
-    price: "v.a. €20",
-    href: "/webshop/tekstcorrectie",
-  },
-];
+export const metadata = {
+  title: "Webshop | Studio SaGo",
+  description:
+    "Ontdek de begeleiding, overgangstrajecten en tekstdiensten van Studio SaGo.",
+};
 
-export default function WebshopPage() {
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+export default async function WebshopPage() {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("services")
+    .select(`
+      id,
+      title,
+      subtitle,
+      category,
+      description,
+      price,
+      button_text,
+      href,
+      event_dates,
+      image_url,
+      is_visible,
+      sort_order
+    `)
+    .eq("is_visible", true)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("WEBSHOP SERVICES LOAD ERROR:", error);
+  }
+
+  /*
+   * De expliciete omzetting via unknown voorkomt de TypeScript-fout
+   * GenericStringError[] wanneer Supabase de dynamische select-string
+   * niet correct kan afleiden.
+   */
+  const services = (data ?? []) as unknown as WebshopService[];
+
   return (
     <PageShell>
-      <main className="webshop-page">
-        <section className="webshop-hero">
-          <p className="eyebrow">Studio SaGo webshop</p>
-          <h1>Webshop</h1>
-          <p>
-            Koop je beurtenkaart, schrijf in voor een workshop of laat je tekst
-            nalezen.
-          </p>
-        </section>
-
-        <section className="shop-grid">
-          {products.map((product) => (
-            <article className="shop-card teal" key={product.title}>
-              <div className="shop-content">
-                <p className="shop-category">{product.category}</p>
-                <h2>{product.title}</h2>
-
-                {product.date && <p>{product.date}</p>}
-
-                <div className="shop-bottom">
-                  <strong>{product.price}</strong>
-                  <Link className="shop-button" href={product.href}>
-                    Bekijk
-                  </Link>
-                </div>
-              </div>
-            </article>
-          ))}
-        </section>
-      </main>
+      <WebshopCategories services={services} />
     </PageShell>
   );
 }

@@ -19,68 +19,44 @@ export default function SecondaryExerciseCard({
   correct,
   onChange,
 }: Props) {
+  const correctAnswer = Array.isArray(exercise.answer)
+    ? exercise.answer[0]
+    : exercise.answer;
+
   return (
     <article
-      className={[
-        "exercise-card",
-        checked ? (correct ? "correct" : "wrong") : "",
-      ]
-        .filter(Boolean)
-        .join(" ")}
+      className={`exercise-card ${
+        checked ? (correct ? "correct" : "wrong") : ""
+      }`}
     >
       <p className="exercise-number">Oefening {index + 1}</p>
 
-      {exercise.instruction && (
-        <p className="exercise-instruction">{exercise.instruction}</p>
-      )}
+      <h3 className="exercise-question">
+        {exercise.question}
+      </h3>
 
-      <h3>{exercise.prompt}</h3>
-
-      {exercise.strategy && exercise.strategy.length > 0 && (
-        <details className="strategy-box">
-          <summary>Gebruik het stappenplan</summary>
-          <ol>
-            {exercise.strategy.map((step) => (
-              <li key={step}>{step}</li>
-            ))}
-          </ol>
-        </details>
-      )}
-
-      {exercise.type === "choice" ? (
-        <div className="choice-grid">
-          {exercise.options?.map((option) => (
-            <button
-              className={value === option ? "choice-option selected" : "choice-option"}
-              key={option}
-              onClick={() => onChange(exercise.id, option)}
-              type="button"
-            >
-              {option}
-            </button>
-          ))}
-        </div>
-      ) : exercise.type === "multiline" ? (
-        <textarea
-          value={value}
-          onChange={(event) => onChange(exercise.id, event.target.value)}
-          placeholder="Schrijf hier je antwoord..."
-          rows={5}
-        />
-      ) : (
-        <input
-          inputMode={exercise.type === "number" ? "decimal" : "text"}
-          value={value}
-          onChange={(event) => onChange(exercise.id, event.target.value)}
-          placeholder="Typ je antwoord..."
-        />
-      )}
+      <input
+        aria-label={`Antwoord op oefening ${index + 1}`}
+        autoComplete="off"
+        disabled={checked}
+        onChange={(event) =>
+          onChange(exercise.id, event.target.value)
+        }
+        placeholder="Typ je antwoord..."
+        type="text"
+        value={value}
+      />
 
       {checked && (
-        <div className="feedback">
-          <strong>{correct ? "Goed gedaan!" : "Kijk nog eens naar de vraag."}</strong>
-          {exercise.explanation && <p>{exercise.explanation}</p>}
-        </div>
+        <p
+          className={`feedback ${
+            correct ? "feedback-correct" : "feedback-wrong"
+          }`}
+        >
+          {correct
+            ? "Juist! Goed gedaan."
+            : `Nog niet juist. Correct antwoord: ${correctAnswer}`}
+        </p>
       )}
     </article>
   );

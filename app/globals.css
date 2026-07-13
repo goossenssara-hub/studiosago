@@ -43,6 +43,10 @@
 @import "./styles/oefenpagina-middelbaar.css";
 @import "./styles/oefenen-middelbaar.css";
 @import "./styles/dashboard-knop.css";
+@import "./styles/feedback-popup.css";
+@import "./styles/studiosago-oefenplatform-compleet.css";
+@import "@/app/styles/middelbaar-overzicht.css";
+@import "@/app/styles/AANVULLING-oefeningen.css";
 
 
 

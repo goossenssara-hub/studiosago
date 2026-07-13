@@ -75,11 +75,13 @@ export default function OefenenPage() {
             )}
           </div>
 
-          <div className="secundair-card">
-            <h2>Secundair onderwijs</h2>
-
-            <p>Binnenkort beschikbaar</p>
-          </div>
+<Link
+  href="/oefenen/middelbaar"
+  className="secundair-card active-secondary"
+>
+  <span>Secundair onderwijs</span>
+  <small>Bekijk leerjaren, vakken en vaardigheden</small>
+</Link>
         </section>
       </main>
     </PageShell>

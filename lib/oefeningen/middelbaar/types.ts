@@ -1,19 +1,8 @@
-export type SecondaryExerciseType =
-  | "text"
-  | "number"
-  | "choice"
-  | "multiline";
-
 export type SecondaryExercise = {
   id: string;
   category: string;
-  prompt: string;
-  instruction?: string;
-  type: SecondaryExerciseType;
-  options?: string[];
+  question: string;
   answer: string | string[];
-  explanation?: string;
-  strategy?: string[];
 };
 
 export type SecondaryLevelProgress = {

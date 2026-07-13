@@ -1,0 +1,563 @@
+/* =========================================================
+   Studio SaGo — Middelbaar overzicht en vaardigheden
+   Vervang de bestaande CSS voor deze onderdelen door dit bestand.
+   ========================================================= */
+
+/* ---------- ALGEMENE PAGINA ---------- */
+
+.oefenpagina {
+  position: relative;
+  z-index: 8;
+  width: 100%;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 42px 44px 100px;
+}
+
+.oefen-hero {
+  width: min(900px, 100%);
+  margin: 0 auto 38px;
+  text-align: center;
+}
+
+.oefen-hero .eyebrow,
+.subject-heading .eyebrow {
+  margin: 0 0 8px;
+  color: #28b9aa;
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.oefen-hero h1 {
+  margin: 8px 0 14px;
+  color: #033663;
+  font-size: clamp(2.35rem, 5vw, 4.8rem);
+  line-height: 1.04;
+  letter-spacing: -0.045em;
+}
+
+.oefen-hero p {
+  max-width: 780px;
+  margin: 0 auto;
+  color: rgba(3, 54, 99, 0.72);
+  font-size: clamp(1rem, 1.5vw, 1.16rem);
+  line-height: 1.72;
+}
+
+.exercise-back {
+  width: 100%;
+  margin: 0 0 24px;
+}
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 48px;
+  padding: 12px 20px;
+  border: 1px solid rgba(3, 54, 99, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #033663;
+  font-weight: 850;
+  text-decoration: none;
+  box-shadow: 0 12px 32px rgba(3, 54, 99, 0.09);
+  backdrop-filter: blur(14px);
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.back-button:hover {
+  transform: translateX(-4px);
+  background: #033663;
+  color: white;
+  box-shadow: 0 16px 36px rgba(3, 54, 99, 0.18);
+}
+
+/* ---------- OVERZICHT LEERJAREN MIDDELBAAR ---------- */
+
+.secondary-years-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 26px;
+  width: 100%;
+}
+
+.secondary-year-card {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr) auto;
+  gap: 22px;
+  align-items: center;
+  min-height: 215px;
+  padding: 32px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.86);
+  border-radius: 36px;
+  background:
+    radial-gradient(
+      circle at 92% 10%,
+      rgba(254, 160, 32, 0.12),
+      transparent 31%
+    ),
+    rgba(255, 255, 255, 0.91);
+  color: #033663;
+  text-decoration: none;
+  box-shadow:
+    0 22px 54px rgba(3, 54, 99, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(18px);
+  transition:
+    transform 0.24s ease,
+    box-shadow 0.24s ease,
+    border-color 0.24s ease;
+}
+
+.secondary-year-card::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  right: -55px;
+  bottom: -75px;
+  width: 190px;
+  height: 190px;
+  border-radius: 50%;
+  background: rgba(40, 185, 170, 0.08);
+}
+
+.secondary-year-card.enabled {
+  cursor: pointer;
+}
+
+.secondary-year-card.enabled:hover {
+  transform: translateY(-7px);
+  border-color: rgba(40, 185, 170, 0.38);
+  box-shadow:
+    0 32px 72px rgba(3, 54, 99, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.secondary-year-card.disabled {
+  opacity: 0.56;
+  cursor: not-allowed;
+  filter: saturate(0.65);
+}
+
+.secondary-year-number {
+  display: grid;
+  place-items: center;
+  width: 78px;
+  height: 78px;
+  border-radius: 24px;
+  background: linear-gradient(145deg, #28b9aa, #033663);
+  color: white;
+  font-size: 2rem;
+  font-weight: 950;
+  box-shadow: 0 14px 30px rgba(3, 54, 99, 0.2);
+}
+
+.secondary-year-card.disabled .secondary-year-number {
+  background: rgba(3, 54, 99, 0.1);
+  color: rgba(3, 54, 99, 0.58);
+  box-shadow: none;
+}
+
+.secondary-year-card h2 {
+  margin: 0 0 8px;
+  color: #033663;
+  font-size: clamp(1.65rem, 2.6vw, 2.35rem);
+  line-height: 1.12;
+  letter-spacing: -0.025em;
+}
+
+.secondary-year-card p {
+  margin: 0;
+  color: rgba(3, 54, 99, 0.7);
+  font-size: 1.04rem;
+  line-height: 1.55;
+}
+
+.secondary-year-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 11px 17px;
+  border-radius: 999px;
+  background: rgba(40, 185, 170, 0.12);
+  color: #087f75;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.secondary-year-card.disabled .secondary-year-action {
+  min-width: 46px;
+  padding: 10px;
+  background: rgba(3, 54, 99, 0.07);
+  color: rgba(3, 54, 99, 0.48);
+}
+
+/* ---------- PERSOONLIJKE FOCUS ---------- */
+
+.focus-banner {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(270px, 0.75fr);
+  gap: 34px;
+  align-items: center;
+  margin: 32px 0 54px;
+  padding: 34px 38px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.88);
+  border-radius: 38px;
+  background:
+    radial-gradient(
+      circle at 84% 20%,
+      rgba(254, 160, 32, 0.22),
+      transparent 31%
+    ),
+    radial-gradient(
+      circle at 10% 100%,
+      rgba(40, 185, 170, 0.17),
+      transparent 35%
+    ),
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.95),
+      rgba(247, 242, 252, 0.9)
+    );
+  box-shadow: 0 24px 62px rgba(3, 54, 99, 0.12);
+  backdrop-filter: blur(18px);
+}
+
+.focus-banner::after {
+  content: "🧭";
+  position: absolute;
+  right: 33%;
+  top: 24px;
+  font-size: 4.2rem;
+  opacity: 0.09;
+  transform: rotate(9deg);
+  pointer-events: none;
+}
+
+.focus-banner > div:first-child > span {
+  display: inline-flex;
+  margin-bottom: 9px;
+  color: #28b9aa;
+  font-size: 0.82rem;
+  font-weight: 950;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.focus-banner h2 {
+  margin: 0 0 12px;
+  color: #033663;
+  font-size: clamp(1.75rem, 3vw, 2.7rem);
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+}
+
+.focus-banner p {
+  max-width: 820px;
+  margin: 0;
+  color: rgba(3, 54, 99, 0.74);
+  font-size: 1.06rem;
+  line-height: 1.7;
+}
+
+.focus-steps {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.focus-steps span {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 47px;
+  padding: 11px 16px 11px 50px;
+  border: 1px solid rgba(3, 54, 99, 0.07);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.82);
+  color: #033663;
+  font-size: 0.96rem;
+  font-weight: 850;
+  box-shadow: 0 9px 22px rgba(3, 54, 99, 0.07);
+}
+
+.focus-steps span::before {
+  position: absolute;
+  left: 12px;
+  display: grid;
+  place-items: center;
+  width: 27px;
+  height: 27px;
+  border-radius: 9px;
+  background: linear-gradient(145deg, #fea020, #fb6730);
+  color: white;
+  font-size: 0.76rem;
+  font-weight: 950;
+}
+
+.focus-steps span:nth-child(1)::before { content: "1"; }
+.focus-steps span:nth-child(2)::before { content: "2"; }
+.focus-steps span:nth-child(3)::before { content: "3"; }
+.focus-steps span:nth-child(4)::before { content: "4"; }
+.focus-steps span:nth-child(5)::before { content: "5"; }
+
+/* ---------- VAKKEN EN VAARDIGHEDEN ---------- */
+
+.skill-subject-section {
+  margin-top: 60px;
+}
+
+.subject-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 22px;
+  padding: 0 4px;
+}
+
+.subject-heading h2 {
+  margin: 0;
+  color: #033663;
+  font-size: clamp(2rem, 3.8vw, 3.4rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.skill-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.skill-card {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr);
+  grid-template-rows: auto auto 1fr auto;
+  gap: 0 20px;
+  min-height: 320px;
+  padding: 29px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 34px;
+  background:
+    radial-gradient(
+      circle at 100% 0,
+      rgba(40, 185, 170, 0.1),
+      transparent 34%
+    ),
+    rgba(255, 255, 255, 0.92);
+  color: #033663;
+  text-decoration: none;
+  box-shadow:
+    0 20px 52px rgba(3, 54, 99, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(16px);
+  transition:
+    transform 0.23s ease,
+    box-shadow 0.23s ease,
+    border-color 0.23s ease;
+}
+
+.skill-card::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  right: -55px;
+  bottom: -75px;
+  width: 190px;
+  height: 190px;
+  border-radius: 50%;
+  background: rgba(155, 129, 184, 0.08);
+}
+
+.skill-card:hover {
+  transform: translateY(-7px);
+  border-color: rgba(40, 185, 170, 0.36);
+  box-shadow:
+    0 32px 72px rgba(3, 54, 99, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.skill-icon {
+  grid-row: 1 / span 2;
+  display: grid;
+  place-items: center;
+  width: 68px;
+  height: 68px;
+  border-radius: 22px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(40, 185, 170, 0.2),
+      rgba(155, 129, 184, 0.18)
+    );
+  font-size: 1.75rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78);
+}
+
+.skill-card h3 {
+  align-self: end;
+  margin: 3px 0 8px;
+  color: #033663;
+  font-size: clamp(1.3rem, 2vw, 1.72rem);
+  line-height: 1.18;
+  letter-spacing: -0.02em;
+}
+
+.skill-card > div > p {
+  margin: 0;
+  color: rgba(3, 54, 99, 0.7);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.skill-card ul {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 9px;
+  margin: 24px 0 24px;
+  padding: 0;
+  list-style: none;
+}
+
+.skill-card li {
+  padding: 8px 13px;
+  border: 1px solid rgba(40, 185, 170, 0.12);
+  border-radius: 999px;
+  background: rgba(40, 185, 170, 0.09);
+  color: #065f59;
+  font-size: 0.87rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.skill-open {
+  grid-column: 1 / -1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 50px;
+  margin-top: auto;
+  padding: 12px 17px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #033663, #0c548a);
+  color: white;
+  font-size: 0.96rem;
+  font-weight: 900;
+  box-shadow: 0 12px 26px rgba(3, 54, 99, 0.16);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.skill-card:hover .skill-open {
+  transform: translateX(3px);
+  box-shadow: 0 15px 30px rgba(3, 54, 99, 0.22);
+}
+
+/* ---------- RESPONSIVE ---------- */
+
+@media (max-width: 1050px) {
+  .oefenpagina {
+    padding: 34px 26px 90px;
+  }
+
+  .focus-banner {
+    grid-template-columns: 1fr;
+  }
+
+  .focus-banner::after {
+    right: 35px;
+  }
+}
+
+@media (max-width: 820px) {
+  .secondary-years-grid,
+  .skill-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .secondary-year-card {
+    min-height: 190px;
+  }
+}
+
+@media (max-width: 620px) {
+  .oefenpagina {
+    padding: 28px 17px 78px;
+  }
+
+  .oefen-hero {
+    margin-bottom: 28px;
+  }
+
+  .secondary-year-card {
+    grid-template-columns: 58px minmax(0, 1fr);
+    gap: 16px;
+    min-height: 170px;
+    padding: 24px 20px;
+    border-radius: 28px;
+  }
+
+  .secondary-year-number {
+    width: 58px;
+    height: 58px;
+    border-radius: 18px;
+    font-size: 1.5rem;
+  }
+
+  .secondary-year-action {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .focus-banner {
+    margin-bottom: 44px;
+    padding: 27px 21px;
+    border-radius: 30px;
+  }
+
+  .focus-banner::after {
+    display: none;
+  }
+
+  .skill-subject-section {
+    margin-top: 48px;
+  }
+
+  .skill-card {
+    grid-template-columns: 56px minmax(0, 1fr);
+    min-height: 0;
+    padding: 23px 20px;
+    border-radius: 28px;
+  }
+
+  .skill-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+    font-size: 1.45rem;
+  }
+
+  .skill-card ul {
+    margin-top: 20px;
+  }
+}

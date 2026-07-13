@@ -39,7 +39,10 @@
   align-items: center;
   gap: 10px;
   text-align: center;
-  transition: 0.25s ease;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    background 0.25s ease;
 }
 
 .leerjaar-card span,
@@ -57,6 +60,7 @@
   background: linear-gradient(135deg, #28b9aa, #033663);
   color: white;
   box-shadow: 0 18px 38px rgba(3, 54, 99, 0.18);
+  cursor: pointer;
 }
 
 .leerjaar-card.active:hover {
@@ -68,12 +72,36 @@
   background: rgba(3, 54, 99, 0.07);
   color: rgba(3, 54, 99, 0.45);
   cursor: not-allowed;
+  pointer-events: none;
 }
 
 .secundair-card {
   margin-top: 22px;
-  background: linear-gradient(135deg, rgba(254, 160, 32, 0.18), rgba(155, 129, 184, 0.18));
-  color: rgba(3, 54, 99, 0.55);
+}
+
+.secundair-card.active-secondary {
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(254, 160, 32, 0.32),
+      transparent 38%
+    ),
+    linear-gradient(135deg, #033663, #9b81b8);
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 18px 42px rgba(3, 54, 99, 0.2);
+}
+
+.secundair-card.active-secondary span,
+.secundair-card.active-secondary small,
+.secundair-card.active-secondary h2,
+.secundair-card.active-secondary p {
+  color: white;
+}
+
+.secundair-card.active-secondary:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 26px 56px rgba(3, 54, 99, 0.24);
 }
 
 @media (max-width: 900px) {

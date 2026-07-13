@@ -1,17 +1,29 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+export const runtime =
+  "nodejs";
+
+export const dynamic =
+  "force-dynamic";
+
+type SupabaseAdmin =
+  ReturnType<
+    typeof getSupabaseAdmin
+  >;
 
 type BookingRecord = {
   id: string;
+  customer_email?: string | null;
   status?: string | null;
 
   start_time?: string | null;
+  end_time?: string | null;
+
   appointment_date?: string | null;
   appointment_time?: string | null;
-  end_time?: string | null;
+  appointment_type?: string | null;
 
   availability_id?: string | null;
 
@@ -20,126 +32,198 @@ type BookingRecord = {
   restored_lesson?: boolean | null;
   credit_refunded?: boolean | null;
 
+  google_event_id?: string | null;
+  google_event_url?: string | null;
+  google_event_link?: string | null;
+  google_meet_url?: string | null;
+
+  cancelled_at?: string | null;
   internal_notes?: string | null;
 };
 
 type AvailabilityRecord = {
   id: string;
-  date?: string | null;
-  start_time?: string | null;
-  booked_places?: number | null;
-  max_places?: number | null;
-  capacity?: number | null;
-  active?: boolean | null;
+  date: string | null;
+  start_time: string | null;
+  booked_places: number | null;
+  max_places: number | null;
+  active: boolean | null;
 };
 
-function normalizeTime(value: unknown) {
-  const time = String(value ?? "").trim();
+type ReleaseAvailabilityResult =
+  | {
+      released: true;
+      availabilityId: string;
+      bookedPlaces: number;
+    }
+  | {
+      released: false;
+      reason: string;
+    };
 
-  if (!time) {
+type RestoreCreditResult =
+  | {
+      restored: true;
+      remainingCredits: number;
+    }
+  | {
+      restored: false;
+      reason: string;
+      skipped?: boolean;
+    };
+
+type DeleteGoogleEventResult =
+  | {
+      deleted: true;
+      skipped?: boolean;
+      alreadyDeleted?: boolean;
+    }
+  | {
+      deleted: false;
+      reason: string;
+    };
+
+function clean(
+  value: unknown
+): string {
+  return String(
+    value ?? ""
+  ).trim();
+}
+
+function normalizeEmail(
+  value: unknown
+): string {
+  return clean(
+    value
+  ).toLowerCase();
+}
+
+function normalizeDate(
+  value: unknown
+): string {
+  const text =
+    clean(value);
+
+  if (!text) {
     return "";
   }
 
-  /*
-   * Ondersteunt:
-   * 11:00
-   * 11:00:00
-   * 2026-07-13T11:00:00
-   * 2026-07-13T11:00:00+02:00
-   */
-  if (time.includes("T")) {
-    const timePart = time.split("T")[1] ?? "";
-    return timePart.slice(0, 5);
+  if (
+    text.includes("T")
+  ) {
+    return (
+      text.split("T")[0] ??
+      ""
+    );
   }
 
-  return time.slice(0, 5);
+  return text.slice(
+    0,
+    10
+  );
 }
 
-function normalizeDate(value: unknown) {
-  const date = String(value ?? "").trim();
+function normalizeTime(
+  value: unknown
+): string {
+  const text =
+    clean(value);
 
-  if (!date) {
+  if (!text) {
     return "";
   }
 
-  if (date.includes("T")) {
-    return date.split("T")[0];
+  if (
+    text.includes("T")
+  ) {
+    const timePart =
+      text.split("T")[1] ??
+      "";
+
+    return timePart.slice(
+      0,
+      5
+    );
   }
 
-  return date.slice(0, 10);
+  return text.slice(
+    0,
+    5
+  );
 }
 
-function buildAppointmentStart(booking: BookingRecord) {
-  /*
-   * start_time kan een volledige datum en tijd bevatten.
-   */
+function buildAppointmentStart(
+  booking: BookingRecord
+): string | null {
   if (
     booking.start_time &&
-    String(booking.start_time).includes("T")
+    booking.start_time.includes(
+      "T"
+    )
   ) {
-    return String(booking.start_time);
+    return booking.start_time;
   }
 
-  /*
-   * appointment_date + appointment_time is de normale fallback.
-   */
-  if (
-    booking.appointment_date &&
-    booking.appointment_time
-  ) {
-    const date = normalizeDate(
+  const date =
+    normalizeDate(
       booking.appointment_date
     );
 
-    const time = normalizeTime(
+  const time =
+    normalizeTime(
       booking.appointment_time
-    );
-
-    if (date && time) {
-      return `${date}T${time}:00`;
-    }
-  }
-
-  /*
-   * Soms staat de datum in appointment_date
-   * en enkel het uur in start_time.
-   */
-  if (
-    booking.appointment_date &&
-    booking.start_time
-  ) {
-    const date = normalizeDate(
-      booking.appointment_date
-    );
-
-    const time = normalizeTime(
+    ) ||
+    normalizeTime(
       booking.start_time
     );
 
-    if (date && time) {
-      return `${date}T${time}:00`;
-    }
+  if (
+    !date ||
+    !time
+  ) {
+    return null;
   }
 
-  return null;
+  return `${date}T${time}:00`;
+}
+
+function hoursUntilAppointment(
+  startTime: string
+): number {
+  const appointmentDate =
+    new Date(
+      startTime
+    );
+
+  return (
+    appointmentDate.getTime() -
+    Date.now()
+  ) / (
+    1000 *
+    60 *
+    60
+  );
 }
 
 function getBookingDate(
   booking: BookingRecord,
   appointmentStart: string
-) {
+): string {
   return (
     normalizeDate(
       booking.appointment_date
     ) ||
-    normalizeDate(appointmentStart)
+    normalizeDate(
+      appointmentStart
+    )
   );
 }
 
 function getBookingTime(
   booking: BookingRecord,
   appointmentStart: string
-) {
+): string {
   return (
     normalizeTime(
       booking.appointment_time
@@ -147,22 +231,10 @@ function getBookingTime(
     normalizeTime(
       booking.start_time
     ) ||
-    normalizeTime(appointmentStart)
+    normalizeTime(
+      appointmentStart
+    )
   );
-}
-
-function hoursUntilAppointment(
-  startTime: string
-) {
-  const appointmentDate =
-    new Date(startTime);
-
-  const now = new Date();
-
-  return (
-    appointmentDate.getTime() -
-    now.getTime()
-  ) / (1000 * 60 * 60);
 }
 
 async function releaseAvailabilitySlot({
@@ -170,171 +242,154 @@ async function releaseAvailabilitySlot({
   booking,
   appointmentStart,
 }: {
-  supabaseAdmin: ReturnType<
-    typeof getSupabaseAdmin
-  >;
-  booking: BookingRecord;
-  appointmentStart: string;
-}) {
-  /*
-   * Beste methode:
-   * gebruik rechtstreeks availability_id
-   * wanneer die op de booking is opgeslagen.
-   */
-  if (booking.availability_id) {
+  supabaseAdmin:
+    SupabaseAdmin;
+  booking:
+    BookingRecord;
+  appointmentStart:
+    string;
+}): Promise<ReleaseAvailabilityResult> {
+  let availability:
+    | AvailabilityRecord
+    | null = null;
+
+  if (
+    booking.availability_id
+  ) {
     const {
-      data: availability,
-      error: availabilityError,
-    } = await supabaseAdmin
-      .from("availability")
-      .select(
-        `
+      data,
+      error,
+    } =
+      await supabaseAdmin
+        .from(
+          "availability"
+        )
+        .select(`
           id,
           date,
           start_time,
           booked_places,
           max_places,
-          capacity,
           active
-        `
-      )
-      .eq(
-        "id",
-        booking.availability_id
-      )
-      .maybeSingle();
+        `)
+        .eq(
+          "id",
+          booking.availability_id
+        )
+        .maybeSingle();
 
-    if (availabilityError) {
+    if (error) {
       throw new Error(
-        `Tijdslot kon niet worden opgehaald: ${availabilityError.message}`
+        `Het gekoppelde tijdslot kon niet geladen worden: ${error.message}`
       );
     }
 
-    if (availability) {
-      const currentBookedPlaces =
-        Number(
-          availability.booked_places ?? 0
-        );
+    availability =
+      data as
+        | AvailabilityRecord
+        | null;
+  }
 
-      const newBookedPlaces = Math.max(
-        0,
-        currentBookedPlaces - 1
+  if (!availability) {
+    const bookingDate =
+      getBookingDate(
+        booking,
+        appointmentStart
       );
 
-      const { error: releaseError } =
-        await supabaseAdmin
-          .from("availability")
-          .update({
-            booked_places:
-              newBookedPlaces,
-            active: true,
-          })
-          .eq(
-            "id",
-            availability.id
-          );
+    const bookingTime =
+      getBookingTime(
+        booking,
+        appointmentStart
+      );
 
-      if (releaseError) {
-        throw new Error(
-          `Tijdslot kon niet worden vrijgegeven: ${releaseError.message}`
-        );
-      }
-
+    if (
+      !bookingDate ||
+      !bookingTime
+    ) {
       return {
-        released: true,
-        availabilityId:
-          availability.id,
-        bookedPlaces:
-          newBookedPlaces,
+        released: false,
+        reason:
+          "De datum of het uur van het tijdslot ontbreekt.",
+      };
+    }
+
+    const {
+      data,
+      error,
+    } =
+      await supabaseAdmin
+        .from(
+          "availability"
+        )
+        .select(`
+          id,
+          date,
+          start_time,
+          booked_places,
+          max_places,
+          active
+        `)
+        .eq(
+          "date",
+          bookingDate
+        );
+
+    if (error) {
+      throw new Error(
+        `De beschikbaarheid kon niet geladen worden: ${error.message}`
+      );
+    }
+
+    const rows =
+      (
+        data as
+          | AvailabilityRecord[]
+          | null
+      ) ?? [];
+
+    availability =
+      rows.find(
+        (slot) =>
+          normalizeTime(
+            slot.start_time
+          ) ===
+          bookingTime
+      ) ?? null;
+
+    if (!availability) {
+      return {
+        released: false,
+        reason:
+          `Geen tijdslot gevonden voor ${bookingDate} om ${bookingTime}.`,
       };
     }
   }
 
-  /*
-   * Fallback wanneer availability_id
-   * nog niet op de booking staat.
-   */
-  const bookingDate = getBookingDate(
-    booking,
-    appointmentStart
-  );
-
-  const bookingTime = getBookingTime(
-    booking,
-    appointmentStart
-  );
-
-  if (!bookingDate || !bookingTime) {
-    return {
-      released: false,
-      reason:
-        "Datum of uur van het tijdslot ontbreekt.",
-    };
-  }
-
-  /*
-   * We halen alle tijdsloten van die datum op
-   * en vergelijken de uren genormaliseerd.
-   *
-   * Daardoor werken zowel 11:00 als 11:00:00.
-   */
-  const {
-    data: availabilityRows,
-    error: availabilityError,
-  } = await supabaseAdmin
-    .from("availability")
-    .select(
-      `
-        id,
-        date,
-        start_time,
-        booked_places,
-        max_places,
-        capacity,
-        active
-      `
-    )
-    .eq("date", bookingDate);
-
-  if (availabilityError) {
-    throw new Error(
-      `Beschikbaarheid kon niet worden opgehaald: ${availabilityError.message}`
-    );
-  }
-
-  const matchingAvailability =
-    (
-      availabilityRows as
-        | AvailabilityRecord[]
-        | null
-    )?.find(
-      (availability) =>
-        normalizeTime(
-          availability.start_time
-        ) === bookingTime
-    );
-
-  if (!matchingAvailability) {
-    return {
-      released: false,
-      reason: `Geen beschikbaarheid gevonden voor ${bookingDate} om ${bookingTime}.`,
-    };
-  }
-
   const currentBookedPlaces =
-    Number(
-      matchingAvailability.booked_places ??
-        0
+    Math.max(
+      0,
+      Number(
+        availability
+          .booked_places ??
+          0
+      )
     );
 
-  const newBookedPlaces = Math.max(
-    0,
-    currentBookedPlaces - 1
-  );
+  const newBookedPlaces =
+    Math.max(
+      0,
+      currentBookedPlaces -
+        1
+    );
 
-  const { error: releaseError } =
+  const {
+    error: updateError,
+  } =
     await supabaseAdmin
-      .from("availability")
+      .from(
+        "availability"
+      )
       .update({
         booked_places:
           newBookedPlaces,
@@ -342,40 +397,378 @@ async function releaseAvailabilitySlot({
       })
       .eq(
         "id",
-        matchingAvailability.id
+        availability.id
       );
 
-  if (releaseError) {
+  if (updateError) {
     throw new Error(
-      `Tijdslot kon niet worden vrijgegeven: ${releaseError.message}`
+      `Het tijdslot kon niet worden vrijgegeven: ${updateError.message}`
     );
   }
 
   return {
     released: true,
     availabilityId:
-      matchingAvailability.id,
+      availability.id,
     bookedPlaces:
       newBookedPlaces,
   };
 }
 
+async function restorePassCredit({
+  supabaseAdmin,
+  booking,
+}: {
+  supabaseAdmin:
+    SupabaseAdmin;
+  booking:
+    BookingRecord;
+}): Promise<RestoreCreditResult> {
+  if (
+    !booking.pass_id
+  ) {
+    return {
+      restored: false,
+      skipped: true,
+      reason:
+        "De afspraak is niet aan een beurtenkaart gekoppeld.",
+    };
+  }
+
+  if (
+    booking.deducted !==
+    true
+  ) {
+    return {
+      restored: false,
+      skipped: true,
+      reason:
+        "Voor deze afspraak werd geen beurt afgeschreven.",
+    };
+  }
+
+  if (
+    booking.restored_lesson ===
+      true ||
+    booking.credit_refunded ===
+      true
+  ) {
+    return {
+      restored: false,
+      skipped: true,
+      reason:
+        "De beurt werd eerder al teruggezet.",
+    };
+  }
+
+  const {
+    data: pass,
+    error: passError,
+  } =
+    await supabaseAdmin
+      .from("passes")
+      .select(`
+        id,
+        total_credits,
+        total_sessions,
+        remaining_credits,
+        remaining_sessions,
+        status
+      `)
+      .eq(
+        "id",
+        booking.pass_id
+      )
+      .maybeSingle();
+
+  if (
+    passError ||
+    !pass
+  ) {
+    throw new Error(
+      passError?.message ||
+        "De beurtenkaart werd niet gevonden."
+    );
+  }
+
+  const total =
+    Number(
+      pass.total_credits ??
+        pass.total_sessions ??
+        0
+    );
+
+  const currentRemaining =
+    Number(
+      pass.remaining_credits ??
+        pass.remaining_sessions ??
+        0
+    );
+
+  if (
+    !Number.isFinite(
+      total
+    ) ||
+    total <= 0
+  ) {
+    throw new Error(
+      "Het totaal aantal beurten is ongeldig."
+    );
+  }
+
+  const newRemaining =
+    Math.min(
+      total,
+      Math.max(
+        0,
+        currentRemaining
+      ) + 1
+    );
+
+  const updateData: {
+    remaining_credits?: number;
+    remaining_sessions?: number;
+    status: string;
+  } = {
+    status: "active",
+  };
+
+  if (
+    pass.remaining_credits !==
+      null &&
+    pass.remaining_credits !==
+      undefined
+  ) {
+    updateData.remaining_credits =
+      newRemaining;
+  }
+
+  if (
+    pass.remaining_sessions !==
+      null &&
+    pass.remaining_sessions !==
+      undefined
+  ) {
+    updateData.remaining_sessions =
+      newRemaining;
+  }
+
+  if (
+    updateData.remaining_credits ===
+      undefined &&
+    updateData.remaining_sessions ===
+      undefined
+  ) {
+    updateData.remaining_credits =
+      newRemaining;
+  }
+
+  const {
+    error: updateError,
+  } =
+    await supabaseAdmin
+      .from("passes")
+      .update(
+        updateData
+      )
+      .eq(
+        "id",
+        pass.id
+      );
+
+  if (updateError) {
+    throw new Error(
+      `De beurt kon niet worden teruggezet: ${updateError.message}`
+    );
+  }
+
+  return {
+    restored: true,
+    remainingCredits:
+      newRemaining,
+  };
+}
+
+async function deleteGoogleCalendarEvent({
+  booking,
+}: {
+  booking:
+    BookingRecord;
+}): Promise<DeleteGoogleEventResult> {
+  const eventId =
+    clean(
+      booking.google_event_id
+    );
+
+  const bookingId =
+    clean(
+      booking.id
+    );
+
+  if (
+    !eventId &&
+    !bookingId
+  ) {
+    return {
+      deleted: true,
+      skipped: true,
+    };
+  }
+
+  const scriptUrl =
+    clean(
+      process.env
+        .GOOGLE_APPS_SCRIPT_AVAILABILITY_URL
+    );
+
+  if (!scriptUrl) {
+    return {
+      deleted: false,
+      reason:
+        "De Google Apps Script-URL ontbreekt.",
+    };
+  }
+
+  const secret =
+    clean(
+      process.env
+        .GOOGLE_APPS_SCRIPT_BOOKING_SECRET
+    );
+
+  try {
+    const response =
+      await fetch(
+        scriptUrl,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+            Accept:
+              "application/json",
+          },
+          cache:
+            "no-store",
+          redirect:
+            "follow",
+          body:
+            JSON.stringify({
+              action:
+                "cancelBooking",
+
+              secret,
+
+              bookingId,
+
+              eventId,
+
+              googleEventId:
+                eventId,
+            }),
+        }
+      );
+
+    const responseText =
+      await response.text();
+
+    let result:
+      Record<
+        string,
+        unknown
+      >;
+
+    try {
+      result =
+        JSON.parse(
+          responseText
+        ) as Record<
+          string,
+          unknown
+        >;
+    } catch {
+      return {
+        deleted: false,
+        reason:
+          "Google Agenda gaf geen geldig JSON-antwoord terug.",
+      };
+    }
+
+    if (
+      !response.ok ||
+      result.success ===
+        false
+    ) {
+      return {
+        deleted: false,
+        reason:
+          clean(
+            result.error
+          ) ||
+          "Het evenement kon niet uit Google Agenda verwijderd worden.",
+      };
+    }
+
+    return {
+      deleted: true,
+      skipped:
+        result.skipped ===
+        true,
+      alreadyDeleted:
+        result.alreadyDeleted ===
+        true,
+    };
+  } catch (error) {
+    return {
+      deleted: false,
+      reason:
+        error instanceof Error
+          ? error.message
+          : "Google Agenda kon niet bereikt worden.",
+    };
+  }
+}
+
 export async function POST(
   request: Request
-) {
+): Promise<NextResponse> {
   try {
-    const supabaseAdmin =
-      getSupabaseAdmin();
+    const supabase =
+      await createClient();
 
-    const body = await request.json();
+    const {
+      data: { user },
+      error: userError,
+    } =
+      await supabase.auth.getUser();
 
-    const bookingId = String(
-      body?.bookingId ?? ""
-    ).trim();
+    if (
+      userError ||
+      !user?.email
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Je bent niet aangemeld.",
+        },
+        {
+          status: 401,
+        }
+      );
+    }
+
+    const body =
+      await request.json();
+
+    const bookingId =
+      clean(
+        body?.bookingId
+      );
 
     if (!bookingId) {
       return NextResponse.json(
         {
+          success: false,
           error:
             "bookingId ontbreekt.",
         },
@@ -385,14 +778,30 @@ export async function POST(
       );
     }
 
+    const customerEmail =
+      normalizeEmail(
+        user.email
+      );
+
+    const supabaseAdmin =
+      getSupabaseAdmin();
+
     const {
       data: bookingData,
       error: bookingError,
-    } = await supabaseAdmin
-      .from("bookings")
-      .select("*")
-      .eq("id", bookingId)
-      .maybeSingle();
+    } =
+      await supabaseAdmin
+        .from("bookings")
+        .select("*")
+        .eq(
+          "id",
+          bookingId
+        )
+        .ilike(
+          "customer_email",
+          customerEmail
+        )
+        .maybeSingle();
 
     const booking =
       bookingData as
@@ -405,8 +814,9 @@ export async function POST(
     ) {
       return NextResponse.json(
         {
+          success: false,
           error:
-            "Geen afspraak gevonden.",
+            "De afspraak werd niet gevonden.",
         },
         {
           status: 404,
@@ -414,32 +824,26 @@ export async function POST(
       );
     }
 
-    const normalizedStatus = String(
-      booking.status ?? ""
-    )
-      .trim()
-      .toLowerCase();
+    const normalizedStatus =
+      clean(
+        booking.status
+      ).toLowerCase();
 
-    if (
+    const alreadyCancelled =
       normalizedStatus ===
         "cancelled" ||
       normalizedStatus ===
-        "canceled"
-    ) {
-      return NextResponse.json({
-        success: true,
-        alreadyCancelled: true,
-        message:
-          "Deze afspraak was al geannuleerd.",
-      });
-    }
+        "canceled";
 
     const appointmentStart =
-      buildAppointmentStart(booking);
+      buildAppointmentStart(
+        booking
+      );
 
     if (!appointmentStart) {
       return NextResponse.json(
         {
+          success: false,
           error:
             "Geen geldig afspraakmoment gevonden.",
         },
@@ -449,16 +853,19 @@ export async function POST(
       );
     }
 
-    const parsedAppointmentStart =
-      new Date(appointmentStart);
+    const parsedStart =
+      new Date(
+        appointmentStart
+      );
 
     if (
       Number.isNaN(
-        parsedAppointmentStart.getTime()
+        parsedStart.getTime()
       )
     ) {
       return NextResponse.json(
         {
+          success: false,
           error:
             "Het afspraakmoment heeft geen geldig datumformaat.",
         },
@@ -476,228 +883,386 @@ export async function POST(
     const mayRestoreLesson =
       hoursBefore >= 72;
 
-    /*
-     * We zetten de booking eerst op cancelled.
-     *
-     * De extra eq("status", booking.status)
-     * voorkomt dat twee annulatieverzoeken
-     * dezelfde booking tegelijk verwerken.
-     */
-    const {
-      data: cancelledBooking,
-      error: cancelError,
-    } = await supabaseAdmin
-      .from("bookings")
-      .update({
-        status: "cancelled",
-        cancelled_at:
-          new Date().toISOString(),
-      })
-      .eq("id", bookingId)
-      .eq(
-        "status",
-        booking.status
-      )
-      .select("*")
-      .maybeSingle();
-
-    if (cancelError) {
-      return NextResponse.json(
-        {
-          error:
-            cancelError.message,
-        },
-        {
-          status: 500,
-        }
-      );
-    }
-
-    if (!cancelledBooking) {
-      return NextResponse.json(
-        {
-          error:
-            "De afspraak werd ondertussen al gewijzigd. Vernieuw de pagina.",
-        },
-        {
-          status: 409,
-        }
-      );
-    }
-
-    /*
-     * Tijdslot opnieuw vrijgeven.
-     */
-    let slotReleased = false;
-    let slotReleaseMessage = "";
-
-    try {
-      const releaseResult =
-        await releaseAvailabilitySlot({
-          supabaseAdmin,
-          booking,
-          appointmentStart,
-        });
-
-      slotReleased =
-        releaseResult.released;
-
-if (!releaseResult.released) {
-  slotReleaseMessage =
-    releaseResult.reason ??
-    "Het tijdslot kon niet automatisch worden vrijgegeven.";
-}    } catch (releaseError) {
-      console.error(
-        "RELEASE AVAILABILITY ERROR:",
-        releaseError
-      );
-
-      slotReleaseMessage =
-        releaseError instanceof Error
-          ? releaseError.message
-          : "Tijdslot kon niet worden vrijgegeven.";
-    }
-
-    /*
-     * Beurt terugzetten wanneer minstens
-     * 72 uur vooraf geannuleerd werd.
-     */
-    let lessonRestored = false;
+    let cancelledBooking:
+      BookingRecord =
+      booking;
 
     if (
-      mayRestoreLesson &&
-      booking.pass_id &&
-      booking.deducted === true &&
-      booking.restored_lesson !== true
+      !alreadyCancelled
     ) {
       const {
-        data: pass,
-        error: passError,
-      } = await supabaseAdmin
-        .from("passes")
-        .select("*")
-        .eq(
-          "id",
-          booking.pass_id
-        )
-        .maybeSingle();
-
-      if (
-        passError ||
-        !pass
-      ) {
-        console.error(
-          "Beurtenkaart niet gevonden:",
-          passError
-        );
-      } else {
-        const currentRemaining =
-          Number(
-            pass.remaining_credits ??
-              pass.remaining_sessions ??
-              0
-          );
-
-        const total = Number(
-          pass.total_credits ??
-            pass.total_sessions ??
-            10
-        );
-
-        const newRemaining =
-          Math.min(
-            currentRemaining + 1,
-            total
-          );
-
-        const {
-          error: passUpdateError,
-        } = await supabaseAdmin
-          .from("passes")
+        data,
+        error:
+          cancelError,
+      } =
+        await supabaseAdmin
+          .from("bookings")
           .update({
-            remaining_credits:
-              newRemaining,
-            remaining_sessions:
-              newRemaining,
-            status: "active",
+            status:
+              "cancelled",
+            cancelled_at:
+              new Date()
+                .toISOString(),
           })
           .eq(
             "id",
-            pass.id
-          );
+            booking.id
+          )
+          .eq(
+            "status",
+            booking.status
+          )
+          .select("*")
+          .maybeSingle();
 
-        if (passUpdateError) {
-          console.error(
-            "Beurt kon niet worden teruggezet:",
-            passUpdateError
-          );
-        } else {
-          lessonRestored = true;
-        }
+      if (cancelError) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              cancelError.message,
+          },
+          {
+            status: 500,
+          }
+        );
       }
+
+      if (!data) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "De afspraak werd ondertussen gewijzigd. Vernieuw de pagina.",
+          },
+          {
+            status: 409,
+          }
+        );
+      }
+
+      cancelledBooking =
+        data as BookingRecord;
     }
 
-    const noteParts = [
-      booking.internal_notes || "",
+    let slotReleased =
+      false;
+
+    let slotReleaseMessage =
+      "";
+
+    /*
+     * Alleen bij de eerste annulering.
+     */
+    if (
+      !alreadyCancelled
+    ) {
+      try {
+        const releaseResult =
+          await releaseAvailabilitySlot({
+            supabaseAdmin,
+            booking,
+            appointmentStart,
+          });
+
+        slotReleased =
+          releaseResult.released;
+
+        if (
+          !releaseResult.released
+        ) {
+          slotReleaseMessage =
+            releaseResult.reason;
+        }
+      } catch (error) {
+        console.error(
+          "RELEASE AVAILABILITY ERROR:",
+          error
+        );
+
+        slotReleaseMessage =
+          error instanceof Error
+            ? error.message
+            : "Het tijdslot kon niet worden vrijgegeven.";
+      }
+    } else {
+      slotReleased = true;
+
+      slotReleaseMessage =
+        "Het tijdslot was eerder al verwerkt.";
+    }
+
+    /*
+     * Google mag ook bij een reeds geannuleerde
+     * afspraak nog worden opgeschoond.
+     */
+    let googleEventDeleted =
+      false;
+
+    let googleEventDeleteSkipped =
+      false;
+
+    let googleDeleteMessage =
+      "";
+
+    try {
+      const deleteResult =
+        await deleteGoogleCalendarEvent({
+          booking,
+        });
+
+      googleEventDeleted =
+        deleteResult.deleted;
+
+      if (
+        deleteResult.deleted
+      ) {
+        googleEventDeleteSkipped =
+          deleteResult.skipped ===
+            true ||
+          deleteResult.alreadyDeleted ===
+            true;
+      } else {
+        googleDeleteMessage =
+          deleteResult.reason;
+      }
+    } catch (error) {
+      console.error(
+        "DELETE GOOGLE EVENT ERROR:",
+        error
+      );
+
+      googleDeleteMessage =
+        error instanceof Error
+          ? error.message
+          : "Het Google Agenda-evenement kon niet verwijderd worden.";
+    }
+
+    let lessonRestored =
+      false;
+
+    let lessonRestoreMessage =
+      "";
+
+    let restoredRemainingCredits:
+      | number
+      | null =
+      null;
+
+    /*
+     * Alleen bij eerste annulering,
+     * anders zou de beurt tweemaal worden toegevoegd.
+     */
+    if (
+      mayRestoreLesson &&
+      !alreadyCancelled
+    ) {
+      try {
+        const restoreResult =
+          await restorePassCredit({
+            supabaseAdmin,
+            booking,
+          });
+
+        lessonRestored =
+          restoreResult.restored;
+
+        if (
+          restoreResult.restored
+        ) {
+          restoredRemainingCredits =
+            restoreResult
+              .remainingCredits;
+        } else {
+          lessonRestoreMessage =
+            restoreResult.reason;
+        }
+      } catch (error) {
+        console.error(
+          "RESTORE PASS CREDIT ERROR:",
+          error
+        );
+
+        lessonRestoreMessage =
+          error instanceof Error
+            ? error.message
+            : "De beurt kon niet worden teruggezet.";
+      }
+    } else if (
+      alreadyCancelled
+    ) {
+      lessonRestored =
+        booking.restored_lesson ===
+          true ||
+        booking.credit_refunded ===
+          true;
+
+      lessonRestoreMessage =
+        "De beurtenkaart was eerder al verwerkt.";
+    }
+
+    const notes = [
+      booking.internal_notes ||
+        "",
+
+      alreadyCancelled
+        ? "Opnieuw opruimen van reeds geannuleerde afspraak uitgevoerd."
+        : "",
+
       slotReleased
-        ? "Het tijdslot werd opnieuw vrijgegeven in de agenda."
-        : `Het tijdslot kon niet automatisch worden vrijgegeven${
+        ? "Tijdslot vrijgegeven in de websiteagenda."
+        : `Tijdslot niet automatisch vrijgegeven${
             slotReleaseMessage
               ? `: ${slotReleaseMessage}`
               : "."
           }`,
+
+      googleEventDeleted
+        ? googleEventDeleteSkipped
+          ? "Google Agenda-evenement was al verwijderd of niet gekoppeld."
+          : "Afspraak verwijderd uit Google Agenda."
+        : `Afspraak niet automatisch verwijderd uit Google Agenda${
+            googleDeleteMessage
+              ? `: ${googleDeleteMessage}`
+              : "."
+          }`,
+
       lessonRestored
-        ? "Annulatie minstens 72u op voorhand: beurt terug toegevoegd."
+        ? "Beurt is terug toegevoegd aan de beurtenkaart."
         : mayRestoreLesson
-          ? "De beurt kon niet automatisch worden teruggezet."
-          : "Annulatie minder dan 72u op voorhand: beurt blijft aangerekend.",
-    ].filter(Boolean);
+          ? `Beurt niet teruggezet${
+              lessonRestoreMessage
+                ? `: ${lessonRestoreMessage}`
+                : "."
+            }`
+          : "Annulatie minder dan 72 uur vooraf: beurt blijft aangerekend.",
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    const finalUpdate: {
+      restored_lesson: boolean;
+      credit_refunded: boolean;
+      internal_notes: string;
+
+      google_event_id?: null;
+      google_event_url?: null;
+      google_event_link?: null;
+      google_meet_url?: null;
+    } = {
+      restored_lesson:
+        alreadyCancelled
+          ? Boolean(
+              booking.restored_lesson
+            )
+          : lessonRestored,
+
+      credit_refunded:
+        alreadyCancelled
+          ? Boolean(
+              booking.credit_refunded
+            )
+          : lessonRestored,
+
+      internal_notes:
+        notes,
+    };
+
+    if (
+      googleEventDeleted
+    ) {
+      finalUpdate.google_event_id =
+        null;
+
+      finalUpdate.google_event_url =
+        null;
+
+      finalUpdate.google_event_link =
+        null;
+
+      finalUpdate.google_meet_url =
+        null;
+    }
 
     const {
-      data: updatedBooking,
-      error: updateError,
-    } = await supabaseAdmin
-      .from("bookings")
-      .update({
-        restored_lesson:
-          lessonRestored,
-        credit_refunded:
-          lessonRestored,
-        internal_notes:
-          noteParts.join("\n"),
-      })
-      .eq("id", bookingId)
-      .select("*")
-      .single();
+      data:
+        updatedBooking,
+      error:
+        finalUpdateError,
+    } =
+      await supabaseAdmin
+        .from("bookings")
+        .update(
+          finalUpdate
+        )
+        .eq(
+          "id",
+          booking.id
+        )
+        .select("*")
+        .maybeSingle();
 
-    if (updateError) {
+    if (
+      finalUpdateError
+    ) {
       console.error(
-        "Bookingnotities konden niet worden bijgewerkt:",
-        updateError
+        "FINAL CANCEL UPDATE ERROR:",
+        finalUpdateError
       );
     }
 
     return NextResponse.json({
       success: true,
+
+      alreadyCancelled,
+
       booking:
         updatedBooking ??
         cancelledBooking,
-      lessonRestored,
+
+      hoursBefore,
+      mayRestoreLesson,
+
       slotReleased,
       slotReleaseMessage:
-        slotReleased
-          ? null
-          : slotReleaseMessage,
+        slotReleaseMessage ||
+        null,
+
+      googleEventDeleted,
+      googleEventDeleteSkipped,
+
+      googleDeleteMessage:
+        googleDeleteMessage ||
+        null,
+
+      lessonRestored,
+      restoredRemainingCredits,
+
+      lessonRestoreMessage:
+        lessonRestoreMessage ||
+        null,
+
       message: [
-        "Afspraak geannuleerd.",
+        alreadyCancelled
+          ? "De reeds geannuleerde afspraak werd opnieuw gecontroleerd."
+          : "De afspraak werd geannuleerd.",
+
         slotReleased
-          ? "Het tijdstip is opnieuw beschikbaar in de agenda."
+          ? "Het tijdstip is beschikbaar op de website."
           : "Het tijdstip kon niet automatisch worden vrijgegeven.",
+
+        googleEventDeleted
+          ? googleEventDeleteSkipped
+            ? "Het Google Agenda-evenement was al verwijderd of niet gekoppeld."
+            : "De afspraak werd uit Google Agenda verwijderd."
+          : "De afspraak kon niet automatisch uit Google Agenda worden verwijderd.",
+
         lessonRestored
-          ? "De beurt werd terug toegevoegd aan de beurtenkaart."
+          ? "De beurt staat op de beurtenkaart."
           : mayRestoreLesson
-            ? "De beurt kon niet automatisch worden teruggezet."
-            : "De beurt blijft aangerekend omdat de annulatie minder dan 72 uur op voorhand gebeurde.",
+            ? lessonRestoreMessage ||
+              "De beurt kon niet automatisch worden teruggezet."
+            : "De beurt blijft aangerekend omdat de annulering minder dan 72 uur vooraf gebeurde.",
       ].join(" "),
     });
   } catch (error) {
@@ -708,8 +1273,12 @@ if (!releaseResult.released) {
 
     return NextResponse.json(
       {
+        success: false,
+
         error:
-          "Serverfout bij annuleren.",
+          error instanceof Error
+            ? error.message
+            : "Serverfout bij annuleren.",
       },
       {
         status: 500,

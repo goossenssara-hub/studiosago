@@ -1,0 +1,87 @@
+export type AliasType =
+  | "parent"
+  | "student";
+
+function removeAccents(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function slugPart(value: string): string {
+  return removeAccents(value)
+    .toLowerCase()
+    .replace(/['’`]/g, "")
+    .replace(/[^a-z0-9]+/g, "")
+    .trim();
+}
+
+function firstGivenName(
+  firstNames: string
+): string {
+  const parts = firstNames
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  return slugPart(parts[0] || "");
+}
+
+function combinedLastNames(
+  lastNames: string
+): string {
+  return lastNames
+    .trim()
+    .split(/\s+/)
+    .map(slugPart)
+    .filter(Boolean)
+    .join("");
+}
+
+export function makeBaseInternalEmail({
+  firstNames,
+  lastNames,
+  type,
+}: {
+  firstNames: string;
+  lastNames: string;
+  type: AliasType;
+}): string {
+  const first = firstGivenName(
+    firstNames
+  );
+
+  const last = combinedLastNames(
+    lastNames
+  );
+
+  if (!first || !last) {
+    throw new Error(
+      "Voornaam en familienaam zijn nodig om een intern adres te maken."
+    );
+  }
+
+  const domain =
+    type === "student"
+      ? "leerling.studiosago.be"
+      : "ouder.studiosago.be";
+
+  return `${first}.${last}@${domain}`;
+}
+
+export function makeNumberedInternalEmail({
+  baseEmail,
+  number,
+}: {
+  baseEmail: string;
+  number: number;
+}): string {
+  if (number <= 1) {
+    return baseEmail;
+  }
+
+  const [local, domain] =
+    baseEmail.split("@");
+
+  return `${local}${number}@${domain}`;
+}

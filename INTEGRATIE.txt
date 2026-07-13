@@ -1,0 +1,31 @@
+// Voeg dit toe aan components/CustomerAppointments.tsx
+
+import AppointmentPremiumPanel, {
+  PremiumAppointmentData,
+} from "@/components/AppointmentPremiumPanel";
+
+// Voeg aan type Booking toe:
+premium?: PremiumAppointmentData | null;
+
+// Voeg binnen de afspraakkaart toe, bijvoorbeeld na AppointmentEnhancements:
+<AppointmentPremiumPanel
+  bookingId={booking.id}
+  startTime={booking.start_time}
+  endTime={booking.end_time}
+  title={booking.title || "Studiebegeleiding"}
+  location={
+    booking.customer_address ||
+    booking.location
+  }
+  description={booking.notes}
+  premium={booking.premium ?? null}
+  onRefresh={loadBookings}
+/>
+
+// In je bestaande GET-route /api/customer/appointments:
+// laad voor elke afspraak de premiumgegevens via dezelfde databasequeries
+// als in app/api/customer/appointments/premium/route.ts,
+// of roep die route client-side aan in een wrappercomponent.
+
+// Importeer de CSS:
+import "@/app/styles/appointment-premium.css";

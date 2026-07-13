@@ -1,0 +1,296 @@
+
+/* =========================================================
+   Uitgebreide afspraakervaring
+   Voeg dit onderaan dashboard.css toe.
+   ========================================================= */
+
+.appointment-experience {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.appointment-countdown {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+}
+
+.appointment-countdown--future {
+  color: #315c84;
+  background: rgba(3, 54, 99, 0.07);
+}
+
+.appointment-countdown--soon,
+.appointment-countdown--live {
+  color: #087b72;
+  background: rgba(40, 185, 170, 0.13);
+}
+
+.appointment-countdown--past {
+  color: #6d7480;
+  background: rgba(91, 117, 144, 0.1);
+}
+
+.appointment-extra-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.appointment-extra-card,
+.appointment-location-card,
+.appointment-files,
+.appointment-report,
+.appointment-feedback {
+  border: 1px solid rgba(3, 54, 99, 0.09);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.appointment-extra-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px;
+}
+
+.appointment-extra-card > span {
+  font-size: 1.35rem;
+}
+
+.appointment-extra-card small,
+.appointment-location-card small {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--dashboard-muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.appointment-extra-card strong,
+.appointment-extra-card span {
+  display: block;
+}
+
+.appointment-extra-card strong {
+  color: var(--dashboard-navy);
+  font-size: 0.9rem;
+}
+
+.appointment-extra-card div > span {
+  margin-top: 2px;
+  color: var(--dashboard-muted);
+  font-size: 0.75rem;
+}
+
+.appointment-location-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+}
+
+.appointment-location-card > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.appointment-location-card strong {
+  display: block;
+  color: var(--dashboard-navy);
+  font-size: 0.9rem;
+  white-space: pre-line;
+}
+
+.appointment-location-card a,
+.appointment-upload-button,
+.appointment-feedback-submit {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 14px;
+  border: 0;
+  border-radius: 13px;
+  color: white;
+  background: var(--dashboard-navy);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.appointment-files,
+.appointment-report,
+.appointment-feedback {
+  padding: 16px;
+}
+
+.appointment-subheading,
+.appointment-subheading > div {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.appointment-subheading {
+  justify-content: space-between;
+}
+
+.appointment-subheading strong {
+  display: block;
+  color: var(--dashboard-navy);
+  font-size: 0.92rem;
+}
+
+.appointment-subheading p {
+  margin: 2px 0 0;
+  color: var(--dashboard-muted);
+  font-size: 0.76rem;
+}
+
+.appointment-upload-button input {
+  display: none;
+}
+
+.appointment-file-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 13px;
+}
+
+.appointment-file {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border-radius: 13px;
+  color: var(--dashboard-navy);
+  background: rgba(3, 54, 99, 0.04);
+  text-decoration: none;
+}
+
+.appointment-file strong,
+.appointment-file small {
+  display: block;
+}
+
+.appointment-file strong {
+  overflow: hidden;
+  font-size: 0.8rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.appointment-file small {
+  margin-top: 2px;
+  color: var(--dashboard-muted);
+  font-size: 0.68rem;
+}
+
+.appointment-empty-inline {
+  margin: 12px 0 0;
+  color: var(--dashboard-muted);
+  font-size: 0.78rem;
+}
+
+.appointment-report-block {
+  margin-top: 14px;
+}
+
+.appointment-report-block > strong {
+  color: var(--dashboard-navy);
+  font-size: 0.8rem;
+}
+
+.appointment-report-block ul {
+  display: grid;
+  gap: 5px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--dashboard-muted);
+  font-size: 0.8rem;
+}
+
+.appointment-report-note {
+  margin: 14px 0 0;
+  padding: 12px;
+  border-radius: 12px;
+  color: var(--dashboard-muted);
+  background: rgba(40, 185, 170, 0.08);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.appointment-stars {
+  display: flex;
+  gap: 4px;
+  margin-top: 14px;
+}
+
+.appointment-stars button {
+  border: 0;
+  padding: 0;
+  color: #c9d0d7;
+  background: transparent;
+  font-size: 2rem;
+  cursor: pointer;
+}
+
+.appointment-stars button.is-selected {
+  color: var(--dashboard-orange);
+}
+
+.appointment-feedback textarea {
+  width: 100%;
+  min-height: 90px;
+  margin-top: 12px;
+  resize: vertical;
+  padding: 12px;
+  border: 1px solid rgba(3, 54, 99, 0.12);
+  border-radius: 13px;
+  color: var(--dashboard-navy);
+  background: #fff;
+  font: inherit;
+  font-size: 0.82rem;
+}
+
+.appointment-feedback-submit {
+  margin-top: 10px;
+  background: var(--dashboard-teal);
+}
+
+.appointment-experience-message {
+  margin: 0;
+  color: var(--dashboard-muted);
+  font-size: 0.78rem;
+}
+
+@media (max-width: 700px) {
+  .appointment-extra-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .appointment-location-card,
+  .appointment-subheading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .appointment-location-card a,
+  .appointment-upload-button,
+  .appointment-feedback-submit {
+    width: 100%;
+  }
+}

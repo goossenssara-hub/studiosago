@@ -1,0 +1,208 @@
+.account-activation-page {
+  position: relative;
+  z-index: 6;
+  width: 100%;
+  min-height: 72vh;
+  display: grid;
+  place-items: center;
+  padding: 58px 24px 110px;
+}
+
+.account-activation-card {
+  width: min(620px, 100%);
+  padding: 46px;
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  border-radius: 34px;
+  background:
+    radial-gradient(
+      circle at 90% 10%,
+      rgba(254, 160, 32, 0.12),
+      transparent 28%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.97),
+      rgba(255, 253, 244, 0.91)
+    );
+  box-shadow: 0 28px 70px rgba(3, 54, 99, 0.14);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.account-activation-icon {
+  display: grid;
+  place-items: center;
+  width: 68px;
+  height: 68px;
+  margin-bottom: 24px;
+  border-radius: 21px;
+  background: rgba(40, 185, 170, 0.13);
+  font-size: 30px;
+}
+
+.account-activation-eyebrow {
+  margin: 0 0 9px;
+  color: #28b9aa;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.account-activation-card h1 {
+  margin: 0;
+  color: #033663;
+  font-family: "StudioTitle", sans-serif;
+  font-size: clamp(38px, 6vw, 56px);
+  font-weight: 950;
+  line-height: 1.05;
+}
+
+.account-activation-intro,
+.account-activation-card > p:last-child {
+  margin: 17px 0 0;
+  color: rgba(3, 54, 99, 0.68);
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.6;
+}
+
+.account-activation-form {
+  display: grid;
+  gap: 19px;
+  margin-top: 30px;
+}
+
+.account-activation-form label {
+  display: grid;
+  gap: 8px;
+}
+
+.account-activation-form label > span {
+  color: #033663;
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.account-activation-form input {
+  width: 100%;
+  min-height: 54px;
+  padding: 0 16px;
+  border: 1px solid rgba(3, 54, 99, 0.14);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.98);
+  color: #033663;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 650;
+  outline: none;
+}
+
+.account-activation-form input:focus {
+  border-color: #28b9aa;
+  box-shadow: 0 0 0 4px rgba(40, 185, 170, 0.12);
+}
+
+.account-activation-password-field {
+  position: relative;
+}
+
+.account-activation-password-field input {
+  padding-right: 106px;
+}
+
+.account-activation-password-field button {
+  position: absolute;
+  top: 50%;
+  right: 9px;
+  min-height: 38px;
+  padding: 0 13px;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 11px;
+  background: rgba(3, 54, 99, 0.07);
+  color: #033663;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.account-activation-requirements {
+  display: grid;
+  gap: 6px;
+  padding: 17px 18px;
+  border-radius: 17px;
+  background: rgba(40, 185, 170, 0.08);
+  color: rgba(3, 54, 99, 0.68);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.account-activation-requirements strong {
+  color: #033663;
+}
+
+.account-activation-requirements span::before {
+  content: "✓";
+  margin-right: 8px;
+  color: #28b9aa;
+  font-weight: 950;
+}
+
+.account-activation-submit {
+  min-height: 57px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: 18px;
+  background:
+    linear-gradient(
+      135deg,
+      #fea020,
+      #fb6730
+    );
+  color: white;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 15px 32px rgba(251, 103, 48, 0.24);
+}
+
+.account-activation-submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.account-activation-error,
+.account-activation-success {
+  margin-top: 22px;
+  padding: 15px 17px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.account-activation-error {
+  border: 1px solid rgba(251, 103, 48, 0.22);
+  background: rgba(251, 103, 48, 0.09);
+  color: #c84a28;
+}
+
+.account-activation-success {
+  border: 1px solid rgba(84, 149, 92, 0.22);
+  background: rgba(84, 149, 92, 0.1);
+  color: #3f7d48;
+}
+
+@media (max-width: 600px) {
+  .account-activation-page {
+    padding: 36px 14px 80px;
+  }
+
+  .account-activation-card {
+    padding: 28px 21px;
+    border-radius: 26px;
+  }
+}

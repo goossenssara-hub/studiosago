@@ -494,12 +494,11 @@ export default function WebshopOrderForm({
           isFreeOrder,
         };
 
-      const checkoutEndpoint =
-        product === "10-beurtenkaart-lager" ||
-        product === "10-beurtenkaart-secundair"
-          ? "/api/checkout/ten-beurtenkaart"
-          : "/api/mollie/create-payment";
-
+const checkoutEndpoint =
+  product === "10-beurtenkaart-lager" ||
+  product === "10-beurtenkaart-secundair"
+    ? "/api/checkout/ten-beurtenkaart"
+    : "/api/checkout/webshop";
       const response = await fetch(
         checkoutEndpoint,
         {

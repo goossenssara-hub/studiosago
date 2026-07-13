@@ -1,11 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
-const bookingIds = [
-  "d1d9592a-52e3-4af6-b995-26baf460a531",
-  "c5d56f2c-de25-4a89-aeaa-5c2fa2ef757b",
-];
+import { useRouter } from "next/navigation";
 
 type BackfillResult = {
   bookingId?: string;
@@ -13,6 +9,8 @@ type BackfillResult = {
   skipped?: boolean;
   message?: string;
   error?: string;
+
+  googleEventId?: string | null;
   googleEventUrl?: string | null;
   googleMeetUrl?: string | null;
 };
@@ -23,72 +21,206 @@ type ApiResponse = {
   error?: string;
 };
 
-export default function BackfillGoogleBookingsButton() {
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+type BackfillGoogleBookingsButtonProps = {
+  bookingIds: string[];
+  label?: string;
+};
+
+function clean(
+  value: unknown
+): string {
+  return String(
+    value ?? ""
+  ).trim();
+}
+
+async function readJsonResponse<T>(
+  response: Response
+): Promise<T> {
+  const contentType =
+    response.headers.get(
+      "content-type"
+    ) || "";
+
+  if (
+    !contentType.includes(
+      "application/json"
+    )
+  ) {
+    const responseText =
+      await response.text();
+
+    console.error(
+      "BACKFILL NON-JSON RESPONSE:",
+      responseText
+    );
+
+    throw new Error(
+      "De server gaf geen geldig antwoord terug."
+    );
+  }
+
+  return (
+    await response.json()
+  ) as T;
+}
+
+export default function BackfillGoogleBookingsButton({
+  bookingIds,
+  label,
+}: BackfillGoogleBookingsButtonProps) {
+  const router =
+    useRouter();
+
+  const [
+    loading,
+    setLoading,
+  ] = useState(false);
+
+  const [
+    message,
+    setMessage,
+  ] = useState("");
+
+  const validBookingIds =
+    Array.from(
+      new Set(
+        bookingIds
+          .map(clean)
+          .filter(Boolean)
+      )
+    );
 
   async function handleBackfill() {
+    if (
+      validBookingIds.length ===
+      0
+    ) {
+      setMessage(
+        "Er zijn geen afspraken om te koppelen."
+      );
+
+      return;
+    }
+
     setLoading(true);
     setMessage("");
 
     try {
-      const response = await fetch(
-        "/api/customer/appointments/backfill-google",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            bookingIds,
-          }),
-        }
-      );
+      const response =
+        await fetch(
+          "/api/customer/appointments/backfill-google",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+              Accept:
+                "application/json",
+            },
+            cache: "no-store",
+            body:
+              JSON.stringify({
+                bookingIds:
+                  validBookingIds,
+              }),
+          }
+        );
 
-      const data = (await response.json()) as ApiResponse;
+      const data =
+        await readJsonResponse<ApiResponse>(
+          response
+        );
 
       if (!response.ok) {
         throw new Error(
           data.error ||
-            "De afspraken konden niet met Google Agenda gekoppeld worden."
+            "De afspraken konden niet gekoppeld worden."
         );
       }
 
-      const results = Array.isArray(data.results)
-        ? data.results
-        : [];
+      const results =
+        Array.isArray(
+          data.results
+        )
+          ? data.results
+          : [];
 
-      const succeeded = results.filter(
-        (result) => result.success && !result.skipped
-      ).length;
+      const succeeded =
+        results.filter(
+          (result) =>
+            result.success ===
+              true &&
+            result.skipped !== true
+        );
 
-      const skipped = results.filter(
-        (result) => result.skipped
-      ).length;
+      const skipped =
+        results.filter(
+          (result) =>
+            result.skipped ===
+            true
+        );
 
-      const failed = results.filter(
-        (result) => !result.success
-      );
+      const failed =
+        results.filter(
+          (result) =>
+            result.success !==
+            true
+        );
 
-      if (failed.length > 0) {
-        setMessage(
-          `${succeeded} afspraak/afspraken gekoppeld, ${skipped} overgeslagen en ${failed.length} mislukt. ${failed
-            .map((result) => result.error)
+      if (
+        failed.length > 0
+      ) {
+        const errors =
+          failed
+            .map(
+              (result) =>
+                result.error ||
+                result.message
+            )
             .filter(Boolean)
-            .join(" ")}`
+            .join(" ");
+
+        setMessage(
+          [
+            `${succeeded.length} gekoppeld.`,
+            `${skipped.length} overgeslagen.`,
+            `${failed.length} mislukt.`,
+            errors,
+          ]
+            .filter(Boolean)
+            .join(" ")
         );
 
         return;
       }
 
       setMessage(
-        `${succeeded} afspraak/afspraken succesvol gekoppeld aan Google Agenda.${
-          skipped > 0
-            ? ` ${skipped} afspraak/afspraken waren al gekoppeld.`
-            : ""
-        }`
+        [
+          `${succeeded.length} afspraak/afspraken succesvol gekoppeld.`,
+
+          skipped.length > 0
+            ? `${skipped.length} afspraak/afspraken waren al gekoppeld.`
+            : "",
+        ]
+          .filter(Boolean)
+          .join(" ")
+      );
+
+      router.refresh();
+
+      window.setTimeout(
+        () => {
+          window.location.reload();
+        },
+        800
       );
     } catch (error) {
+      console.error(
+        "BACKFILL BUTTON ERROR:",
+        error
+      );
+
       setMessage(
         error instanceof Error
           ? error.message
@@ -103,17 +235,32 @@ export default function BackfillGoogleBookingsButton() {
     <div className="google-backfill">
       <button
         type="button"
-        onClick={handleBackfill}
-        disabled={loading}
+        onClick={() => {
+          void handleBackfill();
+        }}
+        disabled={
+          loading ||
+          validBookingIds.length ===
+            0
+        }
         className="primary-action"
       >
         {loading
           ? "Afspraken koppelen..."
-          : "Bestaande afspraken koppelen aan Google Agenda"}
+          : label ||
+            (
+              validBookingIds.length ===
+              1
+                ? "Afspraak koppelen aan Google"
+                : `${validBookingIds.length} afspraken koppelen aan Google`
+            )}
       </button>
 
       {message && (
-        <p className="google-backfill-message">
+        <p
+          className="google-backfill-message"
+          aria-live="polite"
+        >
           {message}
         </p>
       )}

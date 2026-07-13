@@ -1,0 +1,237 @@
+
+/* =========================================================
+   Premium afspraakfuncties
+   ========================================================= */
+
+.appointment-premium-panel {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.appointment-premium-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.appointment-premium-card {
+  padding: 16px;
+  border: 1px solid rgba(3, 54, 99, 0.09);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.appointment-instructor-card {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.appointment-instructor-avatar {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  overflow: hidden;
+  place-items: center;
+  border-radius: 17px;
+  background: rgba(40, 185, 170, 0.12);
+  font-size: 1.4rem;
+}
+
+.appointment-instructor-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.appointment-instructor-card small,
+.appointment-premium-heading small {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--dashboard-muted);
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.appointment-instructor-card strong,
+.appointment-instructor-card span {
+  display: block;
+}
+
+.appointment-instructor-card strong,
+.appointment-premium-heading strong {
+  color: var(--dashboard-navy);
+  font-size: 0.9rem;
+}
+
+.appointment-instructor-card span {
+  margin-top: 2px;
+  color: var(--dashboard-muted);
+  font-size: 0.72rem;
+}
+
+.appointment-premium-heading {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.appointment-premium-heading > span {
+  font-size: 1.2rem;
+}
+
+.appointment-pass-progress {
+  height: 8px;
+  margin-top: 13px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(3, 54, 99, 0.08);
+}
+
+.appointment-pass-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    var(--dashboard-teal),
+    var(--dashboard-orange)
+  );
+}
+
+.appointment-premium-card > p {
+  margin: 9px 0 0;
+  color: var(--dashboard-muted);
+  font-size: 0.75rem;
+}
+
+.appointment-homework-card ul {
+  display: grid;
+  gap: 6px;
+  margin: 13px 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--dashboard-muted);
+  font-size: 0.8rem;
+}
+
+.appointment-payment-actions,
+.appointment-calendar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 13px;
+}
+
+.appointment-payment-actions a,
+.appointment-calendar-actions a {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 13px;
+  border-radius: 12px;
+  color: white;
+  background: var(--dashboard-navy);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.appointment-payment-actions span {
+  align-self: center;
+  color: var(--dashboard-muted);
+  font-size: 0.72rem;
+}
+
+.appointment-message-list {
+  display: grid;
+  gap: 9px;
+  max-height: 260px;
+  margin-top: 14px;
+  overflow-y: auto;
+}
+
+.appointment-message {
+  width: min(88%, 430px);
+  padding: 11px 13px;
+  border-radius: 15px;
+}
+
+.appointment-message--admin {
+  justify-self: start;
+  background: rgba(40, 185, 170, 0.11);
+}
+
+.appointment-message--customer {
+  justify-self: end;
+  background: rgba(3, 54, 99, 0.07);
+}
+
+.appointment-message strong {
+  color: var(--dashboard-navy);
+  font-size: 0.72rem;
+}
+
+.appointment-message p {
+  margin: 4px 0 0;
+  color: var(--dashboard-muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.appointment-message time {
+  display: block;
+  margin-top: 5px;
+  color: rgba(91, 117, 144, 0.75);
+  font-size: 0.64rem;
+}
+
+.appointment-message-form {
+  display: grid;
+  gap: 9px;
+  margin-top: 13px;
+}
+
+.appointment-message-form textarea {
+  width: 100%;
+  min-height: 84px;
+  resize: vertical;
+  padding: 12px;
+  border: 1px solid rgba(3, 54, 99, 0.12);
+  border-radius: 13px;
+  color: var(--dashboard-navy);
+  background: #fff;
+  font: inherit;
+  font-size: 0.8rem;
+}
+
+.appointment-message-form button {
+  width: fit-content;
+  min-height: 42px;
+  padding: 9px 15px;
+  border: 0;
+  border-radius: 13px;
+  color: white;
+  background: var(--dashboard-teal);
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+@media (max-width: 700px) {
+  .appointment-premium-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .appointment-message-form button,
+  .appointment-payment-actions a,
+  .appointment-calendar-actions a {
+    width: 100%;
+  }
+}

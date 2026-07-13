@@ -35,6 +35,11 @@
 @import "./styles/discount-codes-admin.css";
 @import "./styles/customer-appointments.css";
 @import "./styles/customer-pass-cards.css";
+@import "./styles/appointment-choice.css";
+@import "./styles/appointment-premium.css";
+@import "./styles/appointment-order.css";
+@import "./styles/appointment-premium-glass.css";
+@import "./styles/account-activation.css";
 
 @font-face {
   font-family: "StudioFont";

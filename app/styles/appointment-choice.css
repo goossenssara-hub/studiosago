@@ -1,0 +1,621 @@
+.appointment-choice-page {
+  position: relative;
+  z-index: 6;
+  width: 100%;
+  padding: 42px 28px 110px;
+}
+
+.appointment-choice-hero,
+.appointment-choice-section,
+.appointment-choice-footer-card {
+  width: min(1240px, 100%);
+  margin-inline: auto;
+}
+
+/* =========================================================
+   Hero
+   ========================================================= */
+
+.appointment-choice-hero {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1.25fr)
+    minmax(320px, 0.75fr);
+  gap: 42px;
+  align-items: center;
+  min-height: 540px;
+  padding: 54px;
+  border: 1px solid
+    rgba(255, 255, 255, 0.74);
+  border-radius: 38px;
+  background:
+    radial-gradient(
+      circle at 68% 15%,
+      rgba(254, 160, 32, 0.12),
+      transparent 22%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.95),
+      rgba(255, 253, 244, 0.86)
+    );
+  box-shadow:
+    0 28px 70px
+    rgba(3, 54, 99, 0.12);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.appointment-choice-copy {
+  min-width: 0;
+}
+
+.appointment-choice-page .eyebrow {
+  margin: 0 0 11px;
+  color: #28b9aa;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.3;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.appointment-choice-copy h1 {
+  max-width: 760px;
+  margin: 0;
+  color: #033663;
+  font-family:
+    "StudioTitle",
+    sans-serif;
+  font-size:
+    clamp(48px, 6vw, 78px);
+  font-weight: 950;
+  line-height: 0.98;
+}
+
+.appointment-choice-lead {
+  max-width: 700px;
+  margin: 23px 0 0;
+  color:
+    rgba(3, 54, 99, 0.72);
+  font-size:
+    clamp(17px, 1.8vw, 21px);
+  font-weight: 650;
+  line-height: 1.65;
+}
+
+.appointment-choice-notice {
+  display: grid;
+  grid-template-columns:
+    52px minmax(0, 1fr);
+  gap: 15px;
+  max-width: 700px;
+  margin-top: 30px;
+  padding: 20px;
+  border: 1px solid
+    rgba(40, 185, 170, 0.2);
+  border-radius: 20px;
+  background:
+    rgba(40, 185, 170, 0.08);
+}
+
+.appointment-choice-notice
+  > span {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background:
+    rgba(40, 185, 170, 0.13);
+  font-size: 23px;
+}
+
+.appointment-choice-notice
+  strong {
+  display: block;
+  color: #033663;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.appointment-choice-notice p {
+  margin: 6px 0 0;
+  color:
+    rgba(3, 54, 99, 0.66);
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.55;
+}
+
+.appointment-choice-quicklinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 28px;
+}
+
+.appointment-choice-primary,
+.appointment-choice-secondary {
+  min-height: 54px;
+  padding: 0 23px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 17px;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 900;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.appointment-choice-primary {
+  background:
+    linear-gradient(
+      135deg,
+      #fea020,
+      #fb6730
+    );
+  color: white;
+  box-shadow:
+    0 14px 30px
+    rgba(251, 103, 48, 0.22);
+}
+
+.appointment-choice-secondary {
+  border: 1px solid
+    rgba(3, 54, 99, 0.14);
+  background:
+    rgba(255, 255, 255, 0.9);
+  color: #033663;
+}
+
+/* =========================================================
+   Rechter stappenpaneel
+   ========================================================= */
+
+.appointment-choice-info {
+  padding: 12px 28px;
+  border: 1px solid
+    rgba(3, 54, 99, 0.08);
+  border-radius: 30px;
+  background:
+    rgba(255, 255, 255, 0.91);
+  box-shadow:
+    0 22px 52px
+    rgba(3, 54, 99, 0.1);
+}
+
+.appointment-choice-info
+  > div {
+  display: grid;
+  grid-template-columns:
+    46px minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  padding: 23px 0;
+}
+
+.appointment-choice-info
+  > div
+  + div {
+  border-top: 1px solid
+    rgba(3, 54, 99, 0.08);
+}
+
+.appointment-choice-info
+  > div
+  > span {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 15px;
+  background:
+    linear-gradient(
+      135deg,
+      #28b9aa,
+      #1f9f94
+    );
+  color: white;
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.appointment-choice-info
+  strong {
+  display: block;
+  color: #033663;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.appointment-choice-info p {
+  margin: 6px 0 0;
+  color:
+    rgba(3, 54, 99, 0.62);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+/* =========================================================
+   Kaarten
+   ========================================================= */
+
+.appointment-choice-section {
+  margin-top: 70px;
+}
+
+.appointment-choice-heading {
+  max-width: 770px;
+  margin-bottom: 30px;
+}
+
+.appointment-choice-heading h2 {
+  margin: 0;
+  color: #033663;
+  font-family:
+    "StudioTitle",
+    sans-serif;
+  font-size:
+    clamp(35px, 4vw, 54px);
+  font-weight: 950;
+  line-height: 1.05;
+}
+
+.appointment-choice-heading
+  > p:last-child {
+  margin: 15px 0 0;
+  color:
+    rgba(3, 54, 99, 0.68);
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.65;
+}
+
+.appointment-choice-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 26px;
+}
+
+.appointment-choice-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding: 33px;
+  border: 1px solid
+    rgba(255, 255, 255, 0.76);
+  border-radius: 30px;
+  background:
+    rgba(255, 255, 255, 0.94);
+  box-shadow:
+    0 20px 52px
+    rgba(3, 54, 99, 0.1);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.appointment-choice-card.teal {
+  background:
+    linear-gradient(
+      145deg,
+      rgba(40, 185, 170, 0.13),
+      rgba(255, 255, 255, 0.96) 48%
+    );
+}
+
+.appointment-choice-card.navy {
+  background:
+    linear-gradient(
+      145deg,
+      rgba(3, 54, 99, 0.1),
+      rgba(255, 255, 255, 0.96) 48%
+    );
+}
+
+.appointment-choice-card.green {
+  background:
+    linear-gradient(
+      145deg,
+      rgba(84, 149, 92, 0.13),
+      rgba(255, 255, 255, 0.96) 48%
+    );
+}
+
+.appointment-choice-card.purple {
+  background:
+    linear-gradient(
+      145deg,
+      rgba(155, 129, 184, 0.15),
+      rgba(255, 255, 255, 0.96) 48%
+    );
+}
+
+.appointment-choice-card:hover {
+  transform:
+    translateY(-5px);
+  box-shadow:
+    0 28px 64px
+    rgba(3, 54, 99, 0.15);
+}
+
+.appointment-choice-card-top {
+  display: flex;
+  align-items: center;
+  justify-content:
+    space-between;
+  gap: 16px;
+}
+
+.appointment-choice-icon {
+  display: grid;
+  place-items: center;
+  width: 61px;
+  height: 61px;
+  border-radius: 19px;
+  background:
+    rgba(255, 255, 255, 0.82);
+  box-shadow:
+    0 10px 24px
+    rgba(3, 54, 99, 0.08);
+  font-size: 27px;
+}
+
+.appointment-choice-duration {
+  padding: 9px 14px;
+  border-radius: 999px;
+  background:
+    rgba(255, 255, 255, 0.75);
+  color: #033663;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.appointment-choice-eyebrow {
+  margin: 25px 0 0;
+  color: #28b9aa;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.appointment-choice-card h2 {
+  margin: 10px 0 0;
+  color: #033663;
+  font-family:
+    "StudioTitle",
+    sans-serif;
+  font-size:
+    clamp(28px, 3vw, 38px);
+  font-weight: 950;
+  line-height: 1.1;
+}
+
+.appointment-choice-price {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-top: 19px;
+}
+
+.appointment-choice-price
+  strong {
+  color: #033663;
+  font-size:
+    clamp(34px, 4vw, 48px);
+  font-weight: 950;
+  line-height: 1;
+}
+
+.appointment-choice-price
+  span {
+  color:
+    rgba(3, 54, 99, 0.62);
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.appointment-choice-description {
+  margin: 20px 0 0;
+  color:
+    rgba(3, 54, 99, 0.69);
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.65;
+}
+
+.appointment-choice-card ul {
+  display: grid;
+  gap: 11px;
+  margin: 24px 0 30px;
+  padding: 0;
+  list-style: none;
+}
+
+.appointment-choice-card li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color:
+    rgba(3, 54, 99, 0.75);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.appointment-choice-card
+  li
+  > span {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  border-radius: 50%;
+  background:
+    rgba(40, 185, 170, 0.12);
+  color: #168f86;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.appointment-choice-button {
+  min-height: 54px;
+  margin-top: auto;
+  padding: 0 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content:
+    space-between;
+  gap: 13px;
+  border-radius: 17px;
+  background:
+    linear-gradient(
+      135deg,
+      #fea020,
+      #fb6730
+    );
+  color: white;
+  box-shadow:
+    0 14px 30px
+    rgba(251, 103, 48, 0.22);
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 900;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.appointment-choice-button:hover,
+.appointment-choice-primary:hover,
+.appointment-choice-secondary:hover {
+  transform:
+    translateY(-2px);
+}
+
+/* =========================================================
+   Beurtenkaartmelding
+   ========================================================= */
+
+.appointment-choice-footer-card {
+  display: grid;
+  grid-template-columns:
+    55px minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  margin-top: 28px;
+  padding: 23px 27px;
+  border: 1px solid
+    rgba(3, 54, 99, 0.09);
+  border-radius: 23px;
+  background:
+    rgba(255, 255, 255, 0.82);
+}
+
+.appointment-choice-footer-icon {
+  display: grid;
+  place-items: center;
+  width: 55px;
+  height: 55px;
+  border-radius: 16px;
+  background:
+    rgba(254, 160, 32, 0.13);
+  font-size: 24px;
+}
+
+.appointment-choice-footer-card
+  strong {
+  color: #033663;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.appointment-choice-footer-card
+  p {
+  margin: 5px 0 0;
+  color:
+    rgba(3, 54, 99, 0.64);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.appointment-choice-footer-card
+  a {
+  color: #033663;
+  font-size: 14px;
+  font-weight: 900;
+  text-underline-offset: 4px;
+}
+
+/* =========================================================
+   Responsive
+   ========================================================= */
+
+@media (max-width: 980px) {
+  .appointment-choice-hero {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .appointment-choice-page {
+    padding: 28px 16px 80px;
+  }
+
+  .appointment-choice-hero {
+    min-height: auto;
+    padding: 32px 24px;
+    border-radius: 28px;
+  }
+
+  .appointment-choice-copy h1 {
+    font-size: 46px;
+  }
+
+  .appointment-choice-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .appointment-choice-footer-card {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .appointment-choice-page {
+    padding-inline: 12px;
+  }
+
+  .appointment-choice-hero {
+    padding: 27px 20px;
+  }
+
+  .appointment-choice-copy h1 {
+    font-size: 39px;
+  }
+
+  .appointment-choice-notice {
+    grid-template-columns: 1fr;
+  }
+
+  .appointment-choice-quicklinks {
+    flex-direction: column;
+  }
+
+  .appointment-choice-primary,
+  .appointment-choice-secondary {
+    width: 100%;
+  }
+
+  .appointment-choice-card {
+    padding: 25px 21px;
+  }
+}

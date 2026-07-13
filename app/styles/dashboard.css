@@ -7,8 +7,7 @@
   --dashboard-cream: #fffdf4;
   --dashboard-muted: #5b7590;
   --dashboard-border: rgba(3, 54, 99, 0.1);
-  --dashboard-shadow:
-    0 18px 48px rgba(3, 54, 99, 0.08);
+  --dashboard-shadow: 0 18px 48px rgba(3, 54, 99, 0.08);
 }
 
 html {
@@ -110,8 +109,7 @@ html {
     var(--dashboard-deep-orange),
     var(--dashboard-orange)
   );
-  box-shadow:
-    0 12px 26px rgba(251, 103, 48, 0.2);
+  box-shadow: 0 12px 26px rgba(251, 103, 48, 0.2);
 }
 
 .dashboard-secondary-button {
@@ -170,11 +168,7 @@ html {
   place-items: center;
   border-radius: 16px;
   color: white;
-  background: linear-gradient(
-    135deg,
-    var(--dashboard-teal),
-    #69d2c8
-  );
+  background: linear-gradient(135deg, var(--dashboard-teal), #69d2c8);
   font-size: 1.2rem;
   font-weight: 900;
 }
@@ -262,8 +256,7 @@ html {
 .dashboard-summary-grid,
 .dashboard-bottom-grid {
   display: grid;
-  grid-template-columns:
-    repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
 }
 
@@ -452,39 +445,28 @@ html {
   padding: 28px;
 }
 
-.dashboard-section-card--passes
-  .customer-passes-section {
+.dashboard-section-card--passes .customer-passes-section {
   margin-top: 0;
 }
 
-.dashboard-section-card--passes
-  .customer-passes-grid {
-  grid-template-columns:
-    repeat(2, minmax(0, 1fr));
+.dashboard-section-card--passes .customer-passes-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
 }
 
-.dashboard-section-card--passes
-  .customer-pass-card {
+.dashboard-section-card--passes .customer-pass-card {
   padding: 24px;
 }
 
-.dashboard-section-card--passes
-  .customer-pass-card h3 {
-  font-size: clamp(
-    1.45rem,
-    2.2vw,
-    2rem
-  );
+.dashboard-section-card--passes .customer-pass-card h3 {
+  font-size: clamp(1.45rem, 2.2vw, 2rem);
 }
 
-.dashboard-section-card--passes
-  .customer-pass-stamp {
+.dashboard-section-card--passes .customer-pass-stamp {
   max-width: 68px;
 }
 
-.dashboard-section-card--passes
-  .customer-passes-policy {
+.dashboard-section-card--passes .customer-passes-policy {
   max-width: none;
 }
 
@@ -492,43 +474,35 @@ html {
    Afspraken compacter
    ========================================================= */
 
-.dashboard-section-card
-  .customer-appointments {
+.dashboard-section-card .customer-appointments {
   gap: 16px;
 }
 
-.dashboard-section-card
-  .agenda-list {
-  grid-template-columns:
-    repeat(2, minmax(0, 1fr));
+.dashboard-section-card .agenda-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
 
-.dashboard-section-card
-  .agenda-item {
+.dashboard-section-card .agenda-item {
   padding: 20px;
   border-radius: 21px;
 }
 
-.dashboard-section-card
-  .appointment-title {
+.dashboard-section-card .appointment-title {
   font-size: 1.1rem;
 }
 
-.dashboard-section-card
-  .appointment-details {
+.dashboard-section-card .appointment-details {
   margin-top: 17px;
   padding-top: 16px;
 }
 
-.dashboard-section-card
-  .appointment-actions {
+.dashboard-section-card .appointment-actions {
   gap: 9px;
   margin-top: 18px;
 }
 
-.dashboard-section-card
-  .appointment-action {
+.dashboard-section-card .appointment-action {
   min-height: 44px;
   padding: 0 15px;
   font-size: 0.8rem;
@@ -581,20 +555,15 @@ html {
     justify-content: flex-start;
   }
 
-  .dashboard-section-card--passes
-    .customer-passes-grid,
-  .dashboard-section-card
-    .agenda-list {
+  .dashboard-section-card--passes .customer-passes-grid,
+  .dashboard-section-card .agenda-list {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 700px) {
   .customer-dashboard {
-    width: min(
-      100% - 24px,
-      1500px
-    );
+    width: min(100% - 24px, 1500px);
     padding-top: 24px;
   }
 
@@ -642,3 +611,573 @@ html {
     width: 100%;
   }
 }
+/* =========================================================
+   Studio SaGo bevestigingsmodal en meldingen
+   ========================================================= */
+
+.sago-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(3, 31, 57, 0.58);
+  backdrop-filter: blur(10px);
+  animation: sagoBackdropIn 0.2s ease both;
+}
+
+.sago-modal {
+  position: relative;
+  width: min(100%, 560px);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding: 38px;
+  border: 1px solid rgba(3, 54, 99, 0.1);
+  border-radius: 32px;
+  color: var(--dashboard-navy);
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(254, 160, 32, 0.14),
+      transparent 30%
+    ),
+    #fff;
+  box-shadow: 0 30px 90px rgba(3, 31, 57, 0.28);
+  animation: sagoModalIn 0.24s ease both;
+}
+
+.sago-modal-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid rgba(3, 54, 99, 0.1);
+  border-radius: 50%;
+  color: var(--dashboard-navy);
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 1.55rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.sago-modal-icon {
+  display: grid;
+  width: 66px;
+  height: 66px;
+  place-items: center;
+  margin-bottom: 20px;
+  border: 1px solid rgba(251, 103, 48, 0.2);
+  border-radius: 22px;
+  color: #d84b27;
+  background: rgba(251, 103, 48, 0.1);
+  font-size: 2rem;
+  font-weight: 900;
+}
+
+.sago-modal-eyebrow {
+  margin: 0 0 8px;
+  color: var(--dashboard-deep-orange);
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.sago-modal h2 {
+  margin: 0;
+  color: var(--dashboard-navy);
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+
+.sago-modal-intro {
+  margin: 14px 0 0;
+  color: var(--dashboard-muted);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.sago-modal-booking {
+  display: grid;
+  gap: 12px;
+  margin-top: 25px;
+  padding: 20px;
+  border: 1px solid rgba(3, 54, 99, 0.09);
+  border-radius: 21px;
+  background: rgba(3, 54, 99, 0.035);
+}
+
+.sago-modal-booking p {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+}
+
+.sago-modal-booking p span {
+  width: 25px;
+  flex: 0 0 25px;
+  text-align: center;
+}
+
+.sago-modal-booking strong {
+  color: var(--dashboard-navy);
+  font-size: 0.95rem;
+}
+
+.sago-modal-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 16px 18px;
+  border: 1px solid rgba(254, 160, 32, 0.24);
+  border-radius: 18px;
+  color: #765017;
+  background: rgba(254, 160, 32, 0.1);
+}
+
+.sago-modal-warning p {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.sago-modal-actions {
+  display: grid;
+  grid-template-columns: 0.8fr 1.4fr;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.sago-modal-button {
+  min-height: 54px;
+  padding: 13px 18px;
+  border-radius: 17px;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 850;
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    opacity 0.18s ease;
+}
+
+.sago-modal-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.sago-modal-button:disabled,
+.sago-modal-close:disabled {
+  cursor: wait;
+  opacity: 0.58;
+}
+
+.sago-modal-button--secondary {
+  border: 1px solid rgba(3, 54, 99, 0.13);
+  color: var(--dashboard-navy);
+  background: #fff;
+}
+
+.sago-modal-button--danger {
+  border: 1px solid #fb6730;
+  color: #fff;
+  background: linear-gradient(135deg, #fb6730, #e84d25);
+  box-shadow: 0 13px 28px rgba(251, 103, 48, 0.24);
+}
+
+.sago-toast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 10000;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 14px;
+  width: min(430px, calc(100vw - 32px));
+  padding: 18px;
+  border: 1px solid rgba(3, 54, 99, 0.1);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 22px 60px rgba(3, 31, 57, 0.22);
+  backdrop-filter: blur(16px);
+  animation: sagoToastIn 0.25s ease both;
+}
+
+.sago-toast--success {
+  border-left: 5px solid var(--dashboard-teal);
+}
+
+.sago-toast--error {
+  border-left: 5px solid var(--dashboard-deep-orange);
+}
+
+.sago-toast-icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 13px;
+  font-size: 1.15rem;
+  font-weight: 900;
+}
+
+.sago-toast--success .sago-toast-icon {
+  color: #087b72;
+  background: rgba(40, 185, 170, 0.13);
+}
+
+.sago-toast--error .sago-toast-icon {
+  color: #d84b27;
+  background: rgba(251, 103, 48, 0.11);
+}
+
+.sago-toast-content strong {
+  display: block;
+  margin: 1px 0 7px;
+  color: var(--dashboard-navy);
+  font-size: 0.98rem;
+}
+
+.sago-toast-content p {
+  margin: 3px 0 0;
+  color: var(--dashboard-muted);
+  font-size: 0.79rem;
+  line-height: 1.45;
+}
+
+.sago-toast-close {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: var(--dashboard-muted);
+  background: transparent;
+  font-size: 1.3rem;
+  cursor: pointer;
+}
+
+@keyframes sagoBackdropIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes sagoModalIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes sagoToastIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 600px) {
+  .sago-modal-backdrop {
+    align-items: end;
+    padding: 12px;
+  }
+
+  .sago-modal {
+    width: 100%;
+    max-height: calc(100vh - 24px);
+    padding: 30px 20px 22px;
+    border-radius: 27px;
+  }
+
+  .sago-modal-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .sago-modal-button--danger {
+    order: -1;
+  }
+
+  .sago-toast {
+    right: 16px;
+    bottom: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sago-modal-backdrop,
+  .sago-modal,
+  .sago-toast {
+    animation: none;
+  }
+}
+
+/* =========================================================
+   DEFINITIEVE MODAL VIA REACT PORTAL
+   ========================================================= */
+
+.sago-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483646;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100dvh;
+  padding: 20px 16px 48px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  background: rgba(3, 31, 57, 0.58);
+  backdrop-filter: blur(10px);
+}
+
+.sago-modal {
+  position: relative;
+  box-sizing: border-box;
+  width: min(680px, 100%);
+  margin: 0 auto;
+  padding: 26px;
+  border: 1px solid rgba(3, 54, 99, 0.1);
+  border-radius: 28px;
+  color: var(--dashboard-navy);
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(254, 160, 32, 0.12),
+      transparent 28%
+    ),
+    #fff;
+  box-shadow: 0 28px 80px rgba(3, 31, 57, 0.3);
+}
+
+.sago-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid rgba(3, 54, 99, 0.1);
+  border-radius: 50%;
+  color: var(--dashboard-navy);
+  background: #fff;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.sago-modal-icon {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  margin-bottom: 12px;
+  border: 1px solid rgba(251, 103, 48, 0.2);
+  border-radius: 17px;
+  color: #d84b27;
+  background: rgba(251, 103, 48, 0.1);
+  font-size: 1.55rem;
+  font-weight: 900;
+}
+
+.sago-modal-eyebrow {
+  margin: 0 0 5px;
+  color: var(--dashboard-deep-orange);
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.sago-modal h2 {
+  margin: 0;
+  padding-right: 44px;
+  color: var(--dashboard-navy);
+  font-size: clamp(2rem, 4.5vw, 3rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.sago-modal-intro {
+  margin: 10px 0 0;
+  color: var(--dashboard-muted);
+  font-size: 0.96rem;
+  line-height: 1.45;
+}
+
+.sago-modal-booking {
+  display: grid;
+  gap: 9px;
+  margin-top: 18px;
+  padding: 16px 18px;
+  border: 1px solid rgba(3, 54, 99, 0.09);
+  border-radius: 18px;
+  background: rgba(3, 54, 99, 0.035);
+}
+
+.sago-modal-booking p {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.sago-modal-booking p span {
+  width: 24px;
+  flex: 0 0 24px;
+  text-align: center;
+}
+
+.sago-modal-booking strong {
+  color: var(--dashboard-navy);
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.sago-modal-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 13px 15px;
+  border: 1px solid rgba(254, 160, 32, 0.28);
+  border-radius: 16px;
+  color: #765017;
+  background: rgba(254, 160, 32, 0.1);
+}
+
+.sago-modal-warning p {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.sago-modal-actions {
+  display: grid;
+  grid-template-columns:
+    minmax(130px, 0.8fr)
+    minmax(220px, 1.35fr);
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.sago-modal-button {
+  min-height: 48px;
+  padding: 11px 16px;
+  border-radius: 15px;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.sago-modal-button--secondary {
+  border: 1px solid rgba(3, 54, 99, 0.14);
+  color: var(--dashboard-navy);
+  background: #fff;
+}
+
+.sago-modal-button--danger {
+  border: 1px solid var(--dashboard-deep-orange);
+  color: #fff;
+  background: linear-gradient(
+    135deg,
+    var(--dashboard-deep-orange),
+    #e84d25
+  );
+  box-shadow: 0 11px 24px rgba(251, 103, 48, 0.22);
+}
+
+@media (max-height: 760px) and (min-width: 601px) {
+  .sago-modal-backdrop {
+    padding-top: 10px;
+  }
+
+  .sago-modal {
+    width: min(620px, 100%);
+    padding: 18px 22px;
+    border-radius: 22px;
+  }
+
+  .sago-modal-icon {
+    width: 42px;
+    height: 42px;
+    margin-bottom: 8px;
+    font-size: 1.25rem;
+  }
+
+  .sago-modal h2 {
+    font-size: clamp(1.7rem, 4vw, 2.35rem);
+  }
+
+  .sago-modal-intro {
+    margin-top: 6px;
+  }
+
+  .sago-modal-booking {
+    gap: 6px;
+    margin-top: 10px;
+    padding: 11px 14px;
+  }
+
+  .sago-modal-warning {
+    margin-top: 8px;
+    padding: 10px 12px;
+  }
+
+  .sago-modal-actions {
+    margin-top: 10px;
+  }
+
+  .sago-modal-button {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 600px) {
+  .sago-modal-backdrop {
+    padding: 10px 10px 36px;
+  }
+
+  .sago-modal {
+    width: 100%;
+    padding: 22px 18px 18px;
+    border-radius: 24px;
+  }
+
+  .sago-modal h2 {
+    font-size: clamp(1.8rem, 10vw, 2.5rem);
+  }
+
+  .sago-modal-actions {
+    grid-template-columns: 1fr;
+    margin-top: 15px;
+  }
+
+  .sago-modal-button--danger {
+    order: -1;
+  }
+}
+

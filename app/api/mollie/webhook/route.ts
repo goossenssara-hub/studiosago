@@ -1,30 +1,65 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+
 import {
   fulfillWebshopOrder,
   WebshopOrderMetadata,
 } from "@/lib/fulfillWebshopOrder";
 
+import {
+  fulfillAppointmentOrder,
+} from "@/lib/fulfillAppointmentOrder";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function POST(request: Request) {
-  try {
-    const supabaseAdmin = getSupabaseAdmin();
+type MollieMetadata = WebshopOrderMetadata & {
+  orderType?: string;
+  appointmentOrderId?: string;
+  checkoutId?: string;
+  bookingType?: string;
+  educationLevel?: string;
+  deliveryType?: string;
+  participantCount?: number | string;
+  purchaserEmail?: string;
+};
 
-    const formData = await request.formData();
-    const paymentId = String(
-      formData.get("id") || ""
-    ).trim();
+function clean(value: unknown): string {
+  return String(value ?? "").trim();
+}
+
+export async function POST(
+  request: Request
+): Promise<NextResponse> {
+  try {
+    const supabaseAdmin =
+      getSupabaseAdmin();
+
+    const formData =
+      await request.formData();
+
+    const paymentId =
+      clean(
+        formData.get("id")
+      );
 
     if (!paymentId) {
       return NextResponse.json(
-        { error: "Geen payment id ontvangen." },
-        { status: 400 }
+        {
+          error:
+            "Geen payment id ontvangen.",
+        },
+        {
+          status: 400,
+        }
       );
     }
 
-    const mollieApiKey = process.env.MOLLIE_API_KEY;
+    const mollieApiKey =
+      clean(
+        process.env
+          .MOLLIE_API_KEY
+      );
 
     if (!mollieApiKey) {
       console.error(
@@ -32,26 +67,35 @@ export async function POST(request: Request) {
       );
 
       return NextResponse.json(
-        { error: "De Mollie-configuratie ontbreekt." },
-        { status: 500 }
+        {
+          error:
+            "De Mollie-configuratie ontbreekt.",
+        },
+        {
+          status: 500,
+        }
       );
     }
 
-    const mollieResponse = await fetch(
-      `https://api.mollie.com/v2/payments/${encodeURIComponent(
-        paymentId
-      )}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${mollieApiKey}`,
-          Accept: "application/json",
-        },
-        cache: "no-store",
-      }
-    );
+    const mollieResponse =
+      await fetch(
+        `https://api.mollie.com/v2/payments/${encodeURIComponent(
+          paymentId
+        )}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization:
+              `Bearer ${mollieApiKey}`,
+            Accept:
+              "application/json",
+          },
+          cache: "no-store",
+        }
+      );
 
-    const payment = await mollieResponse.json();
+    const payment =
+      await mollieResponse.json();
 
     if (!mollieResponse.ok) {
       console.error(
@@ -65,63 +109,275 @@ export async function POST(request: Request) {
             payment.detail ||
             "De betaling kon niet bij Mollie opgehaald worden.",
         },
-        { status: mollieResponse.status }
+        {
+          status:
+            mollieResponse.status,
+        }
       );
     }
 
-    const paymentStatus = String(
-      payment.status || "open"
-    );
+    const paymentStatus =
+      clean(
+        payment.status ||
+        "open"
+      );
+
+    const metadata: MollieMetadata =
+      payment.metadata &&
+      typeof payment.metadata ===
+        "object"
+        ? (
+            payment.metadata as MollieMetadata
+          )
+        : {};
+
+    const orderType =
+      clean(
+        metadata.orderType
+      );
+
+    const isAppointmentOrder =
+      orderType ===
+        "appointment" ||
+      Boolean(
+        clean(
+          metadata
+            .appointmentOrderId
+        )
+      );
 
     /*
-     * Ook mislukte, verlopen of geannuleerde betalingen
-     * in webshop_payments bijwerken.
+     * Afspraakbestellingen worden bijgewerkt
+     * in appointment_orders.
      */
-    const { error: statusUpdateError } =
-      await supabaseAdmin
-        .from("webshop_payments")
-        .update({
-          status: paymentStatus,
-        })
-        .eq("payment_id", payment.id);
+    if (isAppointmentOrder) {
+      const appointmentOrderId =
+        clean(
+          metadata
+            .appointmentOrderId
+        );
 
-    if (statusUpdateError) {
-      console.error(
-        "MOLLIE WEBHOOK STATUS UPDATE ERROR:",
-        statusUpdateError
-      );
+      const checkoutId =
+        clean(
+          metadata.checkoutId
+        );
+
+      let updateQuery =
+        supabaseAdmin
+          .from(
+            "appointment_orders"
+          )
+          .update({
+            mollie_payment_id:
+              payment.id,
+            payment_status:
+              paymentStatus,
+            updated_at:
+              new Date()
+                .toISOString(),
+          });
+
+      if (
+        appointmentOrderId
+      ) {
+        updateQuery =
+          updateQuery.eq(
+            "id",
+            appointmentOrderId
+          );
+      } else if (
+        checkoutId
+      ) {
+        updateQuery =
+          updateQuery.eq(
+            "checkout_id",
+            checkoutId
+          );
+      } else {
+        updateQuery =
+          updateQuery.eq(
+            "mollie_payment_id",
+            payment.id
+          );
+      }
+
+      const {
+        error:
+          appointmentStatusError,
+      } =
+        await updateQuery;
+
+      if (
+        appointmentStatusError
+      ) {
+        console.error(
+          "APPOINTMENT PAYMENT STATUS UPDATE ERROR:",
+          appointmentStatusError
+        );
+      }
+    } else {
+      /*
+       * Bestaande webshopbetalingen blijven
+       * in webshop_payments bijgewerkt worden.
+       */
+      const {
+        error:
+          webshopStatusError,
+      } =
+        await supabaseAdmin
+          .from(
+            "webshop_payments"
+          )
+          .update({
+            status:
+              paymentStatus,
+          })
+          .eq(
+            "payment_id",
+            payment.id
+          );
+
+      if (
+        webshopStatusError
+      ) {
+        console.error(
+          "MOLLIE WEBHOOK WEBSHOP STATUS UPDATE ERROR:",
+          webshopStatusError
+        );
+      }
     }
 
     /*
-     * Alleen een definitief betaalde betaling levert
-     * een boeking, contact en eventueel beurtenkaart op.
+     * Alleen betaalde betalingen worden vervuld.
      */
-    if (paymentStatus !== "paid") {
+    if (
+      paymentStatus !==
+      "paid"
+    ) {
       return NextResponse.json({
         received: true,
-        status: paymentStatus,
+        status:
+          paymentStatus,
+        orderType:
+          isAppointmentOrder
+            ? "appointment"
+            : "webshop",
       });
     }
 
-    const metadata =
-      payment.metadata &&
-      typeof payment.metadata === "object"
-        ? (payment.metadata as WebshopOrderMetadata)
-        : {};
+    /*
+     * Nieuwe flow voor losse en groepsbegeleiding.
+     */
+    if (
+      isAppointmentOrder
+    ) {
+      try {
+        const result =
+          await fulfillAppointmentOrder({
+            supabaseAdmin,
+            paymentId:
+              clean(
+                payment.id
+              ),
+            metadata,
+          });
 
-    const result = await fulfillWebshopOrder({
-      supabaseAdmin,
-      paymentId: String(payment.id),
-      metadata: {
-        ...metadata,
-        paymentMethod: "mollie",
-      },
-    });
+        return NextResponse.json({
+          received: true,
+          status: "paid",
+          orderType:
+            "appointment",
+          duplicate:
+            result.duplicate,
+          orderId:
+            result.orderId,
+          purchaserProfileId:
+            result.purchaserProfileId,
+          introductionAvailable:
+            result.introductionAvailable,
+        });
+      } catch (fulfillmentError) {
+        console.error(
+          "APPOINTMENT FULFILLMENT ERROR:",
+          fulfillmentError
+        );
+
+        const appointmentOrderId =
+          clean(
+            metadata
+              .appointmentOrderId
+          );
+
+        if (
+          appointmentOrderId
+        ) {
+          await supabaseAdmin
+            .from(
+              "appointment_orders"
+            )
+            .update({
+              payment_status:
+                "paid",
+              booking_status:
+                "fulfillment_error",
+              fulfillment_error:
+                fulfillmentError instanceof
+                Error
+                  ? fulfillmentError.message
+                  : "Onbekende fout bij verwerking.",
+              updated_at:
+                new Date()
+                  .toISOString(),
+            })
+            .eq(
+              "id",
+              appointmentOrderId
+            );
+        }
+
+        /*
+         * Mollie mag opnieuw proberen wanneer de
+         * verwerking tijdelijk mislukt.
+         */
+        return NextResponse.json(
+          {
+            error:
+              fulfillmentError instanceof
+              Error
+                ? fulfillmentError.message
+                : "De afspraakbestelling kon niet verwerkt worden.",
+          },
+          {
+            status: 500,
+          }
+        );
+      }
+    }
+
+    /*
+     * Bestaande webshop- en beurtenkaartflow.
+     */
+    const webshopResult =
+      await fulfillWebshopOrder({
+        supabaseAdmin,
+        paymentId:
+          clean(
+            payment.id
+          ),
+        metadata: {
+          ...metadata,
+          paymentMethod:
+            "mollie",
+        },
+      });
 
     return NextResponse.json({
       received: true,
       status: "paid",
-      duplicate: result.duplicate,
+      orderType:
+        "webshop",
+      duplicate:
+        webshopResult.duplicate,
     });
   } catch (error) {
     console.error(
@@ -136,7 +392,9 @@ export async function POST(request: Request) {
             ? error.message
             : "Er trad een fout op tijdens de verwerking van de webhook.",
       },
-      { status: 500 }
+      {
+        status: 500,
+      }
     );
   }
 }

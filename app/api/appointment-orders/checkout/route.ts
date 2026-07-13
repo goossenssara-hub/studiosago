@@ -1,15 +1,11 @@
 import { NextResponse } from "next/server";
-import { createMollieClient } from "@mollie/api-client";
-
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 type BookingType = "individual" | "group";
-
 type EducationLevel = "primary" | "secondary";
-
 type DeliveryType = "digital" | "home";
 
 type PurchaserInput = {
@@ -81,6 +77,19 @@ type ValidatedParticipant = {
   parentPhone: string;
 };
 
+type MolliePaymentResponse = {
+  id?: string;
+  status?: string;
+  detail?: string;
+  title?: string;
+
+  _links?: {
+    checkout?: {
+      href?: string;
+    };
+  };
+};
+
 const PRICE_CONFIG = {
   individual: {
     primary: 35,
@@ -133,9 +142,7 @@ function isDeliveryType(value: string): value is DeliveryType {
 }
 
 function roundCurrency(value: number): number {
-  return (
-    Math.round((value + Number.EPSILON) * 100) / 100
-  );
+  return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
 function moneyValue(value: number): string {
@@ -369,6 +376,31 @@ async function deleteOrder({
   }
 }
 
+async function updateOrderStatus({
+  supabaseAdmin,
+  orderId,
+  paymentStatus,
+}: {
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
+  orderId: string;
+  paymentStatus: string;
+}): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from("appointment_orders")
+    .update({
+      payment_status: paymentStatus,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", orderId);
+
+  if (error) {
+    console.error(
+      "APPOINTMENT ORDER STATUS UPDATE ERROR:",
+      error
+    );
+  }
+}
+
 export async function POST(
   request: Request
 ): Promise<NextResponse> {
@@ -379,10 +411,14 @@ export async function POST(
       (await request.json()) as CheckoutRequestBody;
 
     const bookingTypeValue = clean(body.bookingType);
+
     const educationLevelValue = clean(
       body.educationLevel
     );
-    const deliveryTypeValue = clean(body.deliveryType);
+
+    const deliveryTypeValue = clean(
+      body.deliveryType
+    );
 
     if (!isBookingType(bookingTypeValue)) {
       return NextResponse.json(
@@ -391,9 +427,7 @@ export async function POST(
           error:
             "Het gekozen type begeleiding is ongeldig.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
@@ -404,9 +438,7 @@ export async function POST(
           error:
             "Het gekozen onderwijsniveau is ongeldig.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
@@ -417,9 +449,7 @@ export async function POST(
           error:
             "Kies digitale begeleiding of begeleiding aan huis.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
@@ -441,7 +471,10 @@ export async function POST(
       purchaser.email
     );
 
-    const purchaserPhone = clean(purchaser.phone);
+    const purchaserPhone = clean(
+      purchaser.phone
+    );
+
     const purchaserAddress = clean(
       purchaser.address
     );
@@ -453,9 +486,7 @@ export async function POST(
           error:
             "Vul de voornaam en familienaam van de koper in.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
@@ -469,9 +500,7 @@ export async function POST(
           error:
             "Vul een geldig e-mailadres van de koper in.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
@@ -482,9 +511,7 @@ export async function POST(
           error:
             "Vul het telefoonnummer van de koper in.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
@@ -498,9 +525,7 @@ export async function POST(
           error:
             "Vul het volledige adres voor begeleiding aan huis in.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
@@ -514,9 +539,7 @@ export async function POST(
           error:
             "Bevestig dat het adres binnen 15 km rond Peer ligt.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
@@ -527,9 +550,7 @@ export async function POST(
           error:
             "Je moet akkoord gaan met de boekings- en annuleringsvoorwaarden.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
@@ -540,9 +561,7 @@ export async function POST(
           error:
             "Je moet akkoord gaan met de verwerking van de ingevulde gegevens.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
@@ -581,9 +600,7 @@ export async function POST(
               ? "Vul de gegevens van alle gekozen groepsleden in."
               : "Vul de gegevens van de leerling in.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
@@ -606,9 +623,7 @@ export async function POST(
             success: false,
             error: validation.error,
           },
-          {
-            status: 400,
-          }
+          { status: 400 }
         );
       }
 
@@ -627,9 +642,7 @@ export async function POST(
           error:
             "Een groep bestaat uit minimaal 2 en maximaal 5 leerlingen.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
@@ -643,15 +656,12 @@ export async function POST(
           error:
             "Bij individuele begeleiding kan slechts één leerling worden toegevoegd.",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
     /*
-     * De prijs wordt uitsluitend op de server bepaald.
-     * Bedragen uit de browser worden bewust genegeerd.
+     * De prijs wordt uitsluitend op de server berekend.
      */
     const pricePerParticipant =
       PRICE_CONFIG[bookingType][educationLevel];
@@ -659,6 +669,20 @@ export async function POST(
     const totalAmount = roundCurrency(
       pricePerParticipant * participantCount
     );
+
+    if (
+      !Number.isFinite(totalAmount) ||
+      totalAmount <= 0
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Het berekende bedrag is ongeldig.",
+        },
+        { status: 400 }
+      );
+    }
 
     const durationMinutes = 60;
     const checkoutId = crypto.randomUUID();
@@ -679,7 +703,6 @@ export async function POST(
         .from("appointment_orders")
         .insert({
           checkout_id: checkoutId,
-
           mollie_payment_id: null,
 
           booking_type: bookingType,
@@ -705,21 +728,11 @@ export async function POST(
           payment_status: "creating",
           booking_status: "awaiting_payment",
 
-          /*
-           * Een gratis kennismaking wordt niet per bestelling
-           * toegekend. De definitieve controle gebeurt via:
-           * customer_profiles.introduction_used_at
-           */
           introduction_allowed: false,
 
           updated_at: new Date().toISOString(),
         })
-        .select(
-          `
-            id,
-            checkout_id
-          `
-        )
+        .select("id, checkout_id")
         .single();
 
     if (orderError || !order?.id) {
@@ -735,9 +748,7 @@ export async function POST(
             orderError?.message ||
             "De bestelling kon niet opgeslagen worden.",
         },
-        {
-          status: 500,
-        }
+        { status: 500 }
       );
     }
 
@@ -810,9 +821,7 @@ export async function POST(
             participantsInsertError.message ||
             "De leerlinggegevens konden niet opgeslagen worden.",
         },
-        {
-          status: 500,
-        }
+        { status: 500 }
       );
     }
 
@@ -821,13 +830,11 @@ export async function POST(
     );
 
     if (!mollieApiKey) {
-      await supabaseAdmin
-        .from("appointment_orders")
-        .update({
-          payment_status: "configuration_error",
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", createdOrderId);
+      await updateOrderStatus({
+        supabaseAdmin,
+        orderId: createdOrderId,
+        paymentStatus: "configuration_error",
+      });
 
       return NextResponse.json(
         {
@@ -835,63 +842,123 @@ export async function POST(
           error:
             "De betaalomgeving is momenteel niet correct ingesteld.",
         },
-        {
-          status: 500,
-        }
+        { status: 500 }
       );
     }
 
     const baseUrl = getBaseUrl(request);
 
-    const mollieClient = createMollieClient({
-      apiKey: mollieApiKey,
-    });
+    const paymentBody = {
+      amount: {
+        currency: "EUR",
+        value: moneyValue(totalAmount),
+      },
 
-    /*
-     * Metadata blijft bewust compact.
-     * Gevoelige leerlinggegevens staan in Supabase en worden
-     * niet volledig naar Mollie gestuurd.
-     */
-    const payment =
-      await mollieClient.payments.create({
-        amount: {
-          currency: "EUR",
-          value: moneyValue(totalAmount),
+      description: productName,
+
+      redirectUrl: `${baseUrl}/betaling/bedankt?checkoutId=${encodeURIComponent(
+        checkoutId
+      )}`,
+
+      webhookUrl: `${baseUrl}/api/mollie/webhook`,
+
+      locale: "nl_BE",
+
+      metadata: {
+        orderType: "appointment",
+        appointmentOrderId: createdOrderId,
+        checkoutId,
+        bookingType,
+        educationLevel,
+        deliveryType,
+        participantCount,
+        purchaserEmail,
+      },
+    };
+
+    const mollieResponse = await fetch(
+      "https://api.mollie.com/v2/payments",
+      {
+        method: "POST",
+
+        headers: {
+          Authorization: `Bearer ${mollieApiKey}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          "Idempotency-Key": checkoutId,
         },
 
-        description: productName,
+        body: JSON.stringify(paymentBody),
 
-        redirectUrl: `${baseUrl}/betaling/bedankt?checkoutId=${encodeURIComponent(
-          checkoutId
-        )}`,
+        cache: "no-store",
+      }
+    );
 
-        webhookUrl: `${baseUrl}/api/mollie/webhook`,
+    let payment: MolliePaymentResponse;
 
-        locale: "nl_BE",
+    try {
+      payment =
+        (await mollieResponse.json()) as MolliePaymentResponse;
+    } catch {
+      payment = {
+        detail:
+          "Mollie heeft geen geldig antwoord teruggestuurd.",
+      };
+    }
 
-        metadata: {
-          orderType: "appointment",
-          appointmentOrderId: createdOrderId,
-          checkoutId,
-          bookingType,
-          educationLevel,
-          deliveryType,
-          participantCount,
-          purchaserEmail,
-        },
+    if (!mollieResponse.ok) {
+      console.error(
+        "APPOINTMENT MOLLIE PAYMENT CREATE ERROR:",
+        {
+          status: mollieResponse.status,
+          payment,
+        }
+      );
+
+      await updateOrderStatus({
+        supabaseAdmin,
+        orderId: createdOrderId,
+        paymentStatus: "payment_error",
       });
 
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            payment.detail ||
+            payment.title ||
+            "De Mollie-betaling kon niet gestart worden.",
+        },
+        {
+          status:
+            mollieResponse.status >= 400
+              ? mollieResponse.status
+              : 500,
+        }
+      );
+    }
+
+    if (!payment.id) {
+      await updateOrderStatus({
+        supabaseAdmin,
+        orderId: createdOrderId,
+        paymentStatus: "payment_error",
+      });
+
+      throw new Error(
+        "Mollie heeft geen geldig betalingsnummer teruggestuurd."
+      );
+    }
+
     const checkoutUrl =
-      payment._links.checkout?.href;
+      payment._links?.checkout?.href;
 
     if (!checkoutUrl) {
-      await supabaseAdmin
-        .from("appointment_orders")
-        .update({
-          payment_status: "payment_error",
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", createdOrderId);
+      await updateOrderStatus({
+        supabaseAdmin,
+        orderId: createdOrderId,
+        paymentStatus: "payment_error",
+      });
 
       throw new Error(
         "Mollie heeft geen geldige betaalpagina teruggegeven."
@@ -929,9 +996,7 @@ export async function POST(
           paymentId: payment.id,
           checkoutId,
         },
-        {
-          status: 500,
-        }
+        { status: 500 }
       );
     }
 
@@ -957,9 +1022,7 @@ export async function POST(
 
         formattedAmount: moneyValue(totalAmount),
       },
-      {
-        status: 201,
-      }
+      { status: 201 }
     );
   } catch (error) {
     console.error(
@@ -971,13 +1034,11 @@ export async function POST(
       try {
         const supabaseAdmin = getSupabaseAdmin();
 
-        await supabaseAdmin
-          .from("appointment_orders")
-          .update({
-            payment_status: "payment_error",
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", createdOrderId);
+        await updateOrderStatus({
+          supabaseAdmin,
+          orderId: createdOrderId,
+          paymentStatus: "payment_error",
+        });
       } catch (updateError) {
         console.error(
           "APPOINTMENT ORDER ERROR STATUS UPDATE FAILED:",
@@ -994,9 +1055,7 @@ export async function POST(
             ? error.message
             : "Er ging iets mis bij het starten van de betaling.",
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 }

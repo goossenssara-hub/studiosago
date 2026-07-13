@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { createMollieClient } from "@mollie/api-client";
 
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import {
@@ -52,7 +51,9 @@ type DiscountCodeRow = {
   email: string | null;
   customer_name: string | null;
 
+  valid_from?: string | null;
   valid_until: string | null;
+
   max_uses: number | null;
   used_count: number | null;
 
@@ -63,6 +64,20 @@ type DiscountResult = {
   discountId: string | null;
   discountCode: string;
   discountAmount: number;
+};
+
+type MolliePaymentResponse = {
+  id?: string;
+  status?: string;
+
+  title?: string;
+  detail?: string;
+
+  _links?: {
+    checkout?: {
+      href?: string;
+    };
+  };
 };
 
 const TEN_SESSION_PRODUCTS: Record<
@@ -198,6 +213,36 @@ function discountMatchesProduct({
   return isGeneralPassCode && isRequestedPass;
 }
 
+function isDateExpired(value: string): boolean {
+  const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(value);
+
+  const parsedDate = new Date(
+    dateOnly
+      ? `${value}T23:59:59`
+      : value
+  );
+
+  return (
+    Number.isFinite(parsedDate.getTime()) &&
+    parsedDate.getTime() < Date.now()
+  );
+}
+
+function isDateInFuture(value: string): boolean {
+  const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(value);
+
+  const parsedDate = new Date(
+    dateOnly
+      ? `${value}T00:00:00`
+      : value
+  );
+
+  return (
+    Number.isFinite(parsedDate.getTime()) &&
+    parsedDate.getTime() > Date.now()
+  );
+}
+
 async function findAndValidateDiscount({
   supabaseAdmin,
   code,
@@ -207,7 +252,7 @@ async function findAndValidateDiscount({
   studentName,
   originalAmount,
 }: {
-  supabaseAdmin: any;
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
   code: string;
   product: TenSessionProduct;
   email: string;
@@ -238,6 +283,7 @@ async function findAndValidateDiscount({
         "product",
         "email",
         "customer_name",
+        "valid_from",
         "valid_until",
         "max_uses",
         "used_count",
@@ -265,27 +311,29 @@ async function findAndValidateDiscount({
     );
   }
 
-  const row = discount as DiscountCodeRow;
-
+const row = discount as unknown as DiscountCodeRow;
   if (!row.active) {
     throw new Error(
       "Deze kortingscode is niet meer actief."
     );
   }
 
-  if (row.valid_until) {
-    const validUntil = new Date(
-      row.valid_until
+  if (
+    row.valid_from &&
+    isDateInFuture(row.valid_from)
+  ) {
+    throw new Error(
+      "Deze kortingscode is nog niet geldig."
     );
+  }
 
-    if (
-      Number.isFinite(validUntil.getTime()) &&
-      validUntil.getTime() < Date.now()
-    ) {
-      throw new Error(
-        "Deze kortingscode is vervallen."
-      );
-    }
+  if (
+    row.valid_until &&
+    isDateExpired(row.valid_until)
+  ) {
+    throw new Error(
+      "Deze kortingscode is vervallen."
+    );
   }
 
   const usedCount = Math.max(
@@ -337,10 +385,8 @@ async function findAndValidateDiscount({
 
   const customerNameMatches =
     !requiredCustomerName ||
-    requiredCustomerName ===
-      normalizedParentName ||
-    requiredCustomerName ===
-      normalizedStudentName;
+    requiredCustomerName === normalizedParentName ||
+    requiredCustomerName === normalizedStudentName;
 
   if (!customerNameMatches) {
     throw new Error(
@@ -382,13 +428,6 @@ async function findAndValidateDiscount({
   };
 }
 
-/*
- * webshop_payments vereist minstens:
- *
- * payment_id, checkout_id, product, email en status.
- *
- * created_at wordt automatisch door Supabase ingevuld.
- */
 async function saveWebshopPayment({
   supabaseAdmin,
   paymentId,
@@ -397,7 +436,7 @@ async function saveWebshopPayment({
   email,
   status,
 }: {
-  supabaseAdmin: any;
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
   paymentId: string;
   checkoutId: string;
   product: string;
@@ -427,6 +466,30 @@ async function saveWebshopPayment({
   }
 }
 
+async function updateWebshopPaymentStatus({
+  supabaseAdmin,
+  paymentId,
+  status,
+}: {
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
+  paymentId: string;
+  status: string;
+}): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from("webshop_payments")
+    .update({
+      status,
+    })
+    .eq("payment_id", paymentId);
+
+  if (error) {
+    console.error(
+      "WEBSHOP PAYMENT STATUS UPDATE ERROR:",
+      error
+    );
+  }
+}
+
 export async function POST(
   request: Request
 ): Promise<NextResponse> {
@@ -435,6 +498,7 @@ export async function POST(
       (await request.json()) as CheckoutRequestBody;
 
     const productKey = clean(body.product);
+
     const product =
       TEN_SESSION_PRODUCTS[productKey];
 
@@ -528,6 +592,17 @@ export async function POST(
       );
     }
 
+    if (!phone) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Vul een geldig telefoonnummer in.",
+        },
+        { status: 400 }
+      );
+    }
+
     const supabaseAdmin =
       getSupabaseAdmin();
 
@@ -588,6 +663,7 @@ export async function POST(
       productName: product.name,
 
       amount: moneyValue(finalAmount),
+
       originalAmount:
         moneyValue(originalAmount),
 
@@ -597,9 +673,10 @@ export async function POST(
       discountCode:
         discountResult.discountCode,
 
-      discountAmount: moneyValue(
-        discountResult.discountAmount
-      ),
+      discountAmount:
+        moneyValue(
+          discountResult.discountAmount
+        ),
 
       parentName,
       studentName,
@@ -616,6 +693,9 @@ export async function POST(
       isFreeOrder,
     };
 
+    /*
+     * GRATIS BESTELLING OF VOLLEDIGE WAARDEBON
+     */
     if (isFreeOrder) {
       const freePaymentId = `${
         paymentMethod === "waardebon"
@@ -623,11 +703,6 @@ export async function POST(
           : "free"
       }_${checkoutId}`;
 
-      /*
-       * Eerst registreren we de bestelling als pending.
-       * fulfillWebshopOrder verwerkt daarna de boeking,
-       * eventuele beurtenkaart en zet de betaling op paid.
-       */
       await saveWebshopPayment({
         supabaseAdmin,
         paymentId: freePaymentId,
@@ -637,37 +712,87 @@ export async function POST(
         status: "pending",
       });
 
-      const fulfillment =
-        await fulfillWebshopOrder({
+      try {
+        const fulfillment =
+          await fulfillWebshopOrder({
+            supabaseAdmin,
+            paymentId: freePaymentId,
+            metadata,
+          });
+
+        return NextResponse.json(
+          {
+            success: true,
+            isFreeOrder: true,
+
+            paymentMethod,
+
+            paymentId: freePaymentId,
+            checkoutId,
+
+            bookingId:
+              fulfillment.bookingId,
+
+            passCreated:
+              fulfillment.passCreated,
+
+            originalAmount:
+              moneyValue(originalAmount),
+
+            discountAmount:
+              moneyValue(
+                discountResult.discountAmount
+              ),
+
+            finalAmount: "0.00",
+
+            checkoutUrl: null,
+
+            redirectUrl:
+              `${baseUrl}/betaling/bedankt?checkoutId=${encodeURIComponent(
+                checkoutId
+              )}`,
+
+            url:
+              `${baseUrl}/betaling/bedankt?checkoutId=${encodeURIComponent(
+                checkoutId
+              )}`,
+
+            message:
+              paymentMethod === "waardebon"
+                ? "Je bestelling werd volledig betaald met een waardebon."
+                : "Je bestelling werd gratis geregistreerd. Er is geen online betaling nodig.",
+          },
+          { status: 200 }
+        );
+      } catch (fulfillmentError) {
+        console.error(
+          "FREE ORDER FULFILLMENT ERROR:",
+          fulfillmentError
+        );
+
+        await updateWebshopPaymentStatus({
           supabaseAdmin,
           paymentId: freePaymentId,
-          metadata,
+          status: "failed",
         });
 
-      return NextResponse.json(
-        {
-          success: true,
-          isFreeOrder: true,
-
-          paymentId: freePaymentId,
-          checkoutId,
-
-          bookingId:
-            fulfillment.bookingId,
-
-          passCreated:
-            fulfillment.passCreated,
-
-          redirectUrl: `${baseUrl}/betaling/bedankt?paymentId=${encodeURIComponent(
-            freePaymentId
-          )}`,
-          message:
-            "Je bestelling werd correct geregistreerd. Er is geen online betaling nodig.",
-        },
-        { status: 200 }
-      );
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              fulfillmentError instanceof Error
+                ? fulfillmentError.message
+                : "De gratis bestelling kon niet verwerkt worden.",
+          },
+          { status: 500 }
+        );
+      }
     }
 
+    /*
+     * NORMALE MOLLIEBETALING
+     */
     const mollieApiKey = clean(
       process.env.MOLLIE_API_KEY
     );
@@ -687,70 +812,192 @@ export async function POST(
       );
     }
 
-    const mollieClient =
-      createMollieClient({
-        apiKey: mollieApiKey,
-      });
+    const paymentBody = {
+      amount: {
+        currency: "EUR",
+        value: moneyValue(finalAmount),
+      },
 
-    const payment =
-      await mollieClient.payments.create({
-        amount: {
-          currency: "EUR",
-          value: moneyValue(finalAmount),
-        },
+      description: product.name,
 
-        description: product.name,
-
-        redirectUrl: `${baseUrl}/betaling/bedankt?checkoutId=${encodeURIComponent(
+      redirectUrl:
+        `${baseUrl}/betaling/bedankt?checkoutId=${encodeURIComponent(
           checkoutId
         )}`,
 
-        webhookUrl: `${baseUrl}/api/mollie/webhook`,
+      webhookUrl:
+        `${baseUrl}/api/mollie/webhook`,
 
-        metadata,
-      });
+      locale: "nl_BE",
+
+      metadata,
+    };
+
+    const mollieResponse = await fetch(
+      "https://api.mollie.com/v2/payments",
+      {
+        method: "POST",
+
+        headers: {
+          Authorization:
+            `Bearer ${mollieApiKey}`,
+
+          "Content-Type":
+            "application/json",
+
+          Accept:
+            "application/json",
+
+          "Idempotency-Key":
+            checkoutId,
+        },
+
+        body:
+          JSON.stringify(paymentBody),
+
+        cache:
+          "no-store",
+      }
+    );
+
+    let payment: MolliePaymentResponse;
+
+    try {
+      payment =
+        (await mollieResponse.json()) as MolliePaymentResponse;
+    } catch {
+      payment = {
+        detail:
+          "Mollie heeft geen geldig antwoord teruggestuurd.",
+      };
+    }
+
+    if (!mollieResponse.ok) {
+      console.error(
+        "TEN SESSION MOLLIE CREATE ERROR:",
+        {
+          status:
+            mollieResponse.status,
+
+          payment,
+        }
+      );
+
+      return NextResponse.json(
+        {
+          success: false,
+
+          error:
+            payment.detail ||
+            payment.title ||
+            "De Mollie-betaling kon niet gestart worden.",
+        },
+        {
+          status:
+            mollieResponse.status >= 400
+              ? mollieResponse.status
+              : 500,
+        }
+      );
+    }
+
+    if (!payment.id) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Mollie heeft geen geldig betalingsnummer teruggestuurd.",
+        },
+        { status: 500 }
+      );
+    }
 
     const checkoutUrl =
-      payment._links.checkout?.href;
+      payment._links?.checkout?.href;
 
     if (!checkoutUrl) {
       console.error(
         "Mollie payment heeft geen checkout-URL:",
-        payment.id
+        payment
       );
 
-      throw new Error(
-        "Mollie heeft geen betaalpagina teruggegeven."
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Mollie heeft geen betaalpagina teruggegeven.",
+        },
+        { status: 500 }
       );
     }
 
-    await saveWebshopPayment({
-      supabaseAdmin,
-      paymentId: payment.id,
-      checkoutId,
-      product: product.key,
-      email,
-      status: payment.status,
-    });
+    try {
+      await saveWebshopPayment({
+        supabaseAdmin,
+
+        paymentId:
+          payment.id,
+
+        checkoutId,
+
+        product:
+          product.key,
+
+        email,
+
+        status:
+          payment.status || "open",
+      });
+    } catch (saveError) {
+      console.error(
+        "TEN SESSION PAYMENT SAVE ERROR:",
+        saveError
+      );
+
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            saveError instanceof Error
+              ? saveError.message
+              : "De betaling kon niet in de database opgeslagen worden.",
+        },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json(
       {
         success: true,
         isFreeOrder: false,
 
-        paymentId: payment.id,
+        paymentMethod:
+          "mollie",
+
+        paymentId:
+          payment.id,
+
         checkoutId,
 
         checkoutUrl,
-        redirectUrl: checkoutUrl,
+        redirectUrl:
+          checkoutUrl,
+        url:
+          checkoutUrl,
 
-        amount: moneyValue(finalAmount),
+        amount:
+          moneyValue(finalAmount),
+
         originalAmount:
           moneyValue(originalAmount),
 
-        discountAmount: moneyValue(
-          discountResult.discountAmount
-        ),
+        discountAmount:
+          moneyValue(
+            discountResult.discountAmount
+          ),
+
+        finalAmount:
+          moneyValue(finalAmount),
       },
       { status: 201 }
     );

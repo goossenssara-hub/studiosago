@@ -6,17 +6,11 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-type BookingType =
-  | "individual"
-  | "group";
+type BookingType = "individual" | "group";
 
-type EducationLevel =
-  | "primary"
-  | "secondary";
+type EducationLevel = "primary" | "secondary";
 
-type DeliveryType =
-  | "digital"
-  | "home";
+type DeliveryType = "digital" | "home";
 
 type PurchaserInput = {
   firstName?: unknown;
@@ -99,130 +93,70 @@ const PRICE_CONFIG = {
   },
 } as const;
 
-function clean(
-  value: unknown
-): string {
-  return String(
-    value ?? ""
-  ).trim();
+function clean(value: unknown): string {
+  return String(value ?? "").trim();
 }
 
-function normalizeEmail(
-  value: unknown
-): string {
-  return clean(value)
-    .toLowerCase();
+function normalizeEmail(value: unknown): string {
+  return clean(value).toLowerCase();
 }
 
-function isValidEmail(
-  value: string
-): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-    value
-  );
+function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
-function isValidDate(
-  value: string
-): boolean {
-  if (
-    !/^\d{4}-\d{2}-\d{2}$/.test(
-      value
-    )
-  ) {
+function isValidDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     return false;
   }
 
-  const date =
-    new Date(
-      `${value}T12:00:00`
-    );
+  const date = new Date(`${value}T12:00:00`);
 
   return (
-    Number.isFinite(
-      date.getTime()
-    ) &&
-    date.getTime() <=
-      Date.now()
+    Number.isFinite(date.getTime()) &&
+    date.getTime() <= Date.now()
   );
 }
 
-function isBookingType(
-  value: string
-): value is BookingType {
-  return (
-    value === "individual" ||
-    value === "group"
-  );
+function isBookingType(value: string): value is BookingType {
+  return value === "individual" || value === "group";
 }
 
 function isEducationLevel(
   value: string
 ): value is EducationLevel {
+  return value === "primary" || value === "secondary";
+}
+
+function isDeliveryType(value: string): value is DeliveryType {
+  return value === "digital" || value === "home";
+}
+
+function roundCurrency(value: number): number {
   return (
-    value === "primary" ||
-    value === "secondary"
+    Math.round((value + Number.EPSILON) * 100) / 100
   );
 }
 
-function isDeliveryType(
-  value: string
-): value is DeliveryType {
-  return (
-    value === "digital" ||
-    value === "home"
-  );
+function moneyValue(value: number): string {
+  return roundCurrency(value).toFixed(2);
 }
 
-function roundCurrency(
-  value: number
-): number {
-  return (
-    Math.round(
-      (
-        value +
-        Number.EPSILON
-      ) *
-        100
-    ) / 100
-  );
-}
-
-function moneyValue(
-  value: number
-): string {
-  return roundCurrency(
-    value
-  ).toFixed(2);
-}
-
-function getBaseUrl(
-  request: Request
-): string {
+function getBaseUrl(request: Request): string {
   const configuredUrl =
-    process.env
-      .NEXT_PUBLIC_SITE_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
     process.env.SITE_URL ||
-    process.env
-      .VERCEL_PROJECT_PRODUCTION_URL;
+    process.env.VERCEL_PROJECT_PRODUCTION_URL;
 
   if (configuredUrl) {
-    const normalizedUrl =
-      configuredUrl.startsWith(
-        "http"
-      )
-        ? configuredUrl
-        : `https://${configuredUrl}`;
+    const normalizedUrl = configuredUrl.startsWith("http")
+      ? configuredUrl
+      : `https://${configuredUrl}`;
 
-    return normalizedUrl.replace(
-      /\/+$/,
-      ""
-    );
+    return normalizedUrl.replace(/\/+$/, "");
   }
 
-  return new URL(
-    request.url
-  ).origin;
+  return new URL(request.url).origin;
 }
 
 function getProductName({
@@ -235,14 +169,11 @@ function getProductName({
   participantCount: number;
 }): string {
   const level =
-    educationLevel ===
-    "primary"
+    educationLevel === "primary"
       ? "Lager onderwijs"
       : "Secundair onderwijs";
 
-  if (
-    bookingType === "group"
-  ) {
+  if (bookingType === "group") {
     return `Begeleiding in kleine groep – ${level} – ${participantCount} leerlingen`;
   }
 
@@ -266,196 +197,124 @@ function validateParticipant({
       valid: false;
       error: string;
     } {
-  const number =
-    index + 1;
+  const number = index + 1;
 
-  const firstNames =
-    clean(
-      participant.firstNames
-    );
+  const firstNames = clean(participant.firstNames);
+  const lastNames = clean(participant.lastNames);
+  const birthDate = clean(participant.birthDate);
 
-  const lastNames =
-    clean(
-      participant.lastNames
-    );
+  const grade = clean(participant.grade);
+  const studyProgram = clean(participant.studyProgram);
+  const school = clean(participant.school);
 
-  const birthDate =
-    clean(
-      participant.birthDate
-    );
+  const schoolContactName = clean(
+    participant.schoolContactName
+  );
 
-  const grade =
-    clean(
-      participant.grade
-    );
+  const schoolContactEmail = normalizeEmail(
+    participant.schoolContactEmail
+  );
 
-  const studyProgram =
-    clean(
-      participant.studyProgram
-    );
+  const schoolContactPhone = clean(
+    participant.schoolContactPhone
+  );
 
-  const school =
-    clean(
-      participant.school
-    );
+  const learningGoal = clean(participant.learningGoal);
 
-  const schoolContactName =
-    clean(
-      participant
-        .schoolContactName
-    );
+  const parentFirstName = clean(
+    participant.parentFirstName
+  );
 
-  const schoolContactEmail =
-    normalizeEmail(
-      participant
-        .schoolContactEmail
-    );
+  const parentLastName = clean(
+    participant.parentLastName
+  );
 
-  const schoolContactPhone =
-    clean(
-      participant
-        .schoolContactPhone
-    );
+  const parentEmail = normalizeEmail(
+    participant.parentEmail
+  );
 
-  const learningGoal =
-    clean(
-      participant.learningGoal
-    );
+  const parentPhone = clean(participant.parentPhone);
 
-  const parentFirstName =
-    clean(
-      participant
-        .parentFirstName
-    );
-
-  const parentLastName =
-    clean(
-      participant
-        .parentLastName
-    );
-
-  const parentEmail =
-    normalizeEmail(
-      participant.parentEmail
-    );
-
-  const parentPhone =
-    clean(
-      participant.parentPhone
-    );
-
-  if (
-    !firstNames ||
-    !lastNames
-  ) {
+  if (!firstNames || !lastNames) {
     return {
       valid: false,
-      error:
-        `Vul de volledige naam van leerling ${number} in.`,
+      error: `Vul de volledige naam van leerling ${number} in.`,
     };
   }
 
-  if (
-    !birthDate ||
-    !isValidDate(
-      birthDate
-    )
-  ) {
+  if (!birthDate || !isValidDate(birthDate)) {
     return {
       valid: false,
-      error:
-        `Vul een geldige geboortedatum van leerling ${number} in.`,
+      error: `Vul een geldige geboortedatum van leerling ${number} in.`,
     };
   }
 
   if (!grade) {
     return {
       valid: false,
-      error:
-        `Kies het leerjaar of studiejaar van leerling ${number}.`,
+      error: `Kies het leerjaar of studiejaar van leerling ${number}.`,
     };
   }
 
   if (
-    educationLevel ===
-      "secondary" &&
+    educationLevel === "secondary" &&
     !studyProgram
   ) {
     return {
       valid: false,
-      error:
-        `Vul de studierichting van leerling ${number} in.`,
+      error: `Vul de studierichting van leerling ${number} in.`,
     };
   }
 
   if (!school) {
     return {
       valid: false,
-      error:
-        `Vul de school van leerling ${number} in.`,
+      error: `Vul de school van leerling ${number} in.`,
     };
   }
 
-  if (
-    !schoolContactName
-  ) {
+  if (!schoolContactName) {
     return {
       valid: false,
-      error:
-        `Vul de betrokken leerkracht of schoolcontactpersoon van leerling ${number} in.`,
+      error: `Vul de betrokken leerkracht of schoolcontactpersoon van leerling ${number} in.`,
     };
   }
 
   if (
     schoolContactEmail &&
-    !isValidEmail(
-      schoolContactEmail
-    )
+    !isValidEmail(schoolContactEmail)
   ) {
     return {
       valid: false,
-      error:
-        `Vul een geldig e-mailadres voor de schoolcontactpersoon van leerling ${number} in.`,
+      error: `Vul een geldig e-mailadres voor de schoolcontactpersoon van leerling ${number} in.`,
     };
   }
 
   if (!learningGoal) {
     return {
       valid: false,
-      error:
-        `Vul de hulpvraag of het leerdoel van leerling ${number} in.`,
+      error: `Vul de hulpvraag of het leerdoel van leerling ${number} in.`,
     };
   }
 
-  if (
-    !parentFirstName ||
-    !parentLastName
-  ) {
+  if (!parentFirstName || !parentLastName) {
     return {
       valid: false,
-      error:
-        `Vul de naam van de ouder of voogd van leerling ${number} in.`,
+      error: `Vul de naam van de ouder of voogd van leerling ${number} in.`,
     };
   }
 
-  if (
-    !parentEmail ||
-    !isValidEmail(
-      parentEmail
-    )
-  ) {
+  if (!parentEmail || !isValidEmail(parentEmail)) {
     return {
       valid: false,
-      error:
-        `Vul een geldig e-mailadres van de ouder van leerling ${number} in.`,
+      error: `Vul een geldig e-mailadres van de ouder van leerling ${number} in.`,
     };
   }
 
   if (!parentPhone) {
     return {
       valid: false,
-      error:
-        `Vul het telefoonnummer van de ouder van leerling ${number} in.`,
+      error: `Vul het telefoonnummer van de ouder van leerling ${number} in.`,
     };
   }
 
@@ -470,8 +329,7 @@ function validateParticipant({
       grade,
 
       studyProgram:
-        educationLevel ===
-        "secondary"
+        educationLevel === "secondary"
           ? studyProgram
           : "",
 
@@ -495,22 +353,13 @@ async function deleteOrder({
   supabaseAdmin,
   orderId,
 }: {
-  supabaseAdmin: ReturnType<
-    typeof getSupabaseAdmin
-  >;
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
   orderId: string;
 }): Promise<void> {
-  const {
-    error,
-  } = await supabaseAdmin
-    .from(
-      "appointment_orders"
-    )
+  const { error } = await supabaseAdmin
+    .from("appointment_orders")
     .delete()
-    .eq(
-      "id",
-      orderId
-    );
+    .eq("id", orderId);
 
   if (error) {
     console.error(
@@ -527,30 +376,15 @@ export async function POST(
 
   try {
     const body =
-      (
-        await request.json()
-      ) as CheckoutRequestBody;
+      (await request.json()) as CheckoutRequestBody;
 
-    const bookingTypeValue =
-      clean(
-        body.bookingType
-      );
+    const bookingTypeValue = clean(body.bookingType);
+    const educationLevelValue = clean(
+      body.educationLevel
+    );
+    const deliveryTypeValue = clean(body.deliveryType);
 
-    const educationLevelValue =
-      clean(
-        body.educationLevel
-      );
-
-    const deliveryTypeValue =
-      clean(
-        body.deliveryType
-      );
-
-    if (
-      !isBookingType(
-        bookingTypeValue
-      )
-    ) {
+    if (!isBookingType(bookingTypeValue)) {
       return NextResponse.json(
         {
           success: false,
@@ -563,11 +397,7 @@ export async function POST(
       );
     }
 
-    if (
-      !isEducationLevel(
-        educationLevelValue
-      )
-    ) {
+    if (!isEducationLevel(educationLevelValue)) {
       return NextResponse.json(
         {
           success: false,
@@ -580,11 +410,7 @@ export async function POST(
       );
     }
 
-    if (
-      !isDeliveryType(
-        deliveryTypeValue
-      )
-    ) {
+    if (!isDeliveryType(deliveryTypeValue)) {
       return NextResponse.json(
         {
           success: false,
@@ -597,47 +423,30 @@ export async function POST(
       );
     }
 
-    const bookingType =
-      bookingTypeValue;
+    const bookingType = bookingTypeValue;
+    const educationLevel = educationLevelValue;
+    const deliveryType = deliveryTypeValue;
 
-    const educationLevel =
-      educationLevelValue;
+    const purchaser = body.purchaser ?? {};
 
-    const deliveryType =
-      deliveryTypeValue;
+    const purchaserFirstName = clean(
+      purchaser.firstName
+    );
 
-    const purchaser =
-      body.purchaser ?? {};
+    const purchaserLastName = clean(
+      purchaser.lastName
+    );
 
-    const purchaserFirstName =
-      clean(
-        purchaser.firstName
-      );
+    const purchaserEmail = normalizeEmail(
+      purchaser.email
+    );
 
-    const purchaserLastName =
-      clean(
-        purchaser.lastName
-      );
+    const purchaserPhone = clean(purchaser.phone);
+    const purchaserAddress = clean(
+      purchaser.address
+    );
 
-    const purchaserEmail =
-      normalizeEmail(
-        purchaser.email
-      );
-
-    const purchaserPhone =
-      clean(
-        purchaser.phone
-      );
-
-    const purchaserAddress =
-      clean(
-        purchaser.address
-      );
-
-    if (
-      !purchaserFirstName ||
-      !purchaserLastName
-    ) {
+    if (!purchaserFirstName || !purchaserLastName) {
       return NextResponse.json(
         {
           success: false,
@@ -652,9 +461,7 @@ export async function POST(
 
     if (
       !purchaserEmail ||
-      !isValidEmail(
-        purchaserEmail
-      )
+      !isValidEmail(purchaserEmail)
     ) {
       return NextResponse.json(
         {
@@ -682,8 +489,7 @@ export async function POST(
     }
 
     if (
-      deliveryType ===
-        "home" &&
+      deliveryType === "home" &&
       !purchaserAddress
     ) {
       return NextResponse.json(
@@ -699,10 +505,8 @@ export async function POST(
     }
 
     if (
-      deliveryType ===
-        "home" &&
-      body.radiusAccepted !==
-        true
+      deliveryType === "home" &&
+      body.radiusAccepted !== true
     ) {
       return NextResponse.json(
         {
@@ -716,10 +520,7 @@ export async function POST(
       );
     }
 
-    if (
-      body.termsAccepted !==
-      true
-    ) {
+    if (body.termsAccepted !== true) {
       return NextResponse.json(
         {
           success: false,
@@ -732,10 +533,7 @@ export async function POST(
       );
     }
 
-    if (
-      body.privacyAccepted !==
-      true
-    ) {
+    if (body.privacyAccepted !== true) {
       return NextResponse.json(
         {
           success: false,
@@ -748,25 +546,25 @@ export async function POST(
       );
     }
 
-    const rawParticipants =
-      Array.isArray(
-        body.participants
-      )
-        ? body.participants
-        : [];
+    const rawParticipants = Array.isArray(
+      body.participants
+    )
+      ? body.participants
+      : [];
+
+    const requestedParticipantCount = Math.trunc(
+      Number(body.participantCount)
+    );
 
     const expectedParticipantCount =
-      bookingType ===
-      "group"
+      bookingType === "group"
         ? Math.max(
             2,
             Math.min(
               5,
-              Math.trunc(
-                Number(
-                  body.participantCount
-                )
-              )
+              Number.isFinite(requestedParticipantCount)
+                ? requestedParticipantCount
+                : 2
             )
           )
         : 1;
@@ -779,8 +577,7 @@ export async function POST(
         {
           success: false,
           error:
-            bookingType ===
-            "group"
+            bookingType === "group"
               ? "Vul de gegevens van alle gekozen groepsleden in."
               : "Vul de gegevens van de leerling in.",
         },
@@ -790,35 +587,24 @@ export async function POST(
       );
     }
 
-    const participants:
-      ValidatedParticipant[] =
-      [];
+    const participants: ValidatedParticipant[] = [];
 
     for (
       let index = 0;
-      index <
-      rawParticipants.length;
+      index < rawParticipants.length;
       index += 1
     ) {
-      const validation =
-        validateParticipant({
-          participant:
-            rawParticipants[
-              index
-            ],
-          index,
-          educationLevel,
-        });
+      const validation = validateParticipant({
+        participant: rawParticipants[index],
+        index,
+        educationLevel,
+      });
 
-      if (
-        validation.valid ===
-        false
-      ) {
+      if (validation.valid === false) {
         return NextResponse.json(
           {
             success: false,
-            error:
-              validation.error,
+            error: validation.error,
           },
           {
             status: 400,
@@ -826,21 +612,14 @@ export async function POST(
         );
       }
 
-      participants.push(
-        validation.participant
-      );
+      participants.push(validation.participant);
     }
 
-    const participantCount =
-      participants.length;
+    const participantCount = participants.length;
 
     if (
-      bookingType ===
-        "group" &&
-      (
-        participantCount < 2 ||
-        participantCount > 5
-      )
+      bookingType === "group" &&
+      (participantCount < 2 || participantCount > 5)
     ) {
       return NextResponse.json(
         {
@@ -855,8 +634,7 @@ export async function POST(
     }
 
     if (
-      bookingType ===
-        "individual" &&
+      bookingType === "individual" &&
       participantCount !== 1
     ) {
       return NextResponse.json(
@@ -872,119 +650,79 @@ export async function POST(
     }
 
     /*
-     * Prijs wordt uitsluitend op de server bepaald.
-     * De bedragen uit de browser worden bewust genegeerd.
+     * De prijs wordt uitsluitend op de server bepaald.
+     * Bedragen uit de browser worden bewust genegeerd.
      */
     const pricePerParticipant =
-      PRICE_CONFIG[
-        bookingType
-      ][educationLevel];
+      PRICE_CONFIG[bookingType][educationLevel];
 
-    const totalAmount =
-      roundCurrency(
-        pricePerParticipant *
-          participantCount
-      );
+    const totalAmount = roundCurrency(
+      pricePerParticipant * participantCount
+    );
 
-    const durationMinutes =
-      60;
+    const durationMinutes = 60;
+    const checkoutId = crypto.randomUUID();
 
-    const checkoutId =
-      crypto.randomUUID();
+    const productName = getProductName({
+      bookingType,
+      educationLevel,
+      participantCount,
+    });
 
-    const productName =
-      getProductName({
-        bookingType,
-        educationLevel,
-        participantCount,
-      });
-
-    const supabaseAdmin =
-      getSupabaseAdmin();
+    const supabaseAdmin = getSupabaseAdmin();
 
     /*
      * Eerst de bestelling bewaren.
      */
-    const {
-      data: order,
-      error: orderError,
-    } = await supabaseAdmin
-      .from(
-        "appointment_orders"
-      )
-      .insert({
-        checkout_id:
-          checkoutId,
+    const { data: order, error: orderError } =
+      await supabaseAdmin
+        .from("appointment_orders")
+        .insert({
+          checkout_id: checkoutId,
 
-        mollie_payment_id:
-          null,
+          mollie_payment_id: null,
 
-        booking_type:
-          bookingType,
+          booking_type: bookingType,
+          education_level: educationLevel,
+          delivery_type: deliveryType,
 
-        education_level:
-          educationLevel,
+          duration_minutes: durationMinutes,
+          participant_count: participantCount,
 
-        delivery_type:
-          deliveryType,
+          price_per_participant: pricePerParticipant,
+          total_amount: totalAmount,
 
-        duration_minutes:
-          durationMinutes,
+          purchaser_first_name: purchaserFirstName,
+          purchaser_last_name: purchaserLastName,
+          purchaser_email: purchaserEmail,
+          purchaser_phone: purchaserPhone,
 
-        participant_count:
-          participantCount,
+          purchaser_address:
+            deliveryType === "home"
+              ? purchaserAddress
+              : null,
 
-        price_per_participant:
-          pricePerParticipant,
+          payment_status: "creating",
+          booking_status: "awaiting_payment",
 
-        total_amount:
-          totalAmount,
+          /*
+           * Een gratis kennismaking wordt niet per bestelling
+           * toegekend. De definitieve controle gebeurt via:
+           * customer_profiles.introduction_used_at
+           */
+          introduction_allowed: false,
 
-        purchaser_first_name:
-          purchaserFirstName,
+          updated_at: new Date().toISOString(),
+        })
+        .select(
+          `
+            id,
+            checkout_id
+          `
+        )
+        .single();
 
-        purchaser_last_name:
-          purchaserLastName,
-
-        purchaser_email:
-          purchaserEmail,
-
-        purchaser_phone:
-          purchaserPhone,
-
-        purchaser_address:
-          deliveryType ===
-          "home"
-            ? purchaserAddress
-            : null,
-
-        payment_status:
-          "creating",
-
-        booking_status:
-          "awaiting_payment",
-
-/*
- * Een gratis kennismaking wordt niet per bestelling toegekend.
- * De definitieve controle gebeurt via:
- * customer_profiles.introduction_used_at
- */
-introduction_allowed: false,
-
-updated_at: new Date().toISOString(),
-      })
-      .select(
-        `
-          id,
-          checkout_id
-        `
-      )
-      .single();
-
-    if (
-      orderError ||
-      !order?.id
-    ) {
+    if (orderError || !order?.id) {
       console.error(
         "APPOINTMENT ORDER INSERT ERROR:",
         orderError
@@ -1003,88 +741,58 @@ updated_at: new Date().toISOString(),
       );
     }
 
-    createdOrderId =
-      String(order.id);
+    createdOrderId = String(order.id);
 
     /*
      * Iedere leerling afzonderlijk bewaren.
      */
-    const participantRows =
-      participants.map(
-        (participant) => ({
-          order_id:
-            createdOrderId,
+    const participantRows = participants.map(
+      (participant) => ({
+        order_id: createdOrderId,
 
-          student_id:
-            null,
+        student_id: null,
+        parent_profile_id: null,
 
-          parent_profile_id:
-            null,
+        first_names: participant.firstNames,
+        last_names: participant.lastNames,
+        birth_date: participant.birthDate,
 
-          first_names:
-            participant.firstNames,
+        education_level: educationLevel,
+        grade: participant.grade,
 
-          last_names:
-            participant.lastNames,
+        study_program:
+          participant.studyProgram || null,
 
-          birth_date:
-            participant.birthDate,
+        school: participant.school,
 
-          education_level:
-            educationLevel,
+        school_contact_name:
+          participant.schoolContactName,
 
-          grade:
-            participant.grade,
+        school_contact_email:
+          participant.schoolContactEmail || null,
 
-          study_program:
-            participant.studyProgram ||
-            null,
+        school_contact_phone:
+          participant.schoolContactPhone || null,
 
-          school:
-            participant.school,
+        learning_goal: participant.learningGoal,
 
-          school_contact_name:
-            participant.schoolContactName,
+        parent_first_name:
+          participant.parentFirstName,
 
-          school_contact_email:
-            participant.schoolContactEmail ||
-            null,
+        parent_last_name:
+          participant.parentLastName,
 
-          school_contact_phone:
-            participant.schoolContactPhone ||
-            null,
+        parent_email: participant.parentEmail,
+        parent_phone: participant.parentPhone,
+      })
+    );
 
-          learning_goal:
-            participant.learningGoal,
+    const { error: participantsInsertError } =
+      await supabaseAdmin
+        .from("appointment_order_participants")
+        .insert(participantRows);
 
-          parent_first_name:
-            participant.parentFirstName,
-
-          parent_last_name:
-            participant.parentLastName,
-
-          parent_email:
-            participant.parentEmail,
-
-          parent_phone:
-            participant.parentPhone,
-        })
-      );
-
-    const {
-      error:
-        participantsInsertError,
-    } = await supabaseAdmin
-      .from(
-        "appointment_order_participants"
-      )
-      .insert(
-        participantRows
-      );
-
-    if (
-      participantsInsertError
-    ) {
+    if (participantsInsertError) {
       console.error(
         "APPOINTMENT PARTICIPANTS INSERT ERROR:",
         participantsInsertError
@@ -1092,8 +800,7 @@ updated_at: new Date().toISOString(),
 
       await deleteOrder({
         supabaseAdmin,
-        orderId:
-          createdOrderId,
+        orderId: createdOrderId,
       });
 
       return NextResponse.json(
@@ -1109,28 +816,18 @@ updated_at: new Date().toISOString(),
       );
     }
 
-    const mollieApiKey =
-      clean(
-        process.env
-          .MOLLIE_API_KEY
-      );
+    const mollieApiKey = clean(
+      process.env.MOLLIE_API_KEY
+    );
 
     if (!mollieApiKey) {
       await supabaseAdmin
-        .from(
-          "appointment_orders"
-        )
+        .from("appointment_orders")
         .update({
-          payment_status:
-            "configuration_error",
-          updated_at:
-            new Date()
-              .toISOString(),
+          payment_status: "configuration_error",
+          updated_at: new Date().toISOString(),
         })
-        .eq(
-          "id",
-          createdOrderId
-        );
+        .eq("id", createdOrderId);
 
       return NextResponse.json(
         {
@@ -1144,103 +841,57 @@ updated_at: new Date().toISOString(),
       );
     }
 
-    const baseUrl =
-      getBaseUrl(request);
+    const baseUrl = getBaseUrl(request);
 
-    const mollieClient =
-      createMollieClient({
-        apiKey:
-          mollieApiKey,
-      });
+    const mollieClient = createMollieClient({
+      apiKey: mollieApiKey,
+    });
 
     /*
      * Metadata blijft bewust compact.
-     * Alle gevoelige leerlinggegevens staan veilig in Supabase
-     * en worden niet volledig naar Mollie gestuurd.
+     * Gevoelige leerlinggegevens staan in Supabase en worden
+     * niet volledig naar Mollie gestuurd.
      */
-const payment =
-  await mollieClient.payments.create({
-    amount: {
-      currency: "EUR",
-      value: moneyValue(totalAmount),
-    },
+    const payment =
+      await mollieClient.payments.create({
+        amount: {
+          currency: "EUR",
+          value: moneyValue(totalAmount),
+        },
 
-    description: productName,
+        description: productName,
 
-    redirectUrl:
-      `${baseUrl}/betaling/bedankt?checkoutId=${encodeURIComponent(
-        checkoutId
-      )}`,
+        redirectUrl: `${baseUrl}/betaling/bedankt?checkoutId=${encodeURIComponent(
+          checkoutId
+        )}`,
 
-    webhookUrl:
-      `${baseUrl}/api/mollie/webhook`,
+        webhookUrl: `${baseUrl}/api/mollie/webhook`,
 
-    locale: "nl_BE",
+        locale: "nl_BE",
 
-    metadata: {
-      orderType: "appointment",
-      appointmentOrderId: createdOrderId,
-      checkoutId,
-      bookingType,
-      educationLevel,
-      deliveryType,
-      participantCount,
-      purchaserEmail,
-    },
-  });          description:
-            productName,
-
-redirectUrl:
-  `${baseUrl}/betaling/bedankt?checkoutId=${encodeURIComponent(
-    checkoutId
-  )}`,
-          webhookUrl:
-            `${baseUrl}/api/mollie/webhook`,
-
-          locale:
-            "nl_BE",
-
-          metadata: {
-            orderType:
-              "appointment",
-
-            appointmentOrderId:
-              createdOrderId,
-
-            checkoutId,
-
-            bookingType,
-
-            educationLevel,
-
-            deliveryType,
-
-            participantCount,
-
-            purchaserEmail,
-          },
-        });
+        metadata: {
+          orderType: "appointment",
+          appointmentOrderId: createdOrderId,
+          checkoutId,
+          bookingType,
+          educationLevel,
+          deliveryType,
+          participantCount,
+          purchaserEmail,
+        },
+      });
 
     const checkoutUrl =
-      payment._links
-        .checkout?.href;
+      payment._links.checkout?.href;
 
     if (!checkoutUrl) {
       await supabaseAdmin
-        .from(
-          "appointment_orders"
-        )
+        .from("appointment_orders")
         .update({
-          payment_status:
-            "payment_error",
-          updated_at:
-            new Date()
-              .toISOString(),
+          payment_status: "payment_error",
+          updated_at: new Date().toISOString(),
         })
-        .eq(
-          "id",
-          createdOrderId
-        );
+        .eq("id", createdOrderId);
 
       throw new Error(
         "Mollie heeft geen geldige betaalpagina teruggegeven."
@@ -1250,35 +901,21 @@ redirectUrl:
     /*
      * Mollie-payment-ID en huidige status opslaan.
      */
-    const {
-      error:
-        paymentUpdateError,
-    } = await supabaseAdmin
-      .from(
-        "appointment_orders"
-      )
-      .update({
-        mollie_payment_id:
-          payment.id,
+    const { error: paymentUpdateError } =
+      await supabaseAdmin
+        .from("appointment_orders")
+        .update({
+          mollie_payment_id: payment.id,
 
-        payment_status:
-          String(
-            payment.status ||
-            "open"
+          payment_status: String(
+            payment.status || "open"
           ),
 
-        updated_at:
-          new Date()
-            .toISOString(),
-      })
-      .eq(
-        "id",
-        createdOrderId
-      );
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", createdOrderId);
 
-    if (
-      paymentUpdateError
-    ) {
+    if (paymentUpdateError) {
       console.error(
         "APPOINTMENT ORDER PAYMENT UPDATE ERROR:",
         paymentUpdateError
@@ -1289,8 +926,7 @@ redirectUrl:
           success: false,
           error:
             "De betaling werd aangemaakt, maar kon niet volledig aan de bestelling gekoppeld worden. Neem contact op met Studio SaGo.",
-          paymentId:
-            payment.id,
+          paymentId: payment.id,
           checkoutId,
         },
         {
@@ -1303,33 +939,23 @@ redirectUrl:
       {
         success: true,
 
-        orderId:
-          createdOrderId,
-
+        orderId: createdOrderId,
         checkoutId,
-
-        paymentId:
-          payment.id,
+        paymentId: payment.id,
 
         checkoutUrl,
-        redirectUrl:
-          checkoutUrl,
-        url:
-          checkoutUrl,
+        redirectUrl: checkoutUrl,
+        url: checkoutUrl,
 
         bookingType,
         educationLevel,
         deliveryType,
 
         participantCount,
-
         pricePerParticipant,
-
         totalAmount,
-        formattedAmount:
-          moneyValue(
-            totalAmount
-          ),
+
+        formattedAmount: moneyValue(totalAmount),
       },
       {
         status: 201,
@@ -1341,32 +967,18 @@ redirectUrl:
       error
     );
 
-    if (
-      createdOrderId
-    ) {
+    if (createdOrderId) {
       try {
-        const supabaseAdmin =
-          getSupabaseAdmin();
+        const supabaseAdmin = getSupabaseAdmin();
 
         await supabaseAdmin
-          .from(
-            "appointment_orders"
-          )
+          .from("appointment_orders")
           .update({
-            payment_status:
-              "payment_error",
-
-            updated_at:
-              new Date()
-                .toISOString(),
+            payment_status: "payment_error",
+            updated_at: new Date().toISOString(),
           })
-          .eq(
-            "id",
-            createdOrderId
-          );
-      } catch (
-        updateError
-      ) {
+          .eq("id", createdOrderId);
+      } catch (updateError) {
         console.error(
           "APPOINTMENT ORDER ERROR STATUS UPDATE FAILED:",
           updateError

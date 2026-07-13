@@ -997,5 +997,7 @@ if (!parentProfile) {
         internalEmail:
           parent.internal_email,
       })),
+      accountActivations:
+  accountActivationResults,
   };
 }

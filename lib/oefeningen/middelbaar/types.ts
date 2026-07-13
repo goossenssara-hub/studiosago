@@ -3,6 +3,7 @@ export type SecondaryExercise = {
   category: string;
   question: string;
   answer: string | string[];
+  options?: string[];
 };
 
 export type SecondaryLevelProgress = {

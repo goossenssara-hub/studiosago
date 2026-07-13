@@ -31,6 +31,8 @@ type Student = {
   doctor_phone: string | null;
   notes: string | null;
   photo_consent: boolean | null;
+  auth_user_id?: string | null;
+  student_email?: string | null;
 };
 
 type StudentForm = {
@@ -103,6 +105,32 @@ function formatDate(date: string | null) {
   }).format(parsedDate);
 }
 
+
+async function readJsonResponse<T>(
+  response: Response,
+  fallbackMessage: string
+): Promise<T> {
+  const contentType = response.headers.get("content-type") ?? "";
+
+  if (!contentType.includes("application/json")) {
+    const rawText = await response.text();
+
+    console.error("API gaf geen JSON terug:", {
+      status: response.status,
+      url: response.url,
+      body: rawText.slice(0, 500),
+    });
+
+    throw new Error(
+      response.status === 404
+        ? "De API-route werd niet gevonden."
+        : fallbackMessage
+    );
+  }
+
+  return (await response.json()) as T;
+}
+
 export default function AdminStudents() {
   const pathname = usePathname();
   const messageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
@@ -119,6 +147,8 @@ export default function AdminStudents() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [generatingAccount, setGeneratingAccount] =
+    useState(false);
 
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -145,12 +175,18 @@ export default function AdminStudents() {
     setErrorMessage("");
 
     try {
-      const response = await fetch("/api/admin/students", {
+      const response = await fetch("/api/admin/students/create", {
         method: "GET",
         cache: "no-store",
       });
 
-      const data = await response.json();
+      const data = await readJsonResponse<{
+        students?: Student[];
+        error?: string;
+      }>(
+        response,
+        "Leerlingen konden niet geladen worden."
+      );
 
       if (!response.ok) {
         throw new Error(
@@ -158,7 +194,9 @@ export default function AdminStudents() {
         );
       }
 
-      setStudents(data.students ?? []);
+      setStudents(
+        Array.isArray(data.students) ? data.students : []
+      );
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -298,6 +336,98 @@ export default function AdminStudents() {
       );
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function generateStudentAccount(
+    student: Student
+  ) {
+    if (student.auth_user_id || student.student_email) {
+      setErrorMessage(
+        "Voor deze leerling bestaat al een leerlingaccount."
+      );
+      return;
+    }
+
+    setGeneratingAccount(true);
+    setErrorMessage("");
+    clearMessageTimer();
+    setMessage("");
+
+    try {
+      const response = await fetch(
+        "/api/admin/students/generate-account",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            studentId: student.id,
+          }),
+        }
+      );
+
+      const data = await readJsonResponse<{
+        student?: Student;
+        credentials?: {
+          name: string;
+          email: string;
+          password: string;
+          loginUrl: string;
+        };
+        error?: string;
+      }>(
+        response,
+        "Het leerlingaccount kon niet gegenereerd worden."
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            "Het leerlingaccount kon niet gegenereerd worden."
+        );
+      }
+
+      if (data.student) {
+        setStudents((current) =>
+          current.map((item) =>
+            item.id === data.student?.id
+              ? data.student!
+              : item
+          )
+        );
+
+        setSelectedStudent(data.student);
+      }
+
+      if (data.credentials) {
+        window.alert(
+          [
+            "Leerlingaccount succesvol aangemaakt",
+            "",
+            `Naam: ${data.credentials.name}`,
+            `E-mailadres: ${data.credentials.email}`,
+            `Wachtwoord: ${data.credentials.password}`,
+            `Loginpagina: ${data.credentials.loginUrl}`,
+            "",
+            "Bewaar deze gegevens. Het wachtwoord wordt alleen nu getoond.",
+          ].join("\\n")
+        );
+      }
+
+      showTemporaryMessage(
+        `Het leerlingaccount voor ${student.name} werd aangemaakt.`
+      );
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Het leerlingaccount kon niet gegenereerd worden."
+      );
+    } finally {
+      setGeneratingAccount(false);
     }
   }
 
@@ -462,10 +592,69 @@ export default function AdminStudents() {
                 {selectedStudent.grade ||
                   "Leerjaar niet ingevuld"}
               </p>
+
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "10px",
+                  marginTop: "16px",
+                }}
+              >
+                {selectedStudent.auth_user_id ||
+                selectedStudent.student_email ? (
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      minHeight: "44px",
+                      padding: "10px 16px",
+                      borderRadius: "999px",
+                      background: "rgba(40, 185, 170, 0.14)",
+                      color: "#087f76",
+                      fontWeight: 800,
+                    }}
+                  >
+                    ✓ Leerlingaccount actief
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    className="primary-action"
+                    onClick={() =>
+                      void generateStudentAccount(
+                        selectedStudent
+                      )
+                    }
+                    disabled={generatingAccount}
+                  >
+                    {generatingAccount
+                      ? "Account genereren..."
+                      : "Account genereren"}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
           <div className="student-detail-grid">
+            <section>
+              <h3>Leerlingportaal</h3>
+
+              <p>
+                <strong>Status:</strong>{" "}
+                {selectedStudent.auth_user_id
+                  ? "Account actief"
+                  : "Nog geen account"}
+              </p>
+
+              <p>
+                <strong>E-mailadres:</strong>{" "}
+                {selectedStudent.student_email ||
+                  "Nog niet gegenereerd"}
+              </p>
+            </section>
+
             <section>
               <h3>Ouder of voogd</h3>
 

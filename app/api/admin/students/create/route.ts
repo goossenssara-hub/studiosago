@@ -13,7 +13,9 @@ type CreateStudentBody = {
   education_level?: string | null;
   secondary_track?: string | null;
   finality?: string | null;
-  parent_email?: string;
+  parent_name?: string | null;
+  parent_relation?: string | null;
+  parent_email?: string | null;
   diagnosis?: string | null;
   support_needs?: string | null;
   goals?: string | null;
@@ -24,6 +26,11 @@ type CreateStudentBody = {
   notes?: string | null;
   photo_consent?: boolean | null;
 };
+
+function optionalText(value: unknown) {
+  const text = String(value ?? "").trim();
+  return text || null;
+}
 
 async function generateUniqueEmail(
   supabase: ReturnType<typeof createAdminClient>,
@@ -44,16 +51,13 @@ async function generateUniqueEmail(
       .eq("student_email", email)
       .maybeSingle();
 
-    if (error) {
-      throw error;
-    }
-
-    if (!data) {
-      return email;
-    }
+    if (error) throw error;
+    if (!data) return email;
   }
 
-  throw new Error("Er kon geen uniek leerling-e-mailadres worden gemaakt.");
+  throw new Error(
+    "Er kon geen uniek leerling-e-mailadres worden gemaakt."
+  );
 }
 
 export async function POST(request: Request) {
@@ -62,7 +66,6 @@ export async function POST(request: Request) {
   try {
     const body = (await request.json()) as CreateStudentBody;
     const name = String(body.name ?? "").trim();
-    const parentEmail = String(body.parent_email ?? "").trim();
 
     if (!name) {
       return NextResponse.json(
@@ -71,14 +74,31 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!parentEmail) {
+    if (!String(body.education_level ?? "").trim()) {
       return NextResponse.json(
-        { error: "E-mailadres van de ouder is verplicht." },
+        { error: "Onderwijsniveau is verplicht." },
         { status: 400 }
       );
     }
 
-    const studentEmail = await generateUniqueEmail(supabase, name);
+    if (!String(body.grade ?? "").trim()) {
+      return NextResponse.json(
+        { error: "Leerjaar is verplicht." },
+        { status: 400 }
+      );
+    }
+
+    if (!String(body.parent_name ?? "").trim()) {
+      return NextResponse.json(
+        { error: "Naam van de ouder of voogd is verplicht." },
+        { status: 400 }
+      );
+    }
+
+    const studentEmail = await generateUniqueEmail(
+      supabase,
+      name
+    );
     const temporaryPassword = generateStudentPassword();
 
     const { data: authData, error: authError } =
@@ -106,34 +126,49 @@ export async function POST(request: Request) {
       );
     }
 
-    const { data: student, error: studentError } = await supabase
-      .from("students")
-      .insert({
-        name,
-        birth_date: body.birth_date || null,
-        school: body.school || null,
-        grade: body.grade || null,
-        education_level: body.education_level || null,
-        secondary_track: body.secondary_track || null,
-        finality: body.finality || null,
-        parent_email: parentEmail,
-        diagnosis: body.diagnosis || null,
-        support_needs: body.support_needs || null,
-        goals: body.goals || null,
-        preferred_subjects: body.preferred_subjects || null,
-        medical_info: body.medical_info || null,
-        doctor_name: body.doctor_name || null,
-        doctor_phone: body.doctor_phone || null,
-        notes: body.notes || null,
-        photo_consent: body.photo_consent ?? false,
-        auth_user_id: authData.user.id,
-        student_email: studentEmail,
-      })
-      .select("*")
-      .single();
+    const { data: student, error: studentError } =
+      await supabase
+        .from("students")
+        .insert({
+          name,
+          birth_date: optionalText(body.birth_date),
+          school: optionalText(body.school),
+          grade: optionalText(body.grade),
+          education_level: optionalText(
+            body.education_level
+          ),
+          secondary_track: optionalText(
+            body.secondary_track
+          ),
+          finality: optionalText(body.finality),
+          parent_name: optionalText(body.parent_name),
+          parent_relation: optionalText(
+            body.parent_relation
+          ),
+          parent_email: optionalText(body.parent_email),
+          diagnosis: optionalText(body.diagnosis),
+          support_needs: optionalText(
+            body.support_needs
+          ),
+          goals: optionalText(body.goals),
+          preferred_subjects: optionalText(
+            body.preferred_subjects
+          ),
+          medical_info: optionalText(body.medical_info),
+          doctor_name: optionalText(body.doctor_name),
+          doctor_phone: optionalText(body.doctor_phone),
+          notes: optionalText(body.notes),
+          photo_consent: body.photo_consent ?? false,
+          auth_user_id: authData.user.id,
+          student_email: studentEmail,
+        })
+        .select("*")
+        .single();
 
     if (studentError) {
-      await supabase.auth.admin.deleteUser(authData.user.id);
+      await supabase.auth.admin.deleteUser(
+        authData.user.id
+      );
 
       return NextResponse.json(
         { error: studentError.message },
@@ -148,7 +183,8 @@ export async function POST(request: Request) {
         name,
         email: studentEmail,
         password: temporaryPassword,
-        loginUrl: "https://www.studiosago.be/leerling-login",
+        loginUrl:
+          "https://www.studiosago.be/leerling-login",
       },
     });
   } catch (error) {

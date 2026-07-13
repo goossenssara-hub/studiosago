@@ -649,3 +649,48 @@ cursor:not-allowed;
   transform: translateY(-5px);
   box-shadow: 0 26px 56px rgba(3, 54, 99, 0.24);
 }
+/* Meerkeuzevragen middelbaar */
+.exercise-options {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+.exercise-option {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid rgba(3, 54, 99, 0.16);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #033663;
+  text-align: left;
+  font: inherit;
+  line-height: 1.45;
+  cursor: pointer;
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+.exercise-option:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(40, 185, 170, 0.55);
+  box-shadow: 0 10px 24px rgba(3, 54, 99, 0.08);
+}
+.exercise-option.selected {
+  border-color: #28b9aa;
+  background: rgba(40, 185, 170, 0.1);
+  box-shadow: 0 0 0 3px rgba(40, 185, 170, 0.12);
+}
+.exercise-option-dot {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  border: 2px solid rgba(3, 54, 99, 0.35);
+  border-radius: 999px;
+  background: #fff;
+}
+.exercise-option.selected .exercise-option-dot {
+  border: 5px solid #28b9aa;
+}
+.exercise-option:disabled { cursor: default; }

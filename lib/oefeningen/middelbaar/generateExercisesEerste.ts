@@ -903,21 +903,245 @@ function generateFrench(level: number, random: Random): ExerciseInput[] {
   }));
 }
 
-function generateGeneric(level: number, random: Random): ExerciseInput[] {
-  const topics = [
-    ["studieplanning", "Een goede planning verdeelt grote taken in kleinere stappen."],
-    ["leren leren", "Actief ophalen uit het geheugen werkt beter dan alleen herlezen."],
-    ["mediawijsheid", "Controleer auteur, datum en bron voordat je informatie vertrouwt."],
-  ] as const;
+function mc(
+  category: string,
+  question: string,
+  options: string[],
+  answer: string
+): ExerciseInput {
+  return { category, question, options, answer };
+}
 
-  return shuffle(random, topics).map(([topic, answer]) => ({
-    category: `Algemene vaardigheden · niveau ${level}`,
-    question:
-      level <= 4
-        ? `Geef één belangrijke tip over ${topic}.`
-        : `Leg in één zin uit waarom ${topic} belangrijk is.`,
-    answer,
-  }));
+function generateMentalMath(level: number, random: Random): ExerciseInput[] {
+  const category = `Hoofdrekenen · niveau ${level}`;
+  const size = 10 ** Math.min(5, level + 2);
+  const a = randomInt(random, Math.floor(size / 4), size);
+  const b = randomInt(random, Math.floor(size / 10), Math.floor(size / 2));
+  const factor = randomInt(random, 6 + level, 15 + level * 2);
+  const other = randomInt(random, 4, 14 + level);
+  const decimalA = randomInt(random, 120, 950) / 10;
+  const decimalB = randomInt(random, 20, 180) / 10;
+  const signed = level >= 6 ? randomInt(random, -40, 40) : randomInt(random, 1, 40);
+  const power = level >= 8 ? randomInt(random, 2, 5) : 2;
+
+  return [
+    { category, question: `${a} + ${b} =`, answer: String(a + b) },
+    { category, question: `${a} - ${b} =`, answer: String(a - b) },
+    { category, question: `${factor} × ${other} =`, answer: String(factor * other) },
+    { category, question: `${factor * other} ÷ ${factor} =`, answer: String(other) },
+    level <= 3
+      ? { category, question: `Schat ${a + b} door beide getallen af te ronden op honderdtallen.`, answer: String(Math.round(a / 100) * 100 + Math.round(b / 100) * 100) }
+      : { category, question: `${decimalA.toFixed(1).replace('.', ',')} - ${decimalB.toFixed(1).replace('.', ',')} =`, answer: acceptedNumber(decimalA - decimalB) },
+    level <= 5
+      ? mc(category, `Welke uitkomst is correct voor 8 + 3 × 4?`, ["44", "20", "23", "32"], "20")
+      : level <= 7
+        ? { category, question: `${signed} - (-12) =`, answer: String(signed + 12) }
+        : { category, question: `${power}³ + ${factor} =`, answer: String(power ** 3 + factor) },
+  ];
+}
+
+function generateFractionsDecimals(level: number, random: Random): ExerciseInput[] {
+  const category = `Breuken en kommagetallen · niveau ${level}`;
+  const d1 = pick(random, [4, 5, 8, 10, 20]);
+  const n1 = randomInt(random, 1, d1 - 1);
+  const d2 = pick(random, [3, 6, 9, 12]);
+  const n2 = randomInt(random, 1, d2 - 1);
+  const common = d1 * d2;
+
+  if (level <= 2) {
+    return [
+      mc(category, `Welke breuk is gelijkwaardig aan ${n1}/${d1}?`, [`${n1 * 2}/${d1 * 2}`, `${n1 + 1}/${d1 + 1}`, `${n1}/${d1 + 1}`, `${n1 * 2}/${d1}`], `${n1 * 2}/${d1 * 2}`),
+      { category, question: `Schrijf ${n1}/${d1} als kommagetal.`, answer: acceptedNumber(n1 / d1) },
+      { category, question: `Schrijf 0,${pick(random, [2, 4, 5, 8])} als breuk met noemer 10.`, answer: [`${pick(random, [2,4,5,8])}/10`] },
+      mc(category, `Welke is het grootst?`, ["3/4", "0,7", "2/3", "0,6"], "3/4"),
+      { category, question: `Vereenvoudig 18/24.`, answer: ["3/4", "3 : 4"] },
+      { category, question: `Rangschik van klein naar groot: 0,5 – 3/4 – 0,25.`, answer: ["0,25 0,5 3/4", "0,25 - 0,5 - 3/4"] },
+    ];
+  }
+
+  if (level <= 5) {
+    return [
+      { category, question: `${n1}/${d1} + ${Math.max(1, d1 - n1 - 1)}/${d1} =`, answer: [`${n1 + Math.max(1, d1 - n1 - 1)}/${d1}`, String((n1 + Math.max(1, d1 - n1 - 1)) / d1)] },
+      { category, question: `3/4 - 2/5 =`, answer: ["7/20", "0,35"] },
+      { category, question: `1,75 + 2 3/4 =`, answer: acceptedNumber(4.5) },
+      { category, question: `Schrijf 2,125 als breuk in eenvoudigste vorm.`, answer: ["17/8", "2 1/8"] },
+      mc(category, `Welke bewerking geeft 5/6 van 72?`, ["72 ÷ 6 × 5", "72 × 6 ÷ 5", "72 ÷ 5 × 6", "72 - 6 × 5"], "72 ÷ 6 × 5"),
+      { category, question: `Bereken 7/12 + 5/18.`, answer: ["31/36", "0,8611"] },
+    ];
+  }
+
+  return [
+    { category, question: `Bereken en vereenvoudig: 5/6 × 9/10.`, answer: ["3/4", "0,75"] },
+    { category, question: `Bereken: 7/8 ÷ 14/15.`, answer: ["15/16", "0,9375"] },
+    { category, question: `Los op: x + 3/5 = 7/4.`, answer: ["23/20", "1,15"] },
+    { category, question: `Zet 0,0${level} om naar een volledig vereenvoudigde breuk.`, answer: level === 6 ? ["3/50"] : [String(level) + "/100"] },
+    mc(category, `Welke uitspraak is waar?`, ["0,333… = 1/3", "0,25 = 1/5", "0,6 = 2/5", "1,2 = 6/10"], "0,333… = 1/3"),
+    { category, question: `Bereken: 2 1/3 - 5/8.`, answer: ["41/24", "1 17/24"] },
+  ];
+}
+
+function generatePercentRatio(level: number, random: Random): ExerciseInput[] {
+  const category = `Procenten en verhoudingen · niveau ${level}`;
+  const base = randomInt(random, 8, 30) * 10;
+  const percent = pick(random, [12, 15, 18, 20, 25, 30]);
+
+  return [
+    { category, question: `Bereken ${percent}% van ${base}.`, answer: acceptedNumber(base * percent / 100) },
+    { category, question: `Een artikel van €${base} krijgt ${percent}% korting. Wat is de nieuwe prijs?`, answer: acceptedMoney(base * (1 - percent / 100)) },
+    { category, question: `De verhouding rood : blauw is 3 : ${level + 4}. Er zijn 18 rode fiches. Hoeveel blauwe fiches zijn er?`, answer: String(6 * (level + 4)) },
+    level <= 3
+      ? { category, question: `Op schaal 1 : 50 000 is een afstand 6 cm. Hoeveel kilometer is dit werkelijk?`, answer: acceptedNumber(3, "km") }
+      : { category, question: `Een prijs stijgt eerst ${percent}% en daalt daarna 10%. Startprijs: €${base}. Eindprijs?`, answer: acceptedMoney(base * (1 + percent / 100) * .9) },
+    level <= 5
+      ? mc(category, `Welke verhouding is gelijk aan 4 : 6?`, ["2 : 3", "3 : 4", "6 : 8", "8 : 10"], "2 : 3")
+      : { category, question: `Na ${percent}% korting kost een product €${(base * (1-percent/100)).toFixed(2).replace('.', ',')}. Wat was de oorspronkelijke prijs?`, answer: acceptedMoney(base) },
+    level <= 7
+      ? { category, question: `In een groep van ${base / 10} leerlingen is 40% meisje. Hoeveel jongens zijn er?`, answer: acceptedNumber(base / 10 * .6) }
+      : { category, question: `Een bevolking groeit twee jaar na elkaar met 4%. Start: ${base * 10}. Hoeveel na twee jaar?`, answer: acceptedNumber(base * 10 * 1.04 ** 2) },
+  ];
+}
+
+function generateGeometry(level: number, random: Random): ExerciseInput[] {
+  const category = `Meetkunde · niveau ${level}`;
+  const l = randomInt(random, 8, 20 + level);
+  const w = randomInt(random, 5, l - 1);
+  return [
+    { category, question: `Een rechthoek is ${l} cm lang en ${w} cm breed. Bereken de omtrek.`, answer: acceptedNumber(2 * (l + w), "cm") },
+    { category, question: `Bereken de oppervlakte van dezelfde rechthoek.`, answer: acceptedNumber(l * w, "cm²") },
+    { category, question: `Een driehoek heeft basis ${l} cm en hoogte ${w} cm. Bereken de oppervlakte.`, answer: acceptedNumber(l * w / 2, "cm²") },
+    mc(category, `Twee hoeken van een driehoek zijn 48° en 67°. Hoe groot is de derde hoek?`, ["55°", "65°", "75°", "85°"], "65°"),
+    level <= 4
+      ? { category, question: `Een vierkant heeft oppervlakte 144 cm². Bereken de omtrek.`, answer: acceptedNumber(48, "cm") }
+      : { category, question: `Een cirkel heeft straal 7 cm. Bereken de oppervlakte met π = 22/7.`, answer: acceptedNumber(154, "cm²") },
+    level <= 7
+      ? { category, question: `Een balk is 8 cm lang, 5 cm breed en 4 cm hoog. Bereken het volume.`, answer: acceptedNumber(160, "cm³") }
+      : { category, question: `Een cilinder heeft straal 3 cm en hoogte 10 cm. Bereken het volume met π = 3,14.`, answer: acceptedNumber(282.6, "cm³") },
+  ];
+}
+
+function generateTablesGraphs(level: number, random: Random): ExerciseInput[] {
+  const category = `Tabellen en grafieken · niveau ${level}`;
+  const values = [12 + level, 18 + level * 2, 15 + level, 22 + level * 3];
+  const total = values.reduce((a, b) => a + b, 0);
+  return [
+    { category, question: `Een tabel toont: maandag ${values[0]}, dinsdag ${values[1]}, woensdag ${values[2]}, donderdag ${values[3]}. Welke dag heeft de hoogste waarde?`, answer: "donderdag" },
+    { category, question: `Hoe groot is het verschil tussen dinsdag en maandag?`, answer: String(values[1] - values[0]) },
+    { category, question: `Bereken het gemiddelde van de vier waarden.`, answer: acceptedNumber(total / 4) },
+    mc(category, `De waarden stijgen van 20 naar 26. Met hoeveel procent is dat?`, ["20%", "25%", "30%", "35%"], "30%"),
+    level <= 5
+      ? { category, question: `Welke waarde ontbreekt als het gemiddelde van 14, 18, x en 24 gelijk is aan 20?`, answer: "24" }
+      : { category, question: `Een grafiek stijgt van 80 naar 104 en daalt daarna naar 91. Bereken de totale procentuele verandering van begin tot einde.`, answer: acceptedNumber(13.75, "%") },
+    mc(category, `Welke grafiek is het geschiktst om een ontwikkeling doorheen de tijd te tonen?`, ["lijngrafiek", "cirkeldiagram", "pictogram", "spreidingsdiagram"], "lijngrafiek"),
+  ];
+}
+
+function generateInstructionUnderstanding(level: number, random: Random): ExerciseInput[] {
+  const category = `Opdrachten begrijpen · niveau ${level}`;
+  return [
+    mc(category, `Wat moet je doen bij de opdracht: “Vergelijk beide standpunten en formuleer daarna je conclusie”?`, ["Alleen verschillen opsommen", "Overeenkomsten en verschillen onderzoeken en besluiten", "Een tekst overschrijven", "Je mening zonder bewijs geven"], "Overeenkomsten en verschillen onderzoeken en besluiten"),
+    mc(category, `Welk instructiewoord vraagt om een verklaring met oorzaken?`, ["verklaar", "noem", "duid aan", "rangschik"], "verklaar"),
+    mc(category, `Bij “beargumenteer je antwoord” moet je…`, ["een antwoord met redenen en bewijs geven", "alleen ja of nee schrijven", "de vraag herhalen", "een voorbeeld overslaan"], "een antwoord met redenen en bewijs geven"),
+    mc(category, `Welke herformulering past bij: “Analyseer de gevolgen van de maatregel”?`, ["Onderzoek welke effecten de maatregel heeft", "Schrijf de maatregel over", "Geef één los voorbeeld", "Vertel wie de maatregel nam"], "Onderzoek welke effecten de maatregel heeft"),
+    level <= 4
+      ? mc(category, `Wat is het verschil tussen “beschrijf” en “verklaar”?`, ["Beschrijven zegt wat je ziet; verklaren zegt waarom", "Er is geen verschil", "Verklaren is korter", "Beschrijven bevat altijd cijfers"], "Beschrijven zegt wat je ziet; verklaren zegt waarom")
+      : mc(category, `Welke opdracht vraagt de meest volledige verwerking?`, ["Noem drie oorzaken", "Vat samen", "Vergelijk, beoordeel en motiveer", "Duid aan"], "Vergelijk, beoordeel en motiveer"),
+    mc(category, `Welke informatie is essentieel in: “Bereken met behulp van tabel 2 het procentuele verschil tussen 2024 en 2025”?`, ["tabel 2 en de waarden van beide jaren", "alle tabellen", "alleen 2025", "de titel van het hoofdstuk"], "tabel 2 en de waarden van beide jaren"),
+  ];
+}
+
+function generateReadingComprehension(level: number, random: Random): ExerciseInput[] {
+  const category = `Begrijpend lezen · niveau ${level}`;
+  const text = level <= 3
+    ? "Steeds meer scholen voeren een smartphonebeleid in. Tijdens de lessen blijven toestellen in een afgesloten kast. Volgens de directie kunnen leerlingen zich daardoor beter concentreren. Sommige leerlingen vinden de regel streng, maar leerkrachten merken minder onderbrekingen."
+    : "Hoewel digitale middelen het leren kunnen ondersteunen, blijkt onbeperkt smartphonegebruik tijdens lessen vaak afleidend. Scholen die toestellen tijdelijk opbergen, rapporteren meer rust, maar critici waarschuwen dat een verbod alleen niet volstaat: leerlingen moeten ook mediawijs leren omgaan met technologie.";
+  return [
+    { category, question: `${text}\n\nWat is de hoofdgedachte?`, answer: level <= 3 ? ["smartphones worden beperkt om de concentratie te verbeteren", "een smartphonebeleid zorgt voor meer concentratie"] : ["beperken kan rust geven maar mediawijsheid blijft nodig", "smartphonebeperking alleen is niet voldoende"] },
+    mc(category, `${text}\n\nWat is het tekstdoel?`, ["informeren", "ontspannen", "instrueren", "verkopen"], "informeren"),
+    mc(category, `${text}\n\nWelk tekstverband staat centraal?`, ["oorzaak-gevolg", "opsomming", "chronologie", "vergelijking zonder conclusie"], "oorzaak-gevolg"),
+    { category, question: `${text}\n\nGeef één bewijs uit de tekst voor het standpunt dat beperkingen effect hebben.`, answer: level <= 3 ? ["leerkrachten merken minder onderbrekingen", "minder onderbrekingen"] : ["scholen rapporteren meer rust", "meer rust"] },
+    level <= 5
+      ? mc(category, `${text}\n\nWie heeft bedenkingen bij de maatregel?`, ["sommige leerlingen", "alle leerkrachten", "de directie", "niemand"], "sommige leerlingen")
+      : mc(category, `${text}\n\nWelke nuance voegt de laatste zin toe?`, ["Een verbod moet samengaan met mediawijsheid", "Smartphones zijn altijd schadelijk", "Digitale middelen helpen nooit", "Scholen moeten technologie volledig weren"], "Een verbod moet samengaan met mediawijsheid"),
+    { category, question: `${text}\n\nFormuleer een passende titel.`, answer: level <= 3 ? ["Minder afleiding door smartphonebeleid", "Smartphones in de klas"] : ["Beperken én mediawijs maken", "Meer rust, maar geen eenvoudige oplossing"] },
+  ];
+}
+
+function generateVocabulary(level: number, random: Random): ExerciseInput[] {
+  const category = `Woordenschat en schooltaal · niveau ${level}`;
+  const advanced = level >= 6;
+  return [
+    mc(category, `Wat betekent “relevant” in: “Selecteer alleen de relevante gegevens”?`, ["belangrijk voor de vraag", "moeilijk leesbaar", "volledig willekeurig", "zeer uitgebreid"], "belangrijk voor de vraag"),
+    mc(category, `Welk woord is een synoniem van “concluderen”?`, ["besluiten", "twijfelen", "opsommen", "kopiëren"], "besluiten"),
+    mc(category, `Wat betekent “impliciet”?`, ["niet rechtstreeks gezegd maar wel bedoeld", "duidelijk letterlijk vermeld", "onmogelijk te begrijpen", "zonder betekenis"], "niet rechtstreeks gezegd maar wel bedoeld"),
+    mc(category, `Welke zin gebruikt “illustreren” correct?`, ["De grafiek illustreert de sterke stijging", "Hij illustreert zijn jas", "Wij illustreren de deur", "De toets illustreert gisteren"], "De grafiek illustreert de sterke stijging"),
+    advanced
+      ? mc(category, `Wat betekent “nuanceren”?`, ["een uitspraak verfijnen en minder absoluut maken", "iets volledig ontkennen", "een tekst verkorten", "een mening zonder argument geven"], "een uitspraak verfijnen en minder absoluut maken")
+      : mc(category, `Wat betekent “prioriteit”?`, ["wat eerst aandacht krijgt", "wat je overslaat", "een toevallige keuze", "een eindconclusie"], "wat eerst aandacht krijgt"),
+    mc(category, `Welk woord past: “De onderzoeker ___ zijn conclusie met cijfers.”`, ["onderbouwt", "vermijdt", "verbergt", "vervangt"], "onderbouwt"),
+  ];
+}
+
+function generateSpellingForSkill(level: number, random: Random): ExerciseInput[] {
+  const category = `Spelling · niveau ${level}`;
+  const sets = [
+    ["Hij wordt morgen zestien.", "Word jij ook uitgenodigd?", "De leerling beantwoordt de vraag."],
+    ["Gisteren verhuisde zij naar Gent.", "De wedstrijd eindigde onverwacht.", "Hij downloadde het bestand."],
+    ["De geüpdatete planning werd verspreid.", "Zij heeft de resultaten geanalyseerd.", "Het besluit beïnvloedt iedereen."],
+  ];
+  const s = sets[level <= 3 ? 0 : level <= 6 ? 1 : 2];
+  return [
+    { category, question: `Schrijf foutloos over: ${s[0]}`, answer: s[0] },
+    { category, question: `Schrijf foutloos over: ${s[1]}`, answer: s[1] },
+    { category, question: `Schrijf foutloos over: ${s[2]}`, answer: s[2] },
+    mc(category, `Welke zin is correct gespeld?`, ["Hij vind dat het verandert.", "Hij vindt dat het verandert.", "Hij vinddt dat het veranderd.", "Hij vindt dat het veranderd."], "Hij vindt dat het verandert."),
+    mc(category, `Waar staan de leestekens correct?`, ["Sara vroeg: ‘Kom je morgen?’", "Sara vroeg ‘Kom je morgen’?", "Sara vroeg; ‘Kom je morgen?’", "Sara vroeg, ‘Kom je morgen’."], "Sara vroeg: ‘Kom je morgen?’"),
+    level <= 5
+      ? { category, question: `Vul correct in: Morgen ___ (worden) de resultaten bekendgemaakt.`, answer: "worden" }
+      : { category, question: `Vul correct in: Het verslag is gisteren volledig ___ (herwerken).`, answer: "herwerkt" },
+  ];
+}
+
+function generateGrammar(level: number, random: Random): ExerciseInput[] {
+  const category = `Taalbeschouwing · niveau ${level}`;
+  return [
+    mc(category, `Wat is de persoonsvorm in: “Morgen zullen de leerlingen hun project voorstellen”?`, ["zullen", "leerlingen", "voorstellen", "project"], "zullen"),
+    mc(category, `Wat is het onderwerp in: “In de aula werden de prijzen uitgereikt”?`, ["de prijzen", "in de aula", "werden", "uitgereikt"], "de prijzen"),
+    mc(category, `Welke woordsoort is “zorgvuldig” in: “Zij werkt zorgvuldig”?`, ["bijwoord", "bijvoeglijk naamwoord", "zelfstandig naamwoord", "voorzetsel"], "bijwoord"),
+    mc(category, `Wat is het lijdend voorwerp in: “De onderzoeker controleert de resultaten”?`, ["de resultaten", "de onderzoeker", "controleert", "geen lijdend voorwerp"], "de resultaten"),
+    level <= 5
+      ? mc(category, `Welke zin bevat een naamwoordelijk gezegde?`, ["De opdracht is moeilijk.", "De leerling maakt de opdracht.", "Wij lezen het boek.", "Hij opent de deur."], "De opdracht is moeilijk.")
+      : mc(category, `Welke bijzin is een betrekkelijke bijzin?`, ["Het boek dat ik lees is spannend.", "Omdat het regent, blijven we binnen.", "Ik weet dat hij komt.", "Als je studeert, slaag je."], "Het boek dat ik lees is spannend."),
+    mc(category, `Welke zinsdeelproef helpt om de persoonsvorm te vinden?`, ["de zin in een andere tijd zetten", "een woord vervangen door een synoniem", "de zin langer maken", "alle leestekens verwijderen"], "de zin in een andere tijd zetten"),
+  ];
+}
+
+function generateSummarizing(level: number, random: Random): ExerciseInput[] {
+  const category = `Samenvatten en structureren · niveau ${level}`;
+  const text = "De schooltuin wordt vernieuwd. Eerst verwijderen vrijwilligers het oude hout. Daarna plaatsen leerlingen nieuwe plantenbakken. De gemeente levert compost en gereedschap. Het doel is een groene leerplek te maken waar leerlingen tijdens de lessen onderzoek kunnen doen.";
+  return [
+    mc(category, `${text}\n\nWelke zin geeft de hoofdgedachte het best weer?`, ["De school maakt met verschillende partners een groene leerplek", "Vrijwilligers verwijderen hout", "De gemeente heeft gereedschap", "Leerlingen krijgen les"], "De school maakt met verschillende partners een groene leerplek"),
+    mc(category, `${text}\n\nWelke informatie is een bijzaak?`, ["De gemeente levert gereedschap", "De schooltuin wordt vernieuwd", "Er komt een groene leerplek", "Leerlingen zullen er onderzoek doen"], "De gemeente levert gereedschap"),
+    { category, question: `${text}\n\nNoteer drie passende kernwoorden, gescheiden door komma's.`, answer: ["schooltuin, samenwerking, leerplek", "schooltuin samenwerking leerplek"] },
+    mc(category, `${text}\n\nWelke structuur gebruikt de tekst vooral?`, ["chronologisch", "probleem-oplossing", "vergelijking", "vraag-antwoord"], "chronologisch"),
+    mc(category, `${text}\n\nWelke samenvatting is te gedetailleerd?`, ["De gemeente levert compost en gereedschap terwijl vrijwilligers hout verwijderen en leerlingen bakken plaatsen", "De school vernieuwt met hulp van anderen de tuin tot leerplek", "De tuin wordt een groene leerplek", "Partners werken samen aan de schooltuin"], "De gemeente levert compost en gereedschap terwijl vrijwilligers hout verwijderen en leerlingen bakken plaatsen"),
+    level <= 5
+      ? { category, question: `${text}\n\nVat de tekst samen in maximaal 15 woorden.`, answer: ["De school vernieuwt samen met partners de tuin tot een groene leerplek."] }
+      : mc(category, `${text}\n\nWelke informatie moet zeker in een samenvatting blijven?`, ["doel, belangrijkste acties en betrokkenen", "alle voorbeelden en details", "alleen de eerste zin", "alleen de materialen"], "doel, belangrijkste acties en betrokkenen"),
+  ];
+}
+
+function generatePlanningStudy(level: number, random: Random): ExerciseInput[] {
+  const category = `Plannen en studeren · niveau ${level}`;
+  return [
+    mc(category, `Je hebt vrijdag een grote toets en woensdag een korte taak. Wat plan je eerst?`, ["De taak afronden en tegelijk al een eerste toetsblok plannen", "Alleen vrijdagavond studeren", "De toets negeren tot donderdag", "Beide taken op vrijdag doen"], "De taak afronden en tegelijk al een eerste toetsblok plannen"),
+    mc(category, `Welke studieaanpak gebruikt actief ophalen?`, ["Na het leren het boek sluiten en jezelf vragen stellen", "De tekst vijf keer herlezen", "Alles markeren", "Alleen de samenvatting bekijken"], "Na het leren het boek sluiten en jezelf vragen stellen"),
+    mc(category, `Wat is de beste manier om een hoofdstuk van 24 pagina's over vier dagen te verdelen?`, ["Elke dag 6 pagina's plus een korte herhaling", "Alle pagina's op de laatste avond", "Elke dag willekeurig lezen", "Alleen moeilijke woorden leren"], "Elke dag 6 pagina's plus een korte herhaling"),
+    mc(category, `Welke taak heeft de hoogste prioriteit?`, ["Een toets morgen waarvoor je nog niet hebt geleerd", "Een presentatie over drie weken", "Je pennenzak ordenen", "Een reeds afgewerkte taak opnieuw versieren"], "Een toets morgen waarvoor je nog niet hebt geleerd"),
+    level <= 5
+      ? mc(category, `Welke controle gebeurt best na een oefenreeks?`, ["Fouten analyseren en opnieuw proberen", "Alle antwoorden wissen", "Alleen het cijfer bekijken", "Onmiddellijk stoppen"], "Fouten analyseren en opnieuw proberen")
+      : mc(category, `Je scoort goed op herkenningsvragen maar zwak op open vragen. Welke aanpassing is het nuttigst?`, ["Meer oefenen met actief formuleren zonder boek", "Nog vaker herlezen", "Minder pauzes nemen", "Alleen definities markeren"], "Meer oefenen met actief formuleren zonder boek"),
+    mc(category, `Welke planning is het meest realistisch?`, ["Blokken van 30–45 minuten met korte pauzes en concrete doelen", "Vier uur zonder pauze", "Studeren zonder startuur", "Alle vakken tegelijk openen"], "Blokken van 30–45 minuten met korte pauzes en concrete doelen"),
+  ];
 }
 
 export function generateExercisesEerste(
@@ -935,20 +1159,51 @@ export function generateExercisesEerste(
     case "wiskunde-vraagstukken":
       inputs = generateMathWordProblems(level, random);
       break;
-    case "begrijpend-lezen":
-      inputs = generateReading(level, random);
+    case "wiskunde-hoofdrekenen":
+      inputs = generateMentalMath(level, random);
       break;
-    case "spelling":
-      inputs = generateSpelling(level, random);
+    case "wiskunde-breuken-kommagetallen":
+      inputs = generateFractionsDecimals(level, random);
       break;
-    case "wiskunde":
-      inputs = generateMath(level, random);
+    case "wiskunde-procenten-verhoudingen":
+      inputs = generatePercentRatio(level, random);
       break;
-    case "frans":
-      inputs = generateFrench(level, random);
+    case "wiskunde-meetkunde":
+      inputs = generateGeometry(level, random);
+      break;
+    case "wiskunde-tabellen-grafieken":
+      inputs = generateTablesGraphs(level, random);
+      break;
+    case "nederlands-opdrachten":
+      inputs = generateInstructionUnderstanding(level, random);
+      break;
+    case "nederlands-begrijpend-lezen":
+      inputs = generateReadingComprehension(level, random);
+      break;
+    case "nederlands-woordenschat":
+      inputs = generateVocabulary(level, random);
+      break;
+    case "nederlands-spelling":
+      inputs = generateSpellingForSkill(level, random);
+      break;
+    case "nederlands-taalbeschouwing":
+      inputs = generateGrammar(level, random);
+      break;
+    case "nederlands-samenvatten":
+      inputs = generateSummarizing(level, random);
+      break;
+    case "leren-leren-plannen":
+      inputs = generatePlanningStudy(level, random);
       break;
     default:
-      inputs = generateGeneric(level, random);
+      inputs = [
+        mc(
+          `Onbekend onderdeel · niveau ${level}`,
+          "Dit onderdeel is nog niet correct gekoppeld. Ga terug naar het overzicht.",
+          ["Terug naar het overzicht"],
+          "Terug naar het overzicht"
+        ),
+      ];
       break;
   }
 

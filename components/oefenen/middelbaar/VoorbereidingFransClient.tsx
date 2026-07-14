@@ -27,7 +27,7 @@ type SavedFrenchProgress = {
 const STORAGE_KEY = "studiosago:voorbereiding-frans:progress:v2";
 const DEFAULT_SECTION: FrenchExerciseCategory = "woordenschat";
 
-function normalize(value: string) {
+function normalize(value: string): string {
   return value
     .trim()
     .toLocaleLowerCase("fr")
@@ -36,7 +36,7 @@ function normalize(value: string) {
     .replace(/\s+/g, " ");
 }
 
-function isCorrect(exercise: FrenchExercise, value: string) {
+function isCorrect(exercise: FrenchExercise, value: string): boolean {
   if (!exercise.answer) {
     return false;
   }
@@ -82,7 +82,7 @@ function isFrenchCategory(value: unknown): value is FrenchExerciseCategory {
   return frenchPreparationSections.some((section) => section.id === value);
 }
 
-function speakFrench(text: string) {
+function speakFrench(text: string): void {
   if (typeof window === "undefined") {
     return;
   }
@@ -90,7 +90,7 @@ function speakFrench(text: string) {
   const speechSynthesis = window.speechSynthesis;
 
   if (!speechSynthesis) {
-    globalThis.alert("Je browser ondersteunt voorlezen niet.");
+    window.alert("Je browser ondersteunt voorlezen niet.");
     return;
   }
 
@@ -201,9 +201,9 @@ export default function VoorbereidingFransClient() {
   ).length;
 
   const total = frenchPreparationExercises.length;
-  const progress = Math.round((completed / total) * 100);
+  const progress = total === 0 ? 0 : Math.round((completed / total) * 100);
 
-  function updateAnswer(id: string, value: string) {
+  function updateAnswer(id: string, value: string): void {
     setAnswers((current) => ({
       ...current,
       [id]: value,
@@ -215,7 +215,14 @@ export default function VoorbereidingFransClient() {
     }));
   }
 
-  function checkExercise(exercise: FrenchExercise) {
+  function markExerciseCompleted(id: string): void {
+    setChecked((current) => ({
+      ...current,
+      [id]: true,
+    }));
+  }
+
+  function checkExercise(exercise: FrenchExercise): void {
     const value = answers[exercise.id]?.trim();
 
     if (!value) {
@@ -223,13 +230,10 @@ export default function VoorbereidingFransClient() {
       return;
     }
 
-    setChecked((current) => ({
-      ...current,
-      [exercise.id]: true,
-    }));
+    markExerciseCompleted(exercise.id);
   }
 
-  function markOpenExercise(exercise: FrenchExercise) {
+  function markOpenExercise(exercise: FrenchExercise): void {
     const value = answers[exercise.id]?.trim() ?? "";
     const wordCount = value.split(/\s+/).filter(Boolean).length;
 
@@ -248,13 +252,14 @@ export default function VoorbereidingFransClient() {
       return;
     }
 
-    setChecked((current) => ({
-      ...current,
-      [exercise.id]: true,
-    }));
+    markExerciseCompleted(exercise.id);
   }
 
-  function getSectionResult(sectionId: FrenchExerciseCategory) {
+  function getSectionResult(sectionId: FrenchExerciseCategory): {
+    isFinished: boolean;
+    score: number | null;
+    passed: boolean;
+  } {
     const exercises = frenchPreparationExercises.filter(
       (exercise) => exercise.category === sectionId
     );
@@ -298,7 +303,7 @@ export default function VoorbereidingFransClient() {
     };
   }
 
-  function resetAll() {
+  function resetAll(): void {
     const confirmed = window.confirm(
       "Weet je zeker dat je alle Franse antwoorden en voortgang wilt wissen?"
     );
@@ -454,8 +459,7 @@ export default function VoorbereidingFransClient() {
         {sectionExercises.map((exercise, index) => {
           const value = answers[exercise.id] ?? "";
           const hasBeenChecked = Boolean(checked[exercise.id]);
-          const correct =
-            hasBeenChecked && isCorrect(exercise, value);
+          const correct = hasBeenChecked && isCorrect(exercise, value);
           const isOpen = exercise.type === "open";
 
           return (
@@ -492,32 +496,26 @@ export default function VoorbereidingFransClient() {
                   {exercise.instruction}
                 </p>
 
-                {exercise.type === "listening" &&
-                  exercise.audioText && (
-                    <button
-                      className={styles.listenButton}
-                      type="button"
-                      onClick={() =>
-                        speakFrench(exercise.audioText ?? "")
-                      }
-                    >
-                      <span aria-hidden="true">🔊</span> Luisteren
-                    </button>
-                  )}
+                {exercise.type === "listening" && exercise.audioText && (
+                  <button
+                    className={styles.listenButton}
+                    type="button"
+                    onClick={() => speakFrench(exercise.audioText ?? "")}
+                  >
+                    <span aria-hidden="true">🔊</span> Luisteren
+                  </button>
+                )}
 
                 {exercise.category === "spreken" ? (
                   <FrenchSpeakingRecorder
                     exerciseId={exercise.id}
                     value={value}
                     minimumWords={exercise.minimumWords}
-                    onTranscriptChange={(transcript) =>
+                    onTranscriptChange={(transcript: string) =>
                       updateAnswer(exercise.id, transcript)
                     }
                     onCompleted={() =>
-                      setChecked((current) => ({
-                        ...current,
-                        [exercise.id]: true,
-                      }))
+                      markExerciseCompleted(exercise.id)
                     }
                   />
                 ) : exercise.category === "schrijven" ? (
@@ -536,14 +534,11 @@ export default function VoorbereidingFransClient() {
                       exerciseId={exercise.id}
                       value={value}
                       minimumWords={exercise.minimumWords}
-                      onValueChange={(nextValue) =>
+                      onValueChange={(nextValue: string) =>
                         updateAnswer(exercise.id, nextValue)
                       }
                       onCompleted={() =>
-                        setChecked((current) => ({
-                          ...current,
-                          [exercise.id]: true,
-                        }))
+                        markExerciseCompleted(exercise.id)
                       }
                     />
                   </>
@@ -592,20 +587,20 @@ export default function VoorbereidingFransClient() {
                 <div className={styles.actions}>
                   {exercise.category !== "spreken" &&
                     exercise.category !== "schrijven" && (
-                    <button
-                      type="button"
-                      className={styles.checkButton}
-                      onClick={() =>
-                        isOpen
-                          ? markOpenExercise(exercise)
-                          : checkExercise(exercise)
-                      }
-                    >
-                      {isOpen
-                        ? "Markeer als afgewerkt"
-                        : "Controleer"}
-                    </button>
-                  )}
+                      <button
+                        type="button"
+                        className={styles.checkButton}
+                        onClick={() =>
+                          isOpen
+                            ? markOpenExercise(exercise)
+                            : checkExercise(exercise)
+                        }
+                      >
+                        {isOpen
+                          ? "Markeer als afgewerkt"
+                          : "Controleer"}
+                      </button>
+                    )}
 
                   {exercise.example && (
                     <button
@@ -625,13 +620,12 @@ export default function VoorbereidingFransClient() {
                   )}
                 </div>
 
-                {showExamples[exercise.id] &&
-                  exercise.example && (
-                    <div className={styles.exampleBox}>
-                      <strong>Voorbeeld</strong>
-                      <p>{exercise.example}</p>
-                    </div>
-                  )}
+                {showExamples[exercise.id] && exercise.example && (
+                  <div className={styles.exampleBox}>
+                    <strong>Voorbeeld</strong>
+                    <p>{exercise.example}</p>
+                  </div>
+                )}
 
                 {hasBeenChecked && !isOpen && (
                   <div

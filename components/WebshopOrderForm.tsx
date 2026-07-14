@@ -1,6 +1,10 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import {
+  FormEvent,
+  useMemo,
+  useState,
+} from "react";
 
 import type {
   WebshopOrderMetadata,
@@ -34,35 +38,46 @@ type CheckoutResponse = {
 type ProductConfiguration = {
   name: string;
   amount: number;
-  category: "pass" | "workshop" | "text" | "general";
+  category:
+    | "pass"
+    | "workshop"
+    | "text"
+    | "general";
   requiresStudentData: boolean;
 };
 
-const PRODUCT_CONFIG: Record<string, ProductConfiguration> = {
+const PRODUCT_CONFIG: Record<
+  string,
+  ProductConfiguration
+> = {
   "10-beurtenkaart-lager": {
     name: "10-beurtenkaart Lager onderwijs",
     amount: 320,
     category: "pass",
     requiresStudentData: true,
   },
+
   "10-beurtenkaart-secundair": {
     name: "10-beurtenkaart Secundair onderwijs",
     amount: 380,
     category: "pass",
     requiresStudentData: true,
   },
+
   "klaar-voor-de-sprong-middelbaar": {
     name: "Klaar voor de Sprong – Naar het middelbaar",
     amount: 250,
     category: "workshop",
     requiresStudentData: true,
   },
+
   "klaar-voor-de-sprong-eerste-leerjaar": {
     name: "Klaar voor de Sprong – Naar het eerste leerjaar",
     amount: 180,
     category: "workshop",
     requiresStudentData: true,
   },
+
   tekstcorrectie: {
     name: "Tekstcorrectie",
     amount: 20,
@@ -89,19 +104,15 @@ const SECONDARY_SCHOOL_YEAR_OPTIONS = [
   "4e middelbaar",
   "5e middelbaar",
   "6e middelbaar",
-  "7e middelbaar",
+  "7e specialisatiejaar",
 ] as const;
 
-const ADVANCED_SECONDARY_YEARS: readonly string[] = [
-  "3e middelbaar",
-  "4e middelbaar",
-  "5e middelbaar",
-  "6e middelbaar",
-  "7e middelbaar",
-];
-
 function roundCurrency(value: number): number {
-  return Math.round((value + Number.EPSILON) * 100) / 100;
+  return (
+    Math.round(
+      (value + Number.EPSILON) * 100
+    ) / 100
+  );
 }
 
 function formatCurrency(value: number): string {
@@ -111,8 +122,13 @@ function formatCurrency(value: number): string {
   }).format(roundCurrency(value));
 }
 
-function calculateTextCorrectionPrice(wordCount: number): number {
-  if (!Number.isFinite(wordCount) || wordCount <= 0) {
+function calculateTextCorrectionPrice(
+  wordCount: number
+): number {
+  if (
+    !Number.isFinite(wordCount) ||
+    wordCount <= 0
+  ) {
     return 20;
   }
 
@@ -121,7 +137,9 @@ function calculateTextCorrectionPrice(wordCount: number): number {
   }
 
   const extraWords = wordCount - 2000;
-  const extraBlocks = Math.ceil(extraWords / 1000);
+  const extraBlocks = Math.ceil(
+    extraWords / 1000
+  );
 
   return 20 + extraBlocks * 8;
 }
@@ -129,36 +147,15 @@ function calculateTextCorrectionPrice(wordCount: number): number {
 export default function WebshopOrderForm({
   product,
 }: WebshopOrderFormProps) {
-  const [parentName, setParentName] = useState("");
-  const [studentName, setStudentName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [studentBirthDate, setStudentBirthDate] = useState("");
-  const [schoolYear, setSchoolYear] = useState("");
-  const [finality, setFinality] = useState("");
-  const [studyDirection, setStudyDirection] = useState("");
-  const [school, setSchool] = useState("");
-  const [wordCount, setWordCount] = useState("");
-  const [textType, setTextType] = useState("");
-  const [notes, setNotes] = useState("");
-  const [discountCode, setDiscountCode] = useState("");
-  const [discount, setDiscount] = useState<DiscountResult | null>(null);
-  const [discountMessage, setDiscountMessage] = useState("");
-  const [isCheckingDiscount, setIsCheckingDiscount] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
-
   const productConfig =
-    PRODUCT_CONFIG[product] ??
-    ({
+    PRODUCT_CONFIG[product] ?? {
       name: product,
       amount: 0,
-      category: "general",
+      category: "general" as const,
       requiresStudentData: true,
-    } satisfies ProductConfiguration);
+    };
 
-  const schoolYearOptions = useMemo<readonly string[]>(() => {
+  const schoolYearOptions = useMemo(() => {
     switch (product) {
       case "10-beurtenkaart-secundair":
       case "klaar-voor-de-sprong-middelbaar":
@@ -172,16 +169,91 @@ export default function WebshopOrderForm({
     product === "10-beurtenkaart-secundair" ||
     product === "klaar-voor-de-sprong-middelbaar";
 
+  const [parentName, setParentName] =
+    useState("");
+
+  const [studentName, setStudentName] =
+    useState("");
+
+  const [email, setEmail] =
+    useState("");
+
+  const [phone, setPhone] =
+    useState("");
+
+  const [studentBirthDate, setStudentBirthDate] =
+    useState("");
+
+  const [schoolYear, setSchoolYear] =
+    useState("");
+
+  const [finality, setFinality] =
+    useState("");
+
+  const [studyDirection, setStudyDirection] =
+    useState("");
+
   const requiresSecondaryDetails =
-    isSecondaryProduct && ADVANCED_SECONDARY_YEARS.includes(schoolYear);
+    isSecondaryProduct &&
+    [
+      "3e middelbaar",
+      "4e middelbaar",
+      "5e middelbaar",
+      "6e middelbaar",
+      "7e specialisatiejaar",
+    ].includes(schoolYear);
+
+  const isSeventhSpecializationYear =
+    schoolYear === "7e specialisatiejaar";
+
+  const [school, setSchool] =
+    useState("");
+
+  const [wordCount, setWordCount] =
+    useState("");
+
+  const [textType, setTextType] =
+    useState("");
+
+  const [notes, setNotes] =
+    useState("");
+
+  const [discountCode, setDiscountCode] =
+    useState("");
+
+  const [discount, setDiscount] =
+    useState<DiscountResult | null>(null);
+
+  const [
+    discountMessage,
+    setDiscountMessage,
+  ] = useState("");
+
+  const [isCheckingDiscount, setIsCheckingDiscount] =
+    useState(false);
+
+  const [isSubmitting, setIsSubmitting] =
+    useState(false);
+
+  const [errorMessage, setErrorMessage] =
+    useState("");
+
+  const [successMessage, setSuccessMessage] =
+    useState("");
 
   const originalAmount = useMemo(() => {
     if (product === "tekstcorrectie") {
-      return calculateTextCorrectionPrice(Number(wordCount));
+      return calculateTextCorrectionPrice(
+        Number(wordCount)
+      );
     }
 
     return productConfig.amount;
-  }, [product, productConfig.amount, wordCount]);
+  }, [
+    product,
+    productConfig.amount,
+    wordCount,
+  ]);
 
   const finalAmount = useMemo(() => {
     if (!discount?.valid) {
@@ -189,12 +261,19 @@ export default function WebshopOrderForm({
     }
 
     return Math.max(
-      roundCurrency(originalAmount - discount.discountAmount),
+      roundCurrency(
+        originalAmount -
+          discount.discountAmount
+      ),
       0
     );
-  }, [discount, originalAmount]);
+  }, [
+    discount,
+    originalAmount,
+  ]);
 
-  const isFreeOrder = finalAmount === 0;
+  const isFreeOrder =
+    finalAmount === 0;
 
   function clearDiscount(): void {
     setDiscount(null);
@@ -202,7 +281,9 @@ export default function WebshopOrderForm({
   }
 
   async function handleCheckDiscount(): Promise<void> {
-    const code = discountCode.trim().toUpperCase();
+    const code = discountCode
+      .trim()
+      .toUpperCase();
 
     setErrorMessage("");
     setSuccessMessage("");
@@ -210,29 +291,39 @@ export default function WebshopOrderForm({
 
     if (!code) {
       clearDiscount();
-      setDiscountMessage("Vul eerst een kortingscode in.");
+      setDiscountMessage(
+        "Vul eerst een kortingscode in."
+      );
       return;
     }
 
     setIsCheckingDiscount(true);
 
     try {
-      const response = await fetch("/api/discount-codes/validate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          code,
-          product,
-          email: email.trim().toLowerCase(),
-          parentName: parentName.trim(),
-          studentName: studentName.trim(),
-          amount: originalAmount,
-        }),
-      });
+      const response = await fetch(
+        "/api/discount-codes/validate",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            code,
+            product,
+            email:
+              email.trim().toLowerCase(),
+            parentName:
+              parentName.trim(),
+            studentName:
+              studentName.trim(),
+            amount: originalAmount,
+          }),
+        }
+      );
 
-      const contentType = response.headers.get("content-type") || "";
+      const contentType =
+        response.headers.get("content-type") || "";
 
       if (!contentType.includes("application/json")) {
         const responseText = await response.text();
@@ -254,35 +345,59 @@ export default function WebshopOrderForm({
 
       if (!response.ok) {
         throw new Error(
-          data.error || "De kortingscode kon niet gecontroleerd worden."
+          data.error ||
+            "De kortingscode kon niet gecontroleerd worden."
         );
       }
 
-      const discountAmount = Math.max(Number(data.discountAmount || 0), 0);
-      const calculatedFinalAmount = Math.max(
-        roundCurrency(originalAmount - discountAmount),
+      const discountAmount = Math.max(
+        Number(data.discountAmount || 0),
         0
       );
 
+      const calculatedFinalAmount =
+        Math.max(
+          roundCurrency(
+            originalAmount -
+              discountAmount
+          ),
+          0
+        );
+
       setDiscount({
         valid: true,
-        discountId: data.discountId ?? null,
-        discountCode: data.discountCode ?? code,
+        discountId:
+          data.discountId ?? null,
+        discountCode:
+          data.discountCode ?? code,
         discountAmount,
-        finalAmount: Number.isFinite(Number(data.finalAmount))
-          ? Math.max(Number(data.finalAmount), 0)
-          : calculatedFinalAmount,
+        finalAmount:
+          Number.isFinite(
+            Number(data.finalAmount)
+          )
+            ? Math.max(
+                Number(data.finalAmount),
+                0
+              )
+            : calculatedFinalAmount,
         paymentMethod:
-          calculatedFinalAmount === 0 ? "waardebon" : "mollie",
-        message: data.message || "Kortingscode toegepast.",
+          calculatedFinalAmount === 0
+            ? "waardebon"
+            : "mollie",
+        message:
+          data.message ||
+          "Kortingscode toegepast.",
       });
 
       setDiscountMessage(
         data.message ||
-          `Kortingscode toegepast: ${formatCurrency(discountAmount)} korting.`
+          `Kortingscode toegepast: ${formatCurrency(
+            discountAmount
+          )} korting.`
       );
     } catch (error) {
       clearDiscount();
+
       setDiscountMessage(
         error instanceof Error
           ? error.message
@@ -302,31 +417,59 @@ export default function WebshopOrderForm({
       return "Vul je e-mailadres in.";
     }
 
-    if (!email.includes("@") || !email.includes(".")) {
+    if (
+      !email.includes("@") ||
+      !email.includes(".")
+    ) {
       return "Vul een geldig e-mailadres in.";
     }
 
-    if (productConfig.requiresStudentData && !studentName.trim()) {
+    if (
+      productConfig.requiresStudentData &&
+      !studentName.trim()
+    ) {
       return "Vul de naam van de leerling in.";
     }
 
-    if (productConfig.requiresStudentData && !studentBirthDate) {
+    if (
+      productConfig.requiresStudentData &&
+      !studentBirthDate
+    ) {
       return "Vul de geboortedatum van de leerling in.";
     }
 
-    if (productConfig.requiresStudentData && !schoolYear) {
+    if (
+      productConfig.requiresStudentData &&
+      !schoolYear
+    ) {
       return "Kies het leerjaar van de leerling.";
     }
 
-    if (requiresSecondaryDetails && !finality) {
+    if (
+      requiresSecondaryDetails &&
+      !finality
+    ) {
       return "Kies de finaliteit van de leerling.";
     }
 
-    if (requiresSecondaryDetails && !studyDirection.trim()) {
+    if (
+      isSeventhSpecializationYear &&
+      finality !== "Arbeidsmarktfinaliteit"
+    ) {
+      return "Een 7e specialisatiejaar hoort bij de arbeidsmarktfinaliteit.";
+    }
+
+    if (
+      requiresSecondaryDetails &&
+      !studyDirection.trim()
+    ) {
       return "Vul de studierichting van de leerling in.";
     }
 
-    if (product === "tekstcorrectie" && Number(wordCount) <= 0) {
+    if (
+      product === "tekstcorrectie" &&
+      Number(wordCount) <= 0
+    ) {
       return "Vul het aantal woorden in.";
     }
 
@@ -341,7 +484,8 @@ export default function WebshopOrderForm({
     setErrorMessage("");
     setSuccessMessage("");
 
-    const validationError = validateForm();
+    const validationError =
+      validateForm();
 
     if (validationError) {
       setErrorMessage(validationError);
@@ -351,67 +495,142 @@ export default function WebshopOrderForm({
     setIsSubmitting(true);
 
     try {
-      const paymentMethod: WebshopPaymentMethod = isFreeOrder
-        ? discount?.paymentMethod ?? "gratis"
-        : "mollie";
+      const paymentMethod: WebshopPaymentMethod =
+        isFreeOrder
+          ? discount?.paymentMethod ??
+            "gratis"
+          : "mollie";
 
       const metadata: WebshopOrderMetadata = {
-        product,
-        productName: productConfig.name,
-        amount: finalAmount.toFixed(2),
-        originalAmount: originalAmount.toFixed(2),
-        discountId: discount?.discountId ?? null,
-        discountCode: discount?.discountCode ?? "",
-        discountAmount: (discount?.discountAmount ?? 0).toFixed(2),
-        parentName: parentName.trim(),
-        studentName: studentName.trim(),
-        email: email.trim().toLowerCase(),
-        phone: phone.trim(),
-        studentAge: studentBirthDate.trim(),
-        schoolYear: schoolYear.trim(),
-        finality: finality.trim(),
-        studyDirection: studyDirection.trim(),
-        school: school.trim(),
-        wordCount: wordCount.trim(),
-        textType: textType.trim(),
-        notes: notes.trim(),
-        paymentMethod,
-        isFreeOrder,
-      };
-
-      const checkoutEndpoint =
-        product === "10-beurtenkaart-lager" ||
-        product === "10-beurtenkaart-secundair"
-          ? "/api/checkout/ten-beurtenkaart"
-          : "/api/checkout/webshop";
-
-      const response = await fetch(checkoutEndpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
           product,
-          productName: productConfig.name,
-          parentName: parentName.trim(),
-          studentName: studentName.trim(),
-          email: email.trim().toLowerCase(),
-          phone: phone.trim(),
-          studentAge: studentBirthDate.trim(),
-          schoolYear: schoolYear.trim(),
-          finality: finality.trim(),
-          studyDirection: studyDirection.trim(),
-          school: school.trim(),
-          notes: notes.trim(),
-          discountCode:
-            discount?.discountCode || discountCode.trim().toUpperCase(),
-          amount: finalAmount.toFixed(2),
-          originalAmount: originalAmount.toFixed(2),
-          metadata,
-        }),
-      });
+          productName:
+            productConfig.name,
 
-      const contentType = response.headers.get("content-type") || "";
+          amount:
+            finalAmount.toFixed(2),
+
+          originalAmount:
+            originalAmount.toFixed(2),
+
+          discountId:
+            discount?.discountId ??
+            null,
+
+          discountCode:
+            discount?.discountCode ??
+            "",
+
+          discountAmount:
+            (
+              discount?.discountAmount ??
+              0
+            ).toFixed(2),
+
+          parentName:
+            parentName.trim(),
+
+          studentName:
+            studentName.trim(),
+
+          email:
+            email
+              .trim()
+              .toLowerCase(),
+
+          phone: phone.trim(),
+
+          studentAge:
+            studentBirthDate.trim(),
+
+          schoolYear:
+            schoolYear.trim(),
+
+          finality:
+            finality.trim(),
+
+          studyDirection:
+            studyDirection.trim(),
+
+          school: school.trim(),
+
+          wordCount:
+            wordCount.trim(),
+
+          textType:
+            textType.trim(),
+
+          notes: notes.trim(),
+
+          paymentMethod,
+          isFreeOrder,
+        };
+
+const checkoutEndpoint =
+  product === "10-beurtenkaart-lager" ||
+  product === "10-beurtenkaart-secundair"
+    ? "/api/checkout/ten-beurtenkaart"
+    : "/api/checkout/webshop";
+      const response = await fetch(
+        checkoutEndpoint,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            product,
+            productName:
+              productConfig.name,
+
+            parentName:
+              parentName.trim(),
+
+            studentName:
+              studentName.trim(),
+
+            email:
+              email
+                .trim()
+                .toLowerCase(),
+
+            phone: phone.trim(),
+
+            studentAge:
+              studentBirthDate.trim(),
+
+            schoolYear:
+              schoolYear.trim(),
+
+            finality:
+              finality.trim(),
+
+            studyDirection:
+              studyDirection.trim(),
+
+            school: school.trim(),
+
+            notes: notes.trim(),
+
+            discountCode:
+              discount?.discountCode ||
+              discountCode
+                .trim()
+                .toUpperCase(),
+
+            amount:
+              finalAmount.toFixed(2),
+
+            originalAmount:
+              originalAmount.toFixed(2),
+
+            metadata,
+          }),
+        }
+      );
+
+      const contentType =
+        response.headers.get("content-type") || "";
 
       if (!contentType.includes("application/json")) {
         const responseText = await response.text();
@@ -429,29 +648,44 @@ export default function WebshopOrderForm({
         );
       }
 
-      const data = (await response.json()) as CheckoutResponse;
+      const data =
+        (await response.json()) as CheckoutResponse;
 
       if (!response.ok) {
         throw new Error(
-          data.error || "De bestelling kon niet verwerkt worden."
+          data.error ||
+            "De bestelling kon niet verwerkt worden."
         );
       }
 
-      const checkoutUrl = data.checkoutUrl || data.redirectUrl || data.url;
+      const checkoutUrl =
+        data.checkoutUrl ||
+        data.redirectUrl ||
+        data.url;
 
       if (checkoutUrl) {
-        window.location.href = checkoutUrl;
+        window.location.href =
+          checkoutUrl;
+
         return;
       }
 
-      if (data.success || data.isFreeOrder || isFreeOrder) {
+      if (
+        data.success ||
+        data.isFreeOrder ||
+        isFreeOrder
+      ) {
         setSuccessMessage(
-          data.message || "Je bestelling werd correct geregistreerd."
+          data.message ||
+            "Je bestelling werd correct geregistreerd."
         );
+
         return;
       }
 
-      throw new Error("Er werd geen betaalpagina ontvangen.");
+      throw new Error(
+        "Er werd geen betaalpagina ontvangen."
+      );
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -467,46 +701,82 @@ export default function WebshopOrderForm({
     <section className="webshop-order-section">
       <div className="webshop-order-card">
         <div className="webshop-order-summary">
-          <p className="eyebrow">Jouw bestelling</p>
+          <p className="eyebrow">
+            Jouw bestelling
+          </p>
+
           <h2>{productConfig.name}</h2>
 
           <div className="webshop-price-overview">
             {discount?.valid && (
               <>
                 <div className="webshop-price-row">
-                  <span>Oorspronkelijke prijs</span>
-                  <span>{formatCurrency(originalAmount)}</span>
+                  <span>
+                    Oorspronkelijke prijs
+                  </span>
+
+                  <span>
+                    {formatCurrency(
+                      originalAmount
+                    )}
+                  </span>
                 </div>
 
                 <div className="webshop-price-row webshop-discount-row">
                   <span>Korting</span>
-                  <span>− {formatCurrency(discount.discountAmount)}</span>
+
+                  <span>
+                    −{" "}
+                    {formatCurrency(
+                      discount.discountAmount
+                    )}
+                  </span>
                 </div>
               </>
             )}
 
             <div className="webshop-price-row webshop-total-row">
-              <strong>{isFreeOrder ? "Te betalen" : "Totaal"}</strong>
-              <strong>{formatCurrency(finalAmount)}</strong>
+              <strong>
+                {isFreeOrder
+                  ? "Te betalen"
+                  : "Totaal"}
+              </strong>
+
+              <strong>
+                {formatCurrency(
+                  finalAmount
+                )}
+              </strong>
             </div>
 
             {isFreeOrder && (
               <p className="webshop-free-notice">
-                Deze bestelling is volledig voldaan. Je wordt niet naar Mollie
-                doorgestuurd.
+                Deze bestelling is volledig
+                voldaan. Je wordt niet naar
+                Mollie doorgestuurd.
               </p>
             )}
           </div>
         </div>
 
-        <form className="webshop-order-form" onSubmit={handleSubmit}>
+        <form
+          className="webshop-order-form"
+          onSubmit={handleSubmit}
+        >
           <div className="webshop-form-grid">
             <label className="webshop-field">
-              <span>Naam ouder of klant *</span>
+              <span>
+                Naam ouder of klant *
+              </span>
+
               <input
                 type="text"
                 value={parentName}
-                onChange={(event) => setParentName(event.target.value)}
+                onChange={(event) =>
+                  setParentName(
+                    event.target.value
+                  )
+                }
                 autoComplete="name"
                 required
               />
@@ -514,11 +784,18 @@ export default function WebshopOrderForm({
 
             {productConfig.requiresStudentData && (
               <label className="webshop-field">
-                <span>Naam leerling *</span>
+                <span>
+                  Naam leerling *
+                </span>
+
                 <input
                   type="text"
                   value={studentName}
-                  onChange={(event) => setStudentName(event.target.value)}
+                  onChange={(event) =>
+                    setStudentName(
+                      event.target.value
+                    )
+                  }
                   required
                 />
               </label>
@@ -526,12 +803,18 @@ export default function WebshopOrderForm({
 
             <label className="webshop-field">
               <span>E-mailadres *</span>
+
               <input
                 type="email"
                 value={email}
                 onChange={(event) => {
-                  setEmail(event.target.value);
-                  if (discount) clearDiscount();
+                  setEmail(
+                    event.target.value
+                  );
+
+                  if (discount) {
+                    clearDiscount();
+                  }
                 }}
                 autoComplete="email"
                 required
@@ -540,10 +823,15 @@ export default function WebshopOrderForm({
 
             <label className="webshop-field">
               <span>Telefoonnummer</span>
+
               <input
                 type="tel"
                 value={phone}
-                onChange={(event) => setPhone(event.target.value)}
+                onChange={(event) =>
+                  setPhone(
+                    event.target.value
+                  )
+                }
                 autoComplete="tel"
               />
             </label>
@@ -551,71 +839,133 @@ export default function WebshopOrderForm({
             {productConfig.requiresStudentData && (
               <>
                 <label className="webshop-field">
-                  <span>Geboortedatum leerling *</span>
+                  <span>
+                    Geboortedatum leerling *
+                  </span>
+
                   <input
                     type="date"
                     value={studentBirthDate}
                     onChange={(event) =>
-                      setStudentBirthDate(event.target.value)
+                      setStudentBirthDate(
+                        event.target.value
+                      )
                     }
-                    max={new Date().toISOString().split("T")[0]}
+                    max={new Date()
+                      .toISOString()
+                      .split("T")[0]}
                     required
                   />
                 </label>
 
                 <label className="webshop-field">
-                  <span>Leerjaar *</span>
+                  <span>
+                    Leerjaar *
+                  </span>
+
                   <select
                     value={schoolYear}
                     onChange={(event) => {
-                      const nextSchoolYear = event.target.value;
-                      setSchoolYear(nextSchoolYear);
+                      const nextSchoolYear =
+                        event.target.value;
 
-                      if (!ADVANCED_SECONDARY_YEARS.includes(nextSchoolYear)) {
+                      setSchoolYear(
+                        nextSchoolYear
+                      );
+                      setStudyDirection("");
+
+                      if (
+                        nextSchoolYear ===
+                        "7e specialisatiejaar"
+                      ) {
+                        setFinality(
+                          "Arbeidsmarktfinaliteit"
+                        );
+                      } else {
                         setFinality("");
-                        setStudyDirection("");
                       }
                     }}
                     required
                   >
-                    <option value="">Kies een leerjaar</option>
-                    {schoolYearOptions.map((year) => (
-                      <option key={year} value={year}>
-                        {year}
-                      </option>
-                    ))}
+                    <option value="">
+                      Kies een leerjaar
+                    </option>
+
+                    {schoolYearOptions.map(
+                      (year) => (
+                        <option
+                          key={year}
+                          value={year}
+                        >
+                          {year}
+                        </option>
+                      )
+                    )}
                   </select>
                 </label>
 
                 {requiresSecondaryDetails && (
                   <>
                     <label className="webshop-field">
-                      <span>Finaliteit *</span>
+                      <span>
+                        Finaliteit *
+                      </span>
+
                       <select
                         value={finality}
-                        onChange={(event) => setFinality(event.target.value)}
+                        onChange={(event) =>
+                          setFinality(
+                            event.target.value
+                          )
+                        }
                         required
+                        disabled={
+                          isSeventhSpecializationYear
+                        }
                       >
-                        <option value="">Kies een finaliteit</option>
-                        <option value="Doorstroomfinaliteit">
-                          Doorstroomfinaliteit
-                        </option>
-                        <option value="Dubbele finaliteit">
-                          Dubbele finaliteit
-                        </option>
-                        <option value="Arbeidsmarktfinaliteit">
-                          Arbeidsmarktfinaliteit
-                        </option>
+                        {isSeventhSpecializationYear ? (
+                          <option value="Arbeidsmarktfinaliteit">
+                            Arbeidsmarktfinaliteit
+                          </option>
+                        ) : (
+                          <>
+                            <option value="">
+                              Kies een finaliteit
+                            </option>
+                            <option value="Doorstroomfinaliteit">
+                              Doorstroomfinaliteit
+                            </option>
+                            <option value="Dubbele finaliteit">
+                              Dubbele finaliteit
+                            </option>
+                            <option value="Arbeidsmarktfinaliteit">
+                              Arbeidsmarktfinaliteit
+                            </option>
+                          </>
+                        )}
                       </select>
+
+                      {isSeventhSpecializationYear && (
+                        <small>
+                          Voor een 7e specialisatiejaar
+                          wordt automatisch
+                          arbeidsmarktfinaliteit gekozen.
+                        </small>
+                      )}
                     </label>
 
                     <label className="webshop-field">
-                      <span>Studierichting *</span>
+                      <span>
+                        Studierichting *
+                      </span>
+
                       <input
                         type="text"
                         value={studyDirection}
                         onChange={(event) =>
-                          setStudyDirection(event.target.value)
+                          setStudyDirection(
+                            event.target.value
+                          )
                         }
                         placeholder="Bijvoorbeeld Humane wetenschappen"
                         required
@@ -626,10 +976,15 @@ export default function WebshopOrderForm({
 
                 <label className="webshop-field webshop-field-full">
                   <span>School</span>
+
                   <input
                     type="text"
                     value={school}
-                    onChange={(event) => setSchool(event.target.value)}
+                    onChange={(event) =>
+                      setSchool(
+                        event.target.value
+                      )
+                    }
                   />
                 </label>
               </>
@@ -638,15 +993,23 @@ export default function WebshopOrderForm({
             {product === "tekstcorrectie" && (
               <>
                 <label className="webshop-field">
-                  <span>Aantal woorden *</span>
+                  <span>
+                    Aantal woorden *
+                  </span>
+
                   <input
                     type="number"
                     min="1"
                     step="1"
                     value={wordCount}
                     onChange={(event) => {
-                      setWordCount(event.target.value);
-                      if (discount) clearDiscount();
+                      setWordCount(
+                        event.target.value
+                      );
+
+                      if (discount) {
+                        clearDiscount();
+                      }
                     }}
                     required
                   />
@@ -654,10 +1017,15 @@ export default function WebshopOrderForm({
 
                 <label className="webshop-field">
                   <span>Soort tekst</span>
+
                   <input
                     type="text"
                     value={textType}
-                    onChange={(event) => setTextType(event.target.value)}
+                    onChange={(event) =>
+                      setTextType(
+                        event.target.value
+                      )
+                    }
                     placeholder="Bijvoorbeeld eindwerk of cursus"
                   />
                 </label>
@@ -665,10 +1033,17 @@ export default function WebshopOrderForm({
             )}
 
             <label className="webshop-field webshop-field-full">
-              <span>Extra opmerkingen</span>
+              <span>
+                Extra opmerkingen
+              </span>
+
               <textarea
                 value={notes}
-                onChange={(event) => setNotes(event.target.value)}
+                onChange={(event) =>
+                  setNotes(
+                    event.target.value
+                  )
+                }
                 rows={4}
               />
             </label>
@@ -676,25 +1051,40 @@ export default function WebshopOrderForm({
 
           <div className="webshop-discount-box">
             <label className="webshop-field">
-              <span>Kortingscode of waardebon</span>
+              <span>
+                Kortingscode of waardebon
+              </span>
 
               <div className="webshop-discount-controls">
                 <input
                   type="text"
                   value={discountCode}
                   onChange={(event) => {
-                    setDiscountCode(event.target.value.toUpperCase());
-                    if (discount) clearDiscount();
+                    setDiscountCode(
+                      event.target.value
+                        .toUpperCase()
+                    );
+
+                    if (discount) {
+                      clearDiscount();
+                    }
                   }}
                   placeholder="Vul je code in"
                 />
 
                 <button
                   type="button"
-                  onClick={handleCheckDiscount}
-                  disabled={isCheckingDiscount || !discountCode.trim()}
+                  onClick={
+                    handleCheckDiscount
+                  }
+                  disabled={
+                    isCheckingDiscount ||
+                    !discountCode.trim()
+                  }
                 >
-                  {isCheckingDiscount ? "Controleren..." : "Toepassen"}
+                  {isCheckingDiscount
+                    ? "Controleren..."
+                    : "Toepassen"}
                 </button>
               </div>
             </label>
@@ -733,7 +1123,9 @@ export default function WebshopOrderForm({
               ? "Even geduld..."
               : isFreeOrder
                 ? "Bestelling bevestigen"
-                : `Veilig betalen – ${formatCurrency(finalAmount)}`}
+                : `Veilig betalen – ${formatCurrency(
+                    finalAmount
+                  )}`}
           </button>
 
           <p className="webshop-payment-note">

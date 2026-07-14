@@ -1,20 +1,33 @@
-import "server-only";
 import { createClient } from "@supabase/supabase-js";
 
 export function createAdminClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseUrl =
+    process.env.NEXT_PUBLIC_SUPABASE_URL;
 
-  if (!url || !serviceRoleKey) {
+  const serviceRoleKey =
+    process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl) {
     throw new Error(
-      "NEXT_PUBLIC_SUPABASE_URL of SUPABASE_SERVICE_ROLE_KEY ontbreekt."
+      "NEXT_PUBLIC_SUPABASE_URL ontbreekt in de environment variables."
     );
   }
 
-  return createClient(url, serviceRoleKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  });
+  if (!serviceRoleKey) {
+    throw new Error(
+      "SUPABASE_SERVICE_ROLE_KEY ontbreekt in de environment variables."
+    );
+  }
+
+  return createClient(
+    supabaseUrl,
+    serviceRoleKey,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+        detectSessionInUrl: false,
+      },
+    }
+  );
 }

@@ -86,13 +86,25 @@ const PRODUCT_CONFIG: Record<
   },
 };
 
-const SCHOOL_YEAR_OPTIONS = [
+const PRIMARY_SCHOOL_YEAR_OPTIONS = [
   "1e leerjaar",
   "2e leerjaar",
   "3e leerjaar",
   "4e leerjaar",
   "5e leerjaar",
   "6e leerjaar",
+] as const;
+
+const SECONDARY_SCHOOL_YEAR_OPTIONS = [
+  "1A",
+  "1B",
+  "2A",
+  "2B",
+  "3e middelbaar",
+  "4e middelbaar",
+  "5e middelbaar",
+  "6e middelbaar",
+  "7e middelbaar",
 ] as const;
 
 function roundCurrency(value: number): number {
@@ -143,6 +155,30 @@ export default function WebshopOrderForm({
       requiresStudentData: true,
     };
 
+  const schoolYearOptions = useMemo(() => {
+    switch (product) {
+      case "10-beurtenkaart-secundair":
+      case "klaar-voor-de-sprong-middelbaar":
+        return SECONDARY_SCHOOL_YEAR_OPTIONS;
+      default:
+        return PRIMARY_SCHOOL_YEAR_OPTIONS;
+    }
+  }, [product]);
+
+  const isSecondaryProduct =
+    product === "10-beurtenkaart-secundair" ||
+    product === "klaar-voor-de-sprong-middelbaar";
+
+  const requiresSecondaryDetails =
+    isSecondaryProduct &&
+    [
+      "3e middelbaar",
+      "4e middelbaar",
+      "5e middelbaar",
+      "6e middelbaar",
+      "7e middelbaar",
+    ].includes(schoolYear);
+
   const [parentName, setParentName] =
     useState("");
 
@@ -159,6 +195,12 @@ export default function WebshopOrderForm({
     useState("");
 
   const [schoolYear, setSchoolYear] =
+    useState("");
+
+  const [finality, setFinality] =
+    useState("");
+
+  const [studyDirection, setStudyDirection] =
     useState("");
 
   const [school, setSchool] =
@@ -401,6 +443,20 @@ export default function WebshopOrderForm({
     }
 
     if (
+      requiresSecondaryDetails &&
+      !finality
+    ) {
+      return "Kies de finaliteit van de leerling.";
+    }
+
+    if (
+      requiresSecondaryDetails &&
+      !studyDirection.trim()
+    ) {
+      return "Vul de studierichting van de leerling in.";
+    }
+
+    if (
       product === "tekstcorrectie" &&
       Number(wordCount) <= 0
     ) {
@@ -480,6 +536,12 @@ export default function WebshopOrderForm({
           schoolYear:
             schoolYear.trim(),
 
+          finality:
+            finality.trim(),
+
+          studyDirection:
+            studyDirection.trim(),
+
           school: school.trim(),
 
           wordCount:
@@ -530,6 +592,12 @@ const checkoutEndpoint =
 
             schoolYear:
               schoolYear.trim(),
+
+            finality:
+              finality.trim(),
+
+            studyDirection:
+              studyDirection.trim(),
 
             school: school.trim(),
 
@@ -788,18 +856,34 @@ const checkoutEndpoint =
 
                   <select
                     value={schoolYear}
-                    onChange={(event) =>
+                    onChange={(event) => {
+                      const nextSchoolYear =
+                        event.target.value;
+
                       setSchoolYear(
-                        event.target.value
-                      )
-                    }
+                        nextSchoolYear
+                      );
+
+                      if (
+                        ![
+                          "3e middelbaar",
+                          "4e middelbaar",
+                          "5e middelbaar",
+                          "6e middelbaar",
+                          "7e middelbaar",
+                        ].includes(nextSchoolYear)
+                      ) {
+                        setFinality("");
+                        setStudyDirection("");
+                      }
+                    }}
                     required
                   >
                     <option value="">
                       Kies een leerjaar
                     </option>
 
-                    {SCHOOL_YEAR_OPTIONS.map(
+                    {schoolYearOptions.map(
                       (year) => (
                         <option
                           key={year}
@@ -811,6 +895,57 @@ const checkoutEndpoint =
                     )}
                   </select>
                 </label>
+
+                {requiresSecondaryDetails && (
+                  <>
+                    <label className="webshop-field">
+                      <span>
+                        Finaliteit *
+                      </span>
+
+                      <select
+                        value={finality}
+                        onChange={(event) =>
+                          setFinality(
+                            event.target.value
+                          )
+                        }
+                        required
+                      >
+                        <option value="">
+                          Kies een finaliteit
+                        </option>
+                        <option value="Doorstroomfinaliteit">
+                          Doorstroomfinaliteit
+                        </option>
+                        <option value="Dubbele finaliteit">
+                          Dubbele finaliteit
+                        </option>
+                        <option value="Arbeidsmarktfinaliteit">
+                          Arbeidsmarktfinaliteit
+                        </option>
+                      </select>
+                    </label>
+
+                    <label className="webshop-field">
+                      <span>
+                        Studierichting *
+                      </span>
+
+                      <input
+                        type="text"
+                        value={studyDirection}
+                        onChange={(event) =>
+                          setStudyDirection(
+                            event.target.value
+                          )
+                        }
+                        placeholder="Bijvoorbeeld Humane wetenschappen"
+                        required
+                      />
+                    </label>
+                  </>
+                )}
 
                 <label className="webshop-field webshop-field-full">
                   <span>School</span>

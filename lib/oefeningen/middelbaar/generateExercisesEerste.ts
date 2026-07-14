@@ -28,7 +28,7 @@ export type ExerciseGenerationOptions = AdaptiveSelectionOptions;
 const clampLevel = (level: number) =>
   Math.max(1, Math.min(10, Math.round(level || 1)));
 
-function normalizeSkill(skill: string) {
+export function normalizeExerciseSkill(skill: string) {
   return skill
     .trim()
     .toLowerCase()
@@ -114,21 +114,19 @@ function generateSkillInputs(
   ];
 }
 
-export function generateExercisesEerste(
+
+export function generateExercisePoolsEerste(
   skill: string,
   requestedLevel: number,
-  seed = Date.now(),
-  options: ExerciseGenerationOptions = {}
-): SecondaryExercise[] {
+  seed = Date.now()
+): Array<{ level: number; exercises: ExerciseInput[] }> {
   const level = clampLevel(requestedLevel);
-  const normalizedSkill = normalizeSkill(skill);
-  const random = createRandom(seed + level * 1009);
-
+  const normalizedSkill = normalizeExerciseSkill(skill);
   const levelsToGenerate = Array.from(
     new Set([Math.max(1, level - 1), level, Math.min(10, level + 1)])
   );
 
-  const pools = levelsToGenerate.map((poolLevel) => ({
+  return levelsToGenerate.map((poolLevel) => ({
     level: poolLevel,
     exercises: generateSkillInputs(
       normalizedSkill,
@@ -136,6 +134,19 @@ export function generateExercisesEerste(
       createRandom(seed + poolLevel * 1009 + 37)
     ),
   }));
+}
+
+export function generateExercisesEerste(
+  skill: string,
+  requestedLevel: number,
+  seed = Date.now(),
+  options: ExerciseGenerationOptions = {}
+): SecondaryExercise[] {
+  const level = clampLevel(requestedLevel);
+  const normalizedSkill = normalizeExerciseSkill(skill);
+  const random = createRandom(seed + level * 1009);
+
+  const pools = generateExercisePoolsEerste(normalizedSkill, level, seed);
 
   const selectedInputs = selectAdaptiveExercises(
     random,

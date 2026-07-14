@@ -586,3 +586,60 @@
     padding: 20px;
   }
 }
+/* Premium harmonisatie */
+.dashboard {
+  --panel-border: rgba(3, 54, 99, 0.085);
+  --panel-shadow: 0 18px 46px rgba(3, 54, 99, 0.075);
+}
+
+.topGrid,
+.insightGrid,
+.revenuePanel {
+  animation: dashboardReveal 420ms ease both;
+}
+
+.insightGrid { animation-delay: 55ms; }
+.revenuePanel { animation-delay: 110ms; }
+
+@keyframes dashboardReveal {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.mainCard,
+.todayPanel,
+.actionPanel,
+.revenuePanel {
+  border-color: var(--panel-border);
+  box-shadow: var(--panel-shadow);
+}
+
+.mainCard {
+  border-radius: 26px;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.98), rgba(249,252,254,.95));
+}
+
+.mainCard:focus-visible,
+.actionItem:focus-visible,
+.upcomingItem:focus-visible,
+.panelHeading button:focus-visible,
+.revenueHeader button:focus-visible {
+  outline: 3px solid rgba(40, 185, 170, 0.25);
+  outline-offset: 3px;
+}
+
+.actionItem,
+.upcomingItem {
+  transition: background 160ms ease, transform 160ms ease;
+}
+
+.actionItem:hover,
+.upcomingItem:hover {
+  background: rgba(40, 185, 170, 0.07);
+  transform: translateX(2px);
+}
+
+.revenueGrid article {
+  border: 1px solid rgba(3,54,99,.055);
+}

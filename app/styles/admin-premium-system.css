@@ -1,0 +1,280 @@
+/* =========================================================
+   STUDIO SAGO — PREMIUM ADMIN DESIGN SYSTEM
+   Globale verfijningen voor admin, kortingscodes en afspraken
+   ========================================================= */
+
+:root {
+  --sago-admin-navy: #033663;
+  --sago-admin-ink: #123f68;
+  --sago-admin-muted: #748ca4;
+  --sago-admin-teal: #28b9aa;
+  --sago-admin-orange: #fea020;
+  --sago-admin-coral: #fb6730;
+  --sago-admin-purple: #9b81b8;
+  --sago-admin-surface: rgba(255, 255, 255, 0.94);
+  --sago-admin-soft: #f6f9fc;
+  --sago-admin-border: rgba(3, 54, 99, 0.09);
+  --sago-admin-shadow: 0 20px 55px rgba(3, 54, 99, 0.09);
+  --sago-admin-shadow-hover: 0 28px 68px rgba(3, 54, 99, 0.14);
+  --sago-admin-radius-xl: 32px;
+  --sago-admin-radius-lg: 24px;
+  --sago-admin-radius-md: 18px;
+}
+
+.admin-content-clean,
+.discount-overview-shell,
+.discount-form-shell,
+.appointment-premium-panel,
+.appointment-order-shell {
+  min-width: 0;
+}
+
+.admin-content-clean {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 98% 0%, rgba(40, 185, 170, 0.08), transparent 26%),
+    radial-gradient(circle at 0% 100%, rgba(254, 160, 32, 0.07), transparent 28%),
+    var(--sago-admin-surface);
+}
+
+.admin-content-clean::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(255,255,255,.32), transparent 45%);
+}
+
+.admin-sidebar-clean {
+  border-color: var(--sago-admin-border);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--sago-admin-shadow);
+}
+
+.admin-sidebar-nav button {
+  min-height: 50px;
+  border-radius: 17px;
+}
+
+.admin-sidebar-nav button.active {
+  background: linear-gradient(135deg, #ff7b45, #fea020);
+  box-shadow: 0 14px 28px rgba(254, 160, 32, 0.25);
+}
+
+.admin-request-card,
+.table-card,
+.admin-placeholder-card {
+  border: 1px solid var(--sago-admin-border) !important;
+  border-radius: var(--sago-admin-radius-lg) !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 16px 38px rgba(3, 54, 99, 0.07) !important;
+}
+
+.primary-action,
+.secondary-action,
+.small-action,
+.admin-actions button,
+.admin-request-actions button {
+  min-height: 46px;
+  border-radius: 999px !important;
+  font-weight: 850;
+  transition: transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
+}
+
+.primary-action:hover,
+.secondary-action:hover,
+.admin-actions button:hover,
+.admin-request-actions button:hover {
+  transform: translateY(-2px);
+}
+
+/* Kortingscodes */
+.discount-admin-page {
+  width: 100%;
+  min-width: 0;
+  color: var(--sago-admin-navy);
+}
+
+.discount-overview-header,
+.discount-form-header,
+.discount-list-card,
+.discount-form-section,
+.discount-stat-card,
+.discount-mobile-card {
+  border: 1px solid var(--sago-admin-border) !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 16px 40px rgba(3, 54, 99, 0.07) !important;
+}
+
+.discount-overview-header,
+.discount-form-header,
+.discount-list-card {
+  border-radius: 28px !important;
+}
+
+.discount-statistics {
+  gap: 14px !important;
+}
+
+.discount-stat-card {
+  min-width: 0;
+  border-radius: 22px !important;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.discount-stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--sago-admin-shadow-hover) !important;
+}
+
+.discount-header-create-button,
+.discount-submit-button,
+.discount-floating-button {
+  border-radius: 999px !important;
+  background: linear-gradient(135deg, var(--sago-admin-navy), #1769b1) !important;
+  box-shadow: 0 15px 30px rgba(3, 54, 99, 0.2) !important;
+}
+
+.discount-refresh-button,
+.discount-back-button,
+.discount-cancel-button,
+.discount-admin-back-link {
+  border-radius: 999px !important;
+}
+
+.discount-table-wrapper {
+  border-radius: 0 0 24px 24px;
+  overflow: auto;
+}
+
+.discount-table th {
+  color: var(--sago-admin-muted);
+  background: #f7f9fc;
+  font-size: .75rem;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.discount-table td {
+  border-top: 1px solid rgba(3, 54, 99, 0.07);
+}
+
+.discount-field input,
+.discount-field select,
+.discount-field textarea {
+  min-height: 52px;
+  border: 1.5px solid rgba(3, 54, 99, 0.13) !important;
+  border-radius: 16px !important;
+  background: #fff !important;
+}
+
+.discount-field input:focus,
+.discount-field select:focus,
+.discount-field textarea:focus {
+  border-color: var(--sago-admin-teal) !important;
+  box-shadow: 0 0 0 4px rgba(40, 185, 170, 0.12) !important;
+  outline: none;
+}
+
+/* Premium afspraakpanelen */
+.appointment-premium-panel {
+  padding: clamp(18px, 3vw, 30px);
+  border: 1px solid var(--sago-admin-border);
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(40,185,170,.1), transparent 27%),
+    rgba(255,255,255,.94);
+  box-shadow: var(--sago-admin-shadow);
+}
+
+.appointment-premium-grid {
+  gap: 18px !important;
+}
+
+.appointment-premium-card {
+  min-width: 0;
+  border: 1px solid var(--sago-admin-border) !important;
+  border-radius: 22px !important;
+  background: rgba(255,255,255,.98) !important;
+  box-shadow: 0 14px 32px rgba(3,54,99,.065) !important;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.appointment-premium-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 42px rgba(3,54,99,.1) !important;
+}
+
+.appointment-premium-heading {
+  color: var(--sago-admin-navy);
+  letter-spacing: -.025em;
+}
+
+.appointment-message-form textarea,
+.appointment-message-form input {
+  border-radius: 16px !important;
+  border: 1.5px solid rgba(3,54,99,.13) !important;
+}
+
+.appointment-message-form button,
+.appointment-payment-actions a,
+.appointment-calendar-actions a {
+  border-radius: 999px !important;
+}
+
+/* Bestelformulier */
+.appointment-order-page,
+.appointment-order-shell,
+.appointment-order-card,
+.appointment-order-section {
+  min-width: 0;
+}
+
+.appointment-order-card,
+.appointment-order-section {
+  border: 1px solid var(--sago-admin-border) !important;
+  border-radius: 26px !important;
+  background: rgba(255,255,255,.96) !important;
+  box-shadow: 0 16px 42px rgba(3,54,99,.07) !important;
+}
+
+.appointment-order-form input,
+.appointment-order-form select,
+.appointment-order-form textarea {
+  border-radius: 16px !important;
+  border: 1.5px solid rgba(3,54,99,.13) !important;
+}
+
+.appointment-order-form input:focus,
+.appointment-order-form select:focus,
+.appointment-order-form textarea:focus {
+  outline: none;
+  border-color: var(--sago-admin-teal) !important;
+  box-shadow: 0 0 0 4px rgba(40,185,170,.12) !important;
+}
+
+/* Toegankelijkheid en animatie */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .appointment-premium-panel {
+    padding: 14px;
+    border-radius: 24px;
+  }
+
+  .discount-overview-header,
+  .discount-form-header,
+  .discount-list-card {
+    border-radius: 22px !important;
+  }
+}

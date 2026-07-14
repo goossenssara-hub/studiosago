@@ -1,0 +1,364 @@
+.shell {
+  width: 100%;
+  min-width: 0;
+  color: #033663;
+}
+
+.header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+  gap: clamp(28px, 4vw, 56px);
+  align-items: center;
+  margin-bottom: 22px;
+  padding: clamp(28px, 4vw, 46px);
+  overflow: hidden;
+  border: 1px solid rgba(3, 54, 99, 0.09);
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at 92% 8%, rgba(254, 160, 32, 0.12), transparent 26%),
+    #ffffff;
+  box-shadow: 0 18px 45px rgba(3, 54, 99, 0.07);
+}
+
+.headerContent {
+  min-width: 0;
+  width: 100%;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: #28b9aa;
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.header h2 {
+  width: max-content;
+  max-width: 100%;
+  margin: 0;
+  color: #033663;
+  font-size: clamp(2.35rem, 4.2vw, 4.15rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  white-space: nowrap;
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
+
+.headerDescription {
+  max-width: 660px;
+  margin: 18px 0 0;
+  color: #6d849c;
+  font-size: clamp(1rem, 1.45vw, 1.2rem);
+  line-height: 1.42;
+}
+
+.headerActions {
+  display: grid;
+  gap: 14px;
+  width: 100%;
+  min-width: 0;
+  align-self: center;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+.stats div {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 112px;
+  padding: 16px 12px;
+  border: 1px solid rgba(3, 54, 99, 0.06);
+  border-radius: 22px;
+  background: rgba(247, 250, 252, 0.96);
+  text-align: center;
+}
+
+.stats strong,
+.stats span {
+  display: block;
+  max-width: 100%;
+}
+
+.stats strong {
+  color: #033663;
+  font-size: clamp(2.2rem, 3.4vw, 3rem);
+  font-weight: 500;
+  line-height: 1;
+}
+
+.stats span {
+  margin-top: 8px;
+  color: #7c91a6;
+  font-size: 0.82rem;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.addButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 56px;
+  padding: 13px 22px;
+  border-radius: 999px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #ff7846, #fea020);
+  box-shadow: 0 12px 28px rgba(254, 160, 32, 0.22);
+  font-weight: 850;
+  text-align: center;
+  text-decoration: none;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.addButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px rgba(254, 160, 32, 0.28);
+}
+
+.message {
+  padding: 14px 18px;
+  border-radius: 15px;
+  color: #b42318;
+  background: rgba(180, 35, 24, 0.08);
+}
+
+.state {
+  padding: 54px 24px;
+  border: 1px dashed rgba(3, 54, 99, 0.18);
+  border-radius: 24px;
+  color: #7890a7;
+  background: #fff;
+  text-align: center;
+}
+
+.list {
+  display: grid;
+  gap: 14px;
+}
+
+.studentCard {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(170px, 0.55fr) auto auto;
+  gap: 18px;
+  align-items: center;
+  min-width: 0;
+  padding: 20px 22px;
+  border: 1px solid rgba(3, 54, 99, 0.09);
+  border-radius: 24px;
+  color: #033663;
+  background: #fff;
+  box-shadow: 0 14px 34px rgba(3, 54, 99, 0.055);
+  text-decoration: none;
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.studentCard:hover {
+  transform: translateY(-3px);
+  border-color: rgba(40, 185, 170, 0.35);
+  box-shadow: 0 20px 42px rgba(3, 54, 99, 0.1);
+}
+
+.avatar {
+  display: grid;
+  width: 68px;
+  height: 68px;
+  place-items: center;
+  border-radius: 50%;
+  color: #033663;
+  background: linear-gradient(145deg, #dff3ef, #eef9f7);
+  font-size: 1.5rem;
+  font-weight: 500;
+}
+
+.details {
+  min-width: 0;
+}
+
+.details strong,
+.details span,
+.details small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.details strong {
+  font-size: 1.15rem;
+}
+
+.details span {
+  margin-top: 5px;
+  font-size: 0.94rem;
+}
+
+.details small {
+  margin-top: 4px;
+  color: #7a90a6;
+  font-size: 0.82rem;
+}
+
+.parentInfo {
+  min-width: 0;
+}
+
+.parentInfo small,
+.parentInfo strong {
+  display: block;
+}
+
+.parentInfo small {
+  color: #7a90a6;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.parentInfo strong {
+  margin-top: 4px;
+  overflow: hidden;
+  font-size: 0.82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.consent {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 13px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.consent strong {
+  font-size: 0.76rem;
+}
+
+.allowed {
+  color: #087f76;
+  background: rgba(40, 185, 170, 0.12);
+}
+
+.denied {
+  color: #9f3a32;
+  background: rgba(180, 35, 24, 0.08);
+}
+
+.arrow {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 50%;
+  color: #033663;
+  background: #f3f7fa;
+  font-weight: 900;
+}
+
+@media (max-width: 1180px) {
+  .header {
+    grid-template-columns: minmax(0, 1fr) minmax(270px, 330px);
+  }
+
+  .header h2 {
+    font-size: clamp(2.1rem, 3.6vw, 3.35rem);
+  }
+
+  .stats div {
+    min-height: 102px;
+  }
+}
+
+@media (max-width: 920px) {
+  .header {
+    grid-template-columns: 1fr;
+  }
+
+  .header h2 {
+    width: 100%;
+    font-size: clamp(2.3rem, 7.5vw, 3.8rem);
+  }
+
+  .headerActions {
+    width: 100%;
+  }
+
+  .studentCard {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .parentInfo {
+    grid-column: 2;
+  }
+
+  .consent {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .arrow {
+    grid-column: 3;
+    grid-row: 1 / span 3;
+  }
+}
+
+@media (max-width: 720px) {
+  .header {
+    padding: 22px;
+  }
+
+  .header h2 {
+    font-size: clamp(1.9rem, 9.5vw, 3rem);
+  }
+
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stats div {
+    min-height: 90px;
+  }
+
+  .studentCard {
+    grid-template-columns: auto minmax(0, 1fr);
+    padding: 16px;
+  }
+
+  .avatar {
+    width: 56px;
+    height: 56px;
+  }
+
+  .parentInfo,
+  .consent {
+    grid-column: 1 / -1;
+  }
+
+  .arrow {
+    display: none;
+  }
+}
+
+@media (max-width: 430px) {
+  .header h2 {
+    font-size: clamp(1.55rem, 8.8vw, 2.25rem);
+  }
+
+  .stats {
+    grid-template-columns: 1fr;
+  }
+}

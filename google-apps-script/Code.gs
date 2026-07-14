@@ -298,6 +298,14 @@ function doPost(e) {
       );
     }
 
+    if (action === "adminCreateBooking") {
+      return json(adminCreateGoogleBooking(data));
+    }
+
+    if (action === "adminUpdateBooking") {
+      return json(adminUpdateGoogleBooking(data));
+    }
+
     if (
       action ===
       "ensureMeetLink"
@@ -1440,6 +1448,114 @@ function findEventIdByBookingId(
     match.id
     ? match.id
     : "";
+}
+
+
+/* =========================================================
+   Adminagenda: vrij aanmaken en verplaatsen
+   ========================================================= */
+
+function adminCreateGoogleBooking(data) {
+  if (!clean(data.date) || !clean(data.startTime) || !clean(data.endTime)) {
+    throw new Error("Datum, beginuur en einduur zijn verplicht.");
+  }
+
+  const calendarId = getCalendarId();
+  const start = makeDateTime(data.date, data.startTime);
+  const end = makeDateTime(data.date, data.endTime);
+
+  if (end <= start) {
+    throw new Error("Het einduur moet na het beginuur liggen.");
+  }
+
+  const isDigital = isDigitalAppointmentType(data.appointmentType);
+  const summary = clean(data.title) || "Afspraak Studio SaGo";
+  const description = [
+    clean(data.bookingId) ? "Studio SaGo boekings-ID: " + clean(data.bookingId) : "",
+    clean(data.customerName) ? "Klant: " + clean(data.customerName) : "",
+    clean(data.email) ? "E-mail: " + clean(data.email) : "",
+    clean(data.customerPhone) ? "Telefoon: " + clean(data.customerPhone) : "",
+    clean(data.serviceType) ? "Dienst: " + clean(data.serviceType) : "",
+    clean(data.notes) ? "Opmerkingen:\n" + clean(data.notes) : ""
+  ].filter(Boolean).join("\n");
+
+  const event = {
+    summary: summary,
+    description: description,
+    location: clean(data.location),
+    start: { dateTime: start.toISOString(), timeZone: TIMEZONE },
+    end: { dateTime: end.toISOString(), timeZone: TIMEZONE },
+    reminders: { useDefault: true }
+  };
+
+  if (clean(data.email)) {
+    event.attendees = [{ email: clean(data.email) }];
+  }
+
+  if (isDigital) {
+    event.conferenceData = {
+      createRequest: {
+        requestId: Utilities.getUuid(),
+        conferenceSolutionKey: { type: "hangoutsMeet" }
+      }
+    };
+  }
+
+  const created = Calendar.Events.insert(event, calendarId, {
+    conferenceDataVersion: isDigital ? 1 : 0,
+    sendUpdates: clean(data.email) ? "all" : "none"
+  });
+
+  const finalEvent = isDigital && created.id
+    ? waitForGoogleMeet(calendarId, created.id, created)
+    : created;
+
+  return {
+    success: true,
+    eventId: clean(finalEvent.id || created.id),
+    htmlLink: clean(finalEvent.htmlLink || created.htmlLink),
+    meetLink: getMeetLink(finalEvent),
+    start: start.toISOString(),
+    end: end.toISOString()
+  };
+}
+
+function adminUpdateGoogleBooking(data) {
+  const calendarId = getCalendarId();
+  let eventId = clean(data.eventId || data.googleEventId);
+
+  if (!eventId && clean(data.bookingId)) {
+    eventId = findEventIdByBookingId(clean(data.bookingId));
+  }
+
+  if (!eventId) {
+    throw new Error("Google event-ID ontbreekt.");
+  }
+
+  const start = new Date(clean(data.startTime));
+  const end = new Date(clean(data.endTime));
+
+  if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) {
+    throw new Error("De nieuwe datum of uren zijn ongeldig.");
+  }
+
+  const patch = {
+    start: { dateTime: start.toISOString(), timeZone: TIMEZONE },
+    end: { dateTime: end.toISOString(), timeZone: TIMEZONE }
+  };
+
+  const updated = Calendar.Events.patch(patch, calendarId, eventId, {
+    sendUpdates: "all"
+  });
+
+  return {
+    success: true,
+    eventId: clean(updated.id || eventId),
+    htmlLink: clean(updated.htmlLink),
+    meetLink: getMeetLink(updated),
+    start: start.toISOString(),
+    end: end.toISOString()
+  };
 }
 
 /* =========================================================

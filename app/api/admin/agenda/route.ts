@@ -1,33 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
-
-export async function GET() {
-  try {
-    const supabaseAdmin = getSupabaseAdmin();
-
-    const { data, error } = await supabaseAdmin
-      .from("bookings")
-      .select("*")
-      .order("appointment_date", { ascending: true, nullsFirst: false })
-      .order("appointment_time", { ascending: true, nullsFirst: false });
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json({ appointments: data ?? [] });
-  } catch (error) {
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Agenda kon niet geladen worden.",
-      },
-      { status: 500 }
-    );
-  }
-}
+export const runtime="nodejs"; export const dynamic="force-dynamic";
+const scriptUrl=process.env.GOOGLE_APPS_SCRIPT_AVAILABILITY_URL; const secret=process.env.GOOGLE_APPS_SCRIPT_BOOKING_SECRET;
+async function callScript(payload:Record<string,unknown>){if(!scriptUrl)throw new Error("GOOGLE_APPS_SCRIPT_AVAILABILITY_URL ontbreekt.");const response=await fetch(scriptUrl,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({...payload,secret}),cache:"no-store"});const data=await response.json();if(!response.ok||!data.success)throw new Error(data.error||"Google Agenda kon niet aangepast worden.");return data;}
+function brusselsParts(value:Date){const parts=new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Brussels",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false}).formatToParts(value);const get=(t:string)=>parts.find(p=>p.type===t)?.value||"";return {date:`${get("year")}-${get("month")}-${get("day")}`,time:`${get("hour")}:${get("minute")}`};}
+export async function GET(){try{const {data,error}=await getSupabaseAdmin().from("bookings").select("*").order("start_time",{ascending:true,nullsFirst:false});if(error)throw error;return NextResponse.json({appointments:data??[]});}catch(error){return NextResponse.json({error:error instanceof Error?error.message:"Agenda kon niet geladen worden."},{status:500});}}
+export async function POST(request:NextRequest){try{const body=await request.json();const {title,customerName,customerEmail,customerPhone,serviceType,date,startTime,endTime,location,notes,appointmentType,paymentStatus}=body;if(!title||!date||!startTime||!endTime)return NextResponse.json({error:"Titel, datum en uren zijn verplicht."},{status:400});const supabase=getSupabaseAdmin();const start=new Date(`${date}T${startTime}:00+02:00`);const end=new Date(`${date}T${endTime}:00+02:00`);const {data:booking,error:insertError}=await supabase.from("bookings").insert({title,customer_name:customerName||null,customer_email:customerEmail||null,location:location||null,notes:notes||null,service_type:serviceType||"andere",appointment_type:appointmentType||null,appointment_date:date,appointment_time:startTime,start_time:start.toISOString(),end_time:end.toISOString(),status:"confirmed",payment_status:paymentStatus||"unpaid",confirmed_at:new Date().toISOString(),updated_at:new Date().toISOString(),booking_source:"admin"}).select("*").single();if(insertError)throw insertError;try{const google=await callScript({action:"adminCreateBooking",bookingId:booking.id,title,customerName,customerEmail,email:customerEmail,customerPhone,serviceType,date,startTime,endTime,location,notes,appointmentType});const {data:updated,error:updateError}=await supabase.from("bookings").update({google_event_id:google.eventId||null,google_event_url:google.htmlLink||null,google_meet_url:google.meetLink||null,google_event_link:google.meetLink||google.htmlLink||null,google_meet_link:google.meetLink||null,updated_at:new Date().toISOString()}).eq("id",booking.id).select("*").single();if(updateError)throw updateError;return NextResponse.json({success:true,appointment:updated});}catch(error){await supabase.from("bookings").delete().eq("id",booking.id);throw error;}}catch(error){return NextResponse.json({error:error instanceof Error?error.message:"Afspraak kon niet aangemaakt worden."},{status:500});}}
+export async function PATCH(request:NextRequest){try{const body=await request.json();const {bookingId,startTime,endTime}=body;if(!bookingId||!startTime||!endTime)return NextResponse.json({error:"Booking en nieuwe uren ontbreken."},{status:400});const supabase=getSupabaseAdmin();const {data:booking,error:findError}=await supabase.from("bookings").select("*").eq("id",bookingId).single();if(findError)throw findError;await callScript({action:"adminUpdateBooking",bookingId,eventId:booking.google_event_id,startTime,endTime});const start=new Date(startTime);const parts=brusselsParts(start);const {data,error}=await supabase.from("bookings").update({start_time:start.toISOString(),end_time:new Date(endTime).toISOString(),appointment_date:parts.date,appointment_time:parts.time,updated_at:new Date().toISOString()}).eq("id",bookingId).select("*").single();if(error)throw error;return NextResponse.json({success:true,appointment:data});}catch(error){return NextResponse.json({error:error instanceof Error?error.message:"Afspraak kon niet verplaatst worden."},{status:500});}}
+export async function DELETE(request:NextRequest){try{const id=request.nextUrl.searchParams.get("id");if(!id)return NextResponse.json({error:"Afspraak-ID ontbreekt."},{status:400});const supabase=getSupabaseAdmin();const {data:booking,error:findError}=await supabase.from("bookings").select("*").eq("id",id).single();if(findError)throw findError;if(booking.google_event_id){await callScript({action:"cancelBooking",eventId:booking.google_event_id,bookingId:id});}const {error}=await supabase.from("bookings").delete().eq("id",id);if(error)throw error;return NextResponse.json({success:true});}catch(error){return NextResponse.json({error:error instanceof Error?error.message:"Afspraak kon niet verwijderd worden."},{status:500});}}

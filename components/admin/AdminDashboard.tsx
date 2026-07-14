@@ -1,355 +1,383 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import styles from "./AdminDashboard.module.css";
+
+type DashboardStats = {
+  requests: number;
+  contacts: number;
+  passes: number;
+  todayAppointments: number;
+  todayWorkshops: number;
+  todayLessons: number;
+  syncIssues: number;
+  emptyPasses: number;
+  revenueThisMonth: number;
+  revenuePreviousMonth: number;
+  revenueDifferencePercentage: number | null;
+};
+
+type UpcomingItem = {
+  id: string;
+  title: string;
+  customer: string;
+  startTime: string | null;
+  location: string;
+  serviceType: string;
+};
+
+type DashboardResponse = {
+  stats: DashboardStats;
+  upcoming: UpcomingItem[];
+  todayLabel: string;
+  error?: string;
+};
 
 type AdminDashboardProps = {
   setTab?: (tab: string) => void;
 };
 
-type DashboardStats = {
-  contacts: number;
-  bookings: number;
-  passes: number;
-  payments: number;
-  availability: number;
+const initialStats: DashboardStats = {
+  requests: 0,
+  contacts: 0,
+  passes: 0,
+  todayAppointments: 0,
+  todayWorkshops: 0,
+  todayLessons: 0,
+  syncIssues: 0,
+  emptyPasses: 0,
+  revenueThisMonth: 0,
+  revenuePreviousMonth: 0,
+  revenueDifferencePercentage: null,
 };
 
-const initialStats: DashboardStats = {
-  contacts: 0,
-  bookings: 0,
-  passes: 0,
-  payments: 0,
-  availability: 0,
-};
+function formatMoney(value: number) {
+  return new Intl.NumberFormat("nl-BE", {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+function formatUpcomingDate(value: string | null) {
+  if (!value) return "Datum ontbreekt";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Datum ontbreekt";
+  }
+
+  return new Intl.DateTimeFormat("nl-BE", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/Brussels",
+  }).format(date);
+}
 
 export default function AdminDashboard({
   setTab,
 }: AdminDashboardProps) {
   const [stats, setStats] = useState<DashboardStats>(initialStats);
+  const [upcoming, setUpcoming] = useState<UpcomingItem[]>([]);
+  const [todayLabel, setTodayLabel] = useState("");
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
-  useEffect(() => {
-    let mounted = true;
+  const loadDashboard = useCallback(async () => {
+    setLoading(true);
+    setMessage("");
 
-    async function loadStats() {
-      if (!supabase) {
-        setMessage("Supabase is niet geconfigureerd.");
-        setLoading(false);
-        return;
+    try {
+      const response = await fetch("/api/admin/dashboard", {
+        method: "GET",
+        cache: "no-store",
+        credentials: "include",
+      });
+
+      const data = (await response.json()) as DashboardResponse;
+
+      if (!response.ok) {
+        throw new Error(
+          data.error || "Het dashboard kon niet geladen worden."
+        );
       }
 
-      setLoading(true);
-      setMessage("");
+      setStats(data.stats ?? initialStats);
+      setUpcoming(data.upcoming ?? []);
+      setTodayLabel(data.todayLabel ?? "");
+    } catch (error) {
+      console.error("ADMIN DASHBOARD LOAD ERROR:", error);
 
-      try {
-        const [
-          contactsResult,
-          bookingsResult,
-          passesResult,
-          paymentsResult,
-          availabilityResult,
-        ] = await Promise.all([
-          supabase
-            .from("contacts")
-            .select("*", { count: "exact", head: true }),
-
-          supabase
-            .from("bookings")
-            .select("*", { count: "exact", head: true }),
-
-          supabase
-            .from("passes")
-            .select("*", { count: "exact", head: true })
-            .eq("status", "active"),
-
-          supabase
-            .from("payments")
-            .select("*", { count: "exact", head: true })
-            .eq("status", "pending"),
-
-          supabase
-            .from("availability")
-            .select("*", { count: "exact", head: true })
-            .eq("active", true),
-        ]);
-
-        const errors = [
-          contactsResult.error,
-          bookingsResult.error,
-          passesResult.error,
-          paymentsResult.error,
-          availabilityResult.error,
-        ].filter(Boolean);
-
-        if (errors.length > 0) {
-          console.error("ADMIN DASHBOARD ERRORS:", errors);
-          setMessage(
-            "Een deel van de dashboardgegevens kon niet geladen worden."
-          );
-        }
-
-        if (!mounted) return;
-
-        setStats({
-          contacts: contactsResult.count ?? 0,
-          bookings: bookingsResult.count ?? 0,
-          passes: passesResult.count ?? 0,
-          payments: paymentsResult.count ?? 0,
-          availability: availabilityResult.count ?? 0,
-        });
-      } catch (error) {
-        console.error("ADMIN DASHBOARD ERROR:", error);
-
-        if (mounted) {
-          setMessage("Het dashboard kon niet geladen worden.");
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Het dashboard kon niet geladen worden."
+      );
+    } finally {
+      setLoading(false);
     }
-
-    loadStats();
-
-    return () => {
-      mounted = false;
-    };
   }, []);
 
-  const statCards = [
-    {
-      label: "Aanvragen",
-      value: stats.bookings,
-      icon: "📥",
-      tab: "requests",
-      description: "Afspraken en aanvragen",
-      tone: "orange",
-    },
-    {
-      label: "Contacten",
-      value: stats.contacts,
-      icon: "👤",
-      tab: "parents",
-      description: "Ouders en klanten",
-      tone: "teal",
-    },
-    {
-      label: "Beurtenkaarten",
-      value: stats.passes,
-      icon: "🎟️",
-      tab: "cards",
-      description: "Actieve kaarten",
-      tone: "purple",
-    },
-    {
-      label: "Vrije momenten",
-      value: stats.availability,
-      icon: "🕒",
-      tab: "availability",
-      description: "Boekbare tijdstippen",
-      tone: "blue",
-    },
-  ];
+  useEffect(() => {
+    void loadDashboard();
+  }, [loadDashboard]);
 
-  const today = new Intl.DateTimeFormat("nl-BE", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  }).format(new Date());
+  const actionCount = useMemo(
+    () => stats.requests + stats.syncIssues + stats.emptyPasses,
+    [stats]
+  );
+
+  const revenueTrend = useMemo(() => {
+if (stats.revenueDifferencePercentage === null) {
+  return {
+    label: "Nog geen vergelijking",
+    positive: true,
+  };
+}
+    const positive = stats.revenueDifferencePercentage >= 0;
+    const absolute = Math.abs(stats.revenueDifferencePercentage);
+
+    return {
+      label: `${positive ? "+" : "−"}${absolute.toFixed(0)}% tegenover vorige maand`,
+      positive,
+    };
+  }, [stats.revenueDifferencePercentage]);
+
+  if (loading) {
+    return (
+      <div className={styles.loading}>
+        <span />
+        <p>Dashboard laden…</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="admin-dashboard">
-      <header className="admin-dashboard-header">
+    <div className={styles.dashboard}>
+      <header className={styles.header}>
         <div>
-          <p className="admin-section-eyebrow">Dashboard</p>
+          <p className={styles.eyebrow}>Dashboard</p>
           <h2>Overzicht</h2>
-          <p>
-            Bekijk wat aandacht nodig heeft en ga meteen naar de juiste
-            beheerpagina.
-          </p>
+          <span>
+            Bekijk wat vandaag gepland staat en wat nog aandacht nodig heeft.
+          </span>
         </div>
 
-        <div className="admin-today">
-          <span>Vandaag</span>
-          <strong>{today}</strong>
+        <div className={styles.today}>
+          <small>Vandaag</small>
+          <strong>{todayLabel || "Vandaag"}</strong>
         </div>
       </header>
 
       {message && (
-        <div className="admin-dashboard-message">
-          <span>⚠️</span>
+        <div className={styles.message}>
+          <span>!</span>
           <p>{message}</p>
+          <button type="button" onClick={() => void loadDashboard()}>
+            Opnieuw proberen
+          </button>
         </div>
       )}
 
-      {loading ? (
-        <div className="admin-dashboard-loading">
-          <span className="admin-loading-spinner" />
-          <p>Dashboard laden...</p>
-        </div>
-      ) : (
-        <>
-          <section className="admin-stat-grid">
-            {statCards.map((card) => (
-              <button
-                key={card.label}
-                type="button"
-                className={`admin-stat-card admin-stat-card--${card.tone}`}
-                onClick={() => setTab?.(card.tab)}
-              >
-                <div className="admin-stat-card__top">
-                  <span className="admin-stat-card__icon">
-                    {card.icon}
-                  </span>
+      <section className={styles.topGrid}>
+        <button
+          type="button"
+          className={`${styles.mainCard} ${styles.orange}`}
+          onClick={() => setTab?.("requests")}
+        >
+          <div className={styles.icon}>📥</div>
+          <strong>{stats.requests}</strong>
+          <h3>Nieuwe aanvragen</h3>
+          <p>Aanvragen die nog verwerkt moeten worden.</p>
+          <span>Open aanvragen →</span>
+        </button>
 
-                  <span className="admin-stat-card__arrow">→</span>
-                </div>
+        <button
+          type="button"
+          className={`${styles.mainCard} ${styles.teal}`}
+          onClick={() => setTab?.("parents")}
+        >
+          <div className={styles.icon}>👤</div>
+          <strong>{stats.contacts}</strong>
+          <h3>Contacten</h3>
+          <p>Ouders en klanten in je administratie.</p>
+          <span>Open contacten →</span>
+        </button>
 
-                <strong>{card.value}</strong>
-                <h3>{card.label}</h3>
-                <p>{card.description}</p>
-              </button>
-            ))}
-          </section>
+        <button
+          type="button"
+          className={`${styles.mainCard} ${styles.purple}`}
+          onClick={() => setTab?.("cards")}
+        >
+          <div className={styles.icon}>🎟️</div>
+          <strong>{stats.passes}</strong>
+          <h3>Actieve beurtenkaarten</h3>
+          <p>Kaarten die momenteel gebruikt kunnen worden.</p>
+          <span>Open kaarten →</span>
+        </button>
+      </section>
 
-          <section className="admin-dashboard-panels">
-            <article
-              className={`admin-attention-card ${
-                stats.payments > 0
-                  ? "admin-attention-card--warning"
-                  : "admin-attention-card--success"
-              }`}
-            >
-              <div className="admin-attention-card__top">
-                <span className="admin-attention-card__icon">💶</span>
+      <section className={styles.insightGrid}>
+        <article className={styles.todayPanel}>
+          <div className={styles.panelHeading}>
+            <div>
+              <p className={styles.eyebrow}>Vandaag</p>
+              <h3>Planning van de dag</h3>
+            </div>
 
-                <div>
-                  <p>Openstaande betalingen</p>
-                  <strong>{stats.payments}</strong>
-                </div>
-              </div>
+            <button type="button" onClick={() => setTab?.("agenda")}>
+              Agenda openen
+            </button>
+          </div>
 
-              <p className="admin-attention-card__description">
-                {stats.payments === 0
-                  ? "Alle geregistreerde betalingen zijn momenteel verwerkt."
-                  : `${stats.payments} betaling${
-                      stats.payments === 1 ? "" : "en"
-                    } wacht${
-                      stats.payments === 1 ? "" : "en"
-                    } nog op verwerking.`}
+          <div className={styles.todayStats}>
+            <div>
+              <span>📅</span>
+              <strong>{stats.todayAppointments}</strong>
+              <small>Afspraken</small>
+            </div>
+
+            <div>
+              <span>🏕️</span>
+              <strong>{stats.todayWorkshops}</strong>
+              <small>Workshops</small>
+            </div>
+
+            <div>
+              <span>📚</span>
+              <strong>{stats.todayLessons}</strong>
+              <small>Lessen</small>
+            </div>
+          </div>
+
+          <div className={styles.upcoming}>
+            <h4>Eerstvolgende afspraken</h4>
+
+            {upcoming.length === 0 ? (
+              <p className={styles.empty}>
+                Er zijn geen komende afspraken gevonden.
               </p>
-
-              <button
-                type="button"
-                onClick={() => setTab?.("payments")}
-              >
-                Betalingen bekijken
-                <span>→</span>
-              </button>
-            </article>
-
-            <article className="admin-quick-panel">
-              <div className="admin-quick-panel__header">
-                <div>
-                  <p className="admin-section-eyebrow">
-                    Snelle acties
-                  </p>
-                  <h3>Direct beheren</h3>
-                </div>
-              </div>
-
-              <div className="admin-quick-actions">
+            ) : (
+              upcoming.map((item) => (
                 <button
+                  key={item.id}
                   type="button"
-                  onClick={() => setTab?.("requests")}
-                >
-                  <span className="admin-quick-icon">📥</span>
-
-                  <span className="admin-quick-text">
-                    <strong>Aanvragen bekijken</strong>
-                    <small>Nieuwe aanvragen verwerken</small>
-                  </span>
-
-                  <span className="admin-quick-arrow">→</span>
-                </button>
-
-                <button
-                  type="button"
+                  className={styles.upcomingItem}
                   onClick={() => setTab?.("agenda")}
                 >
-                  <span className="admin-quick-icon">📅</span>
-
-                  <span className="admin-quick-text">
-                    <strong>Agenda openen</strong>
-                    <small>Lessen en afspraken bekijken</small>
+                  <span className={styles.upcomingTime}>
+                    {formatUpcomingDate(item.startTime)}
                   </span>
 
-                  <span className="admin-quick-arrow">→</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setTab?.("availability")}
-                >
-                  <span className="admin-quick-icon">🕒</span>
-
-                  <span className="admin-quick-text">
-                    <strong>Vrije momenten</strong>
-                    <small>Beschikbaarheid toevoegen</small>
+                  <span className={styles.upcomingInfo}>
+                    <strong>{item.title}</strong>
+                    <small>
+                      {item.customer}
+                      {item.location ? ` · ${item.location}` : ""}
+                    </small>
                   </span>
 
-                  <span className="admin-quick-arrow">→</span>
+                  <span className={styles.arrow}>›</span>
                 </button>
+              ))
+            )}
+          </div>
+        </article>
 
-                <button
-                  type="button"
-                  onClick={() => setTab?.("students")}
-                >
-                  <span className="admin-quick-icon">🎓</span>
+        <article className={styles.actionPanel}>
+          <div className={styles.panelHeading}>
+            <div>
+              <p className={styles.eyebrow}>Actie nodig</p>
+              <h3>{actionCount} aandachtspunt(en)</h3>
+            </div>
 
-                  <span className="admin-quick-text">
-                    <strong>Leerlingen</strong>
-                    <small>Profielen bekijken en beheren</small>
-                  </span>
+            <span className={styles.warningIcon}>!</span>
+          </div>
 
-                  <span className="admin-quick-arrow">→</span>
-                </button>
+          <button
+            type="button"
+            className={styles.actionItem}
+            onClick={() => setTab?.("requests")}
+          >
+            <span className={styles.actionIcon}>📥</span>
+            <span>
+              <strong>{stats.requests} nieuwe aanvragen</strong>
+              <small>Nog niet goedgekeurd of verwerkt</small>
+            </span>
+            <b>›</b>
+          </button>
 
-                <button
-                  type="button"
-                  onClick={() => setTab?.("cards")}
-                >
-                  <span className="admin-quick-icon">🎟️</span>
+          <button
+            type="button"
+            className={styles.actionItem}
+            onClick={() => setTab?.("agenda")}
+          >
+            <span className={styles.actionIcon}>🔄</span>
+            <span>
+              <strong>{stats.syncIssues} synchronisatieproblemen</strong>
+              <small>Controleer afspraken zonder Google-koppeling</small>
+            </span>
+            <b>›</b>
+          </button>
 
-                  <span className="admin-quick-text">
-                    <strong>Beurtenkaarten</strong>
-                    <small>Kaarten en resterende beurten</small>
-                  </span>
+          <button
+            type="button"
+            className={styles.actionItem}
+            onClick={() => setTab?.("cards")}
+          >
+            <span className={styles.actionIcon}>🎟️</span>
+            <span>
+              <strong>{stats.emptyPasses} lege beurtenkaarten</strong>
+              <small>Actieve kaarten zonder resterende beurten</small>
+            </span>
+            <b>›</b>
+          </button>
+        </article>
+      </section>
 
-                  <span className="admin-quick-arrow">→</span>
-                </button>
+      <section className={styles.revenuePanel}>
+        <div className={styles.revenueHeader}>
+          <div>
+            <p className={styles.eyebrow}>Omzet</p>
+            <h3>Betaalde Mollie-transacties</h3>
+            <span>
+              Alleen betalingen met definitieve status <strong>paid</strong>.
+            </span>
+          </div>
 
-                <button
-                  type="button"
-                  onClick={() => setTab?.("discounts")}
-                >
-                  <span className="admin-quick-icon">🏷️</span>
+          <button type="button" onClick={() => setTab?.("payments")}>
+            Betalingen bekijken
+          </button>
+        </div>
 
-                  <span className="admin-quick-text">
-                    <strong>Kortingscodes</strong>
-                    <small>Codes aanmaken en beheren</small>
-                  </span>
+        <div className={styles.revenueGrid}>
+          <article>
+            <span>Deze maand</span>
+            <strong>{formatMoney(stats.revenueThisMonth)}</strong>
+          </article>
 
-                  <span className="admin-quick-arrow">→</span>
-                </button>
-              </div>
-            </article>
-          </section>
-        </>
-      )}
+          <article>
+            <span>Vorige maand</span>
+            <strong>{formatMoney(stats.revenuePreviousMonth)}</strong>
+          </article>
+
+          <article
+            className={
+              revenueTrend.positive
+                ? styles.positiveTrend
+                : styles.negativeTrend
+            }
+          >
+            <span>Vergelijking</span>
+            <strong>{revenueTrend.label}</strong>
+          </article>
+        </div>
+      </section>
     </div>
   );
 }

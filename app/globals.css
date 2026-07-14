@@ -47,7 +47,7 @@
 @import "./styles/studiosago-oefenplatform-compleet.css";
 @import "@/app/styles/middelbaar-overzicht.css";
 @import "@/app/styles/AANVULLING-oefeningen.css";
-
+@import "@/app/styles/admin-student-edit.css";
 
 
 @font-face {

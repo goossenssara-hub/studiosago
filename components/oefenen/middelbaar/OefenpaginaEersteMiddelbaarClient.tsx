@@ -20,8 +20,10 @@ type Props = {
 export default function OefenpaginaEersteMiddelbaarClient({ skill }: Props) {
   const config = getSkillConfig(skill);
 
-  // v4 gebruikt de nieuwe generators per onderdeel en verwijdert oude algemene reeksen.
-  const storageKey = `sago-oefenklim-eerste-middelbaar-${skill}-v4`;
+  // v2 wist de oude, identieke reeksen uit de vorige generator niet,
+  // maar gebruikt bewust een nieuwe opslagruimte zodat nieuwe niveaus
+  // onmiddellijk met de moeilijkere generator worden opgebouwd.
+  const storageKey = `sago-oefenklim-eerste-middelbaar-${skill}-v5`;
 
   const [level, setLevel] = useState(1);
   const [answers, setAnswers] = useState<Record<string, string>>({});

@@ -175,7 +175,7 @@ export default function AdminStudents() {
     setErrorMessage("");
 
     try {
-      const response = await fetch("/api/admin/students/create", {
+      const response = await fetch("/api/admin/students", {
         method: "GET",
         cache: "no-store",
       });

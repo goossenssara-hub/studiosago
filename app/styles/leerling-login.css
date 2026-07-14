@@ -1,118 +1,347 @@
 :root {
   --sago-navy: #033663;
+  --sago-navy-dark: #022846;
   --sago-teal: #28b9aa;
+  --sago-teal-dark: #15978c;
   --sago-orange: #fea020;
   --sago-purple: #9b81b8;
   --sago-cream: #fffdf4;
+  --sago-soft-blue: #edf8f8;
+  --sago-muted: #67809a;
+  --sago-danger: #b42318;
 }
+
+/* =========================================================
+   PAGINA
+========================================================= */
 
 .leerling-login-page {
-  min-height: 100vh;
+  position: relative;
+  isolation: isolate;
+  min-height: 100svh;
   display: grid;
   place-items: center;
-  padding: 24px;
-  background: linear-gradient(135deg, #f8fffc 0%, #fffdf4 55%, #f4fbfa 100%);
-  color: var(--sago-navy);
+  padding: clamp(14px, 2vw, 30px);
   overflow: hidden;
+  color: var(--sago-navy);
+  background:
+    radial-gradient(
+      circle at 8% 6%,
+      rgba(40, 185, 170, 0.12),
+      transparent 27%
+    ),
+    radial-gradient(
+      circle at 91% 10%,
+      rgba(254, 160, 32, 0.13),
+      transparent 29%
+    ),
+    radial-gradient(
+      circle at 16% 92%,
+      rgba(155, 129, 184, 0.1),
+      transparent 25%
+    ),
+    linear-gradient(
+      135deg,
+      #f4fcfa 0%,
+      #fffdf4 47%,
+      #f2fbfa 100%
+    );
 }
 
-.leerling-login-blobs {
+.login-background-shape {
   position: absolute;
-  inset: 0 auto auto 0;
-  width: min(360px, 36vw);
+  z-index: -1;
+  display: block;
+  border-radius: 999px;
   pointer-events: none;
-  opacity: 0.75;
+  filter: blur(2px);
 }
+
+.login-background-shape-one {
+  top: -140px;
+  left: -120px;
+  width: 380px;
+  height: 380px;
+  border: 1px solid rgba(40, 185, 170, 0.18);
+}
+
+.login-background-shape-two {
+  right: -130px;
+  bottom: -170px;
+  width: 440px;
+  height: 440px;
+  background: rgba(40, 185, 170, 0.07);
+}
+
+.login-background-shape-three {
+  left: 37%;
+  bottom: -180px;
+  width: 320px;
+  height: 320px;
+  border: 65px solid rgba(254, 160, 32, 0.055);
+}
+
+/* =========================================================
+   HOOFDKAART
+========================================================= */
 
 .leerling-login-shell {
-  width: min(1180px, 100%);
-  height: min(760px, calc(100vh - 48px));
+  position: relative;
+  z-index: 2;
+  width: min(1420px, 100%);
+  min-height: min(850px, calc(100svh - 40px));
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1.03fr) minmax(520px, 0.97fr);
   overflow: hidden;
-  border-radius: 42px;
-  background: rgba(255, 253, 244, 0.92);
-  box-shadow: 0 24px 60px rgba(3, 54, 99, 0.14);
+  border: 1px solid rgba(3, 54, 99, 0.07);
+  border-radius: clamp(30px, 3vw, 50px);
+  background: rgba(255, 253, 244, 0.93);
+  box-shadow:
+    0 42px 100px rgba(3, 54, 99, 0.14),
+    0 10px 30px rgba(3, 54, 99, 0.07);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
 }
+
+/* =========================================================
+   LINKERZIJDE
+========================================================= */
 
 .leerling-login-left {
   position: relative;
   display: flex;
   align-items: center;
-  padding: 76px 72px 48px;
+  justify-content: center;
+  padding:
+    clamp(100px, 9vh, 124px)
+    clamp(44px, 5.5vw, 86px)
+    clamp(48px, 6vh, 70px);
+  background:
+    radial-gradient(
+      circle at 12% 88%,
+      rgba(40, 185, 170, 0.08),
+      transparent 26%
+    ),
+    radial-gradient(
+      circle at 87% 14%,
+      rgba(254, 160, 32, 0.08),
+      transparent 26%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.55),
+      rgba(255, 253, 244, 0.9)
+    );
+}
+
+.leerling-login-left::after {
+  content: "";
+  position: absolute;
+  top: 11%;
+  right: 0;
+  width: 1px;
+  height: 78%;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(3, 54, 99, 0.1),
+    transparent
+  );
 }
 
 .back-home-button {
   position: absolute;
-  top: 26px;
-  left: 72px;
-  padding: 9px 15px;
+  top: clamp(24px, 3vw, 36px);
+  left: clamp(26px, 4vw, 56px);
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 19px;
+  border: 1px solid rgba(40, 185, 170, 0.2);
   border-radius: 999px;
-  background: white;
-  border: 1px solid rgba(40, 185, 170, 0.24);
   color: var(--sago-navy);
-  font-size: 14px;
-  font-weight: 800;
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 10px 28px rgba(3, 54, 99, 0.08);
   text-decoration: none;
+  font-size: 15px;
+  font-weight: 750;
+  line-height: 1;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    background 180ms ease;
+}
+
+.back-home-arrow {
+  display: inline-grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  color: var(--sago-teal-dark);
+  background: rgba(40, 185, 170, 0.11);
+  font-size: 16px;
+  transition: transform 180ms ease;
+}
+
+.back-home-button:hover {
+  transform: translateY(-2px);
+  border-color: rgba(40, 185, 170, 0.42);
+  background: white;
+  box-shadow: 0 15px 34px rgba(3, 54, 99, 0.12);
+}
+
+.back-home-button:hover .back-home-arrow {
+  transform: translateX(-2px);
 }
 
 .leerling-login-form {
-  width: 100%;
-  max-width: 480px;
+  width: min(520px, 100%);
+}
+
+.login-heading {
+  margin-bottom: 30px;
 }
 
 .portal-pill {
   width: fit-content;
-  margin: 0 0 20px;
-  padding: 10px 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 24px;
+  padding: 11px 19px;
+  border: 1px solid rgba(40, 185, 170, 0.13);
   border-radius: 999px;
-  background: rgba(40, 185, 170, 0.13);
-  color: var(--sago-teal);
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
+  color: var(--sago-teal-dark);
+  background: linear-gradient(
+    90deg,
+    rgba(40, 185, 170, 0.13),
+    rgba(40, 185, 170, 0.07)
+  );
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: 0.13em;
+  line-height: 1;
   text-transform: uppercase;
+}
+
+.portal-pill-dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border: 2px solid white;
+  border-radius: 50%;
+  background: var(--sago-teal);
+  box-shadow: 0 0 0 3px rgba(40, 185, 170, 0.14);
 }
 
 .leerling-login-form h1 {
   margin: 0;
   color: var(--sago-navy);
-  font-size: clamp(56px, 5.4vw, 82px);
-  line-height: 0.9;
-  letter-spacing: -0.055em;
+  font-size: clamp(58px, 5vw, 82px);
+  font-weight: 850;
+  line-height: 0.89;
+  letter-spacing: -0.058em;
+}
+
+.leerling-login-form h1 span {
+  position: relative;
+  display: inline-block;
+}
+
+.leerling-login-form h1 span::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  bottom: -11px;
+  width: 72%;
+  height: 7px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--sago-orange),
+    rgba(254, 160, 32, 0.08)
+  );
+  transform: rotate(-1.5deg);
 }
 
 .login-subtitle {
-  margin: 24px 0 28px;
-  color: rgba(3, 54, 99, 0.62);
-  font-size: 19px;
-  line-height: 1.15;
+  max-width: 485px;
+  margin: 31px 0 0;
+  color: rgba(3, 54, 99, 0.65);
+  font-size: clamp(17px, 1.3vw, 19px);
+  font-weight: 500;
+  line-height: 1.48;
+}
+
+/* =========================================================
+   INVOERVELDEN
+========================================================= */
+
+.login-fields {
+  display: grid;
+  gap: 20px;
 }
 
 .login-field {
   display: grid;
-  gap: 10px;
-  margin-top: 18px;
-  font-size: 16px;
-  font-weight: 700;
+  gap: 9px;
+}
+
+.login-label {
+  padding-left: 3px;
+  color: var(--sago-navy);
+  font-size: 15px;
+  font-weight: 800;
 }
 
 .login-input-wrap {
-  height: 58px;
+  min-height: 66px;
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 0 18px;
-  border-radius: 22px;
-  border: 1.5px solid rgba(40, 185, 170, 0.34);
-  background: rgba(255, 255, 255, 0.72);
+  gap: 13px;
+  padding: 0 17px;
+  overflow: hidden;
+  border: 1.5px solid rgba(3, 54, 99, 0.12);
+  border-radius: 21px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow:
+    0 10px 25px rgba(3, 54, 99, 0.045),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease,
+    background 180ms ease;
+}
+
+.login-input-wrap:focus-within {
+  border-color: rgba(40, 185, 170, 0.78);
+  background: white;
+  box-shadow:
+    0 0 0 5px rgba(40, 185, 170, 0.1),
+    0 14px 34px rgba(3, 54, 99, 0.08);
+  transform: translateY(-1px);
 }
 
 .login-icon {
-  width: 22px;
-  text-align: center;
-  color: var(--sago-teal);
-  font-weight: 900;
+  width: 35px;
+  height: 35px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: var(--sago-teal-dark);
+  background: rgba(40, 185, 170, 0.1);
+}
+
+.login-svg-icon {
+  width: 20px;
+  height: 20px;
 }
 
 .login-input-wrap input {
@@ -120,212 +349,894 @@
   min-width: 0;
   border: 0;
   outline: 0;
-  background: transparent;
   color: var(--sago-navy);
+  background: transparent;
   font: inherit;
-  font-size: 17px;
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 650;
 }
 
 .login-input-wrap input::placeholder {
-  color: rgba(22, 38, 50, 0.42);
+  color: rgba(3, 54, 99, 0.37);
+  font-weight: 500;
 }
 
 .show-password {
+  flex: 0 0 auto;
+  min-height: 38px;
+  padding: 0 9px;
   border: 0;
+  border-radius: 10px;
+  color: var(--sago-teal-dark);
   background: transparent;
-  color: var(--sago-teal);
-  font-size: 16px;
-  font-weight: 700;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
   cursor: pointer;
+  transition:
+    color 160ms ease,
+    background 160ms ease;
 }
+
+.show-password:hover {
+  color: var(--sago-navy);
+  background: rgba(40, 185, 170, 0.09);
+}
+
+/* =========================================================
+   OPTIES
+========================================================= */
 
 .login-options {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
-  margin: 20px 0 22px;
-  font-size: 16px;
+  gap: 18px;
+  margin: 18px 2px 20px;
+  font-size: 14px;
 }
 
 .remember-me {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  color: rgba(3, 54, 99, 0.73);
+  font-weight: 650;
+  cursor: pointer;
+  user-select: none;
 }
 
 .remember-me input {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--sago-teal);
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.custom-checkbox {
+  width: 21px;
+  height: 21px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid rgba(3, 54, 99, 0.2);
+  border-radius: 7px;
+  color: transparent;
+  background: white;
+  transition:
+    border-color 160ms ease,
+    color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.feature-check-icon {
+  width: 15px;
+  height: 15px;
+}
+
+.remember-me input:checked + .custom-checkbox {
+  border-color: var(--sago-teal);
+  color: white;
+  background: var(--sago-teal);
+  box-shadow: 0 5px 13px rgba(40, 185, 170, 0.25);
+}
+
+.remember-me input:focus-visible + .custom-checkbox {
+  outline: 3px solid rgba(40, 185, 170, 0.18);
+  outline-offset: 2px;
 }
 
 .forgot-password {
+  position: relative;
+  flex: 0 0 auto;
   color: var(--sago-navy);
   text-decoration: none;
-  font-weight: 700;
+  font-weight: 800;
 }
+
+.forgot-password::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: -4px;
+  left: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--sago-teal);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 180ms ease;
+}
+
+.forgot-password:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* =========================================================
+   FOUTMELDING
+========================================================= */
 
 .login-error {
-  margin: 0 0 14px;
-  padding: 12px 15px;
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin: 0 0 16px;
+  padding: 13px 15px;
+  border: 1px solid rgba(180, 35, 24, 0.12);
   border-radius: 16px;
-  background: rgba(254, 32, 32, 0.09);
-  color: #b42318;
+  color: var(--sago-danger);
+  background: rgba(180, 35, 24, 0.07);
+  font-size: 14px;
   font-weight: 700;
+  line-height: 1.4;
 }
 
+.login-error-icon {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: white;
+  background: var(--sago-danger);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+/* =========================================================
+   AANMELDKNOP
+========================================================= */
+
 .login-submit {
+  position: relative;
   width: 100%;
-  min-height: 60px;
+  min-height: 66px;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: 18px;
+  padding: 7px 8px 7px 26px;
+  overflow: hidden;
   border: 0;
-  border-radius: 999px;
-  background: linear-gradient(90deg, var(--sago-navy), var(--sago-teal));
+  border-radius: 22px;
   color: white;
-  font-size: 19px;
-  font-weight: 800;
+  background:
+    linear-gradient(
+      100deg,
+      var(--sago-navy-dark) 0%,
+      var(--sago-navy) 48%,
+      var(--sago-teal-dark) 100%
+    );
+  box-shadow:
+    0 18px 38px rgba(3, 54, 99, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.17);
+  font: inherit;
+  font-size: 17px;
+  font-weight: 850;
   cursor: pointer;
-  box-shadow: 0 18px 34px rgba(3, 54, 99, 0.2);
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    filter 180ms ease;
+}
+
+.login-submit::before {
+  content: "";
+  position: absolute;
+  top: -70%;
+  left: -35%;
+  width: 35%;
+  height: 240%;
+  background: rgba(255, 255, 255, 0.16);
+  transform: rotate(20deg);
+  transition: left 500ms ease;
+}
+
+.login-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow:
+    0 24px 46px rgba(3, 54, 99, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  filter: saturate(1.06);
+}
+
+.login-submit:hover:not(:disabled)::before {
+  left: 110%;
+}
+
+.login-submit:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .login-submit:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
+  opacity: 0.68;
+  cursor: wait;
 }
 
-.account-note {
-  margin: 20px 0 0;
-  color: rgba(3, 54, 99, 0.58);
-  font-size: 18px;
-  line-height: 1.12;
+.login-submit-arrow {
+  position: relative;
+  z-index: 2;
+  width: 50px;
+  height: 50px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 17px;
+  color: var(--sago-navy);
+  background: white;
+  box-shadow: 0 7px 18px rgba(2, 40, 70, 0.16);
 }
+
+.button-arrow-icon {
+  width: 22px;
+  height: 22px;
+  transition: transform 180ms ease;
+}
+
+.login-submit:hover:not(:disabled) .button-arrow-icon {
+  transform: translateX(3px);
+}
+
+.login-spinner {
+  width: 20px;
+  height: 20px;
+  display: block;
+  border: 2.5px solid rgba(3, 54, 99, 0.19);
+  border-top-color: var(--sago-teal);
+  border-radius: 50%;
+  animation: leerling-login-spin 700ms linear infinite;
+}
+
+@keyframes leerling-login-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* =========================================================
+   ACCOUNTMELDING
+========================================================= */
+
+.account-note {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0 0;
+  padding: 0 4px;
+  color: rgba(3, 54, 99, 0.55);
+}
+
+.account-note-icon {
+  width: 31px;
+  height: 31px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(3, 54, 99, 0.1);
+  border-radius: 11px;
+  color: var(--sago-teal-dark);
+  background: rgba(40, 185, 170, 0.08);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.account-note p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.account-note p span {
+  color: rgba(3, 54, 99, 0.76);
+  font-weight: 750;
+}
+
+/* =========================================================
+   RECHTERZIJDE
+========================================================= */
 
 .leerling-login-right {
   position: relative;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   overflow: hidden;
-  border-radius: 0 42px 42px 0;
+  padding:
+    clamp(42px, 4vw, 62px)
+    clamp(34px, 4vw, 58px)
+    clamp(32px, 3.5vw, 48px);
+  color: white;
+  border-radius: 0 clamp(30px, 3vw, 50px)
+    clamp(30px, 3vw, 50px) 0;
+  background: var(--sago-navy);
 }
 
 .portal-bg {
   position: absolute;
+  z-index: 0;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
+  transform: scale(1.025);
 }
 
-.portal-logo {
+.portal-overlay {
   position: absolute;
-  top: 58px;
+  z-index: 1;
+  inset: 0;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(2, 40, 70, 0.66) 0%,
+      rgba(3, 54, 99, 0.16) 38%,
+      rgba(3, 54, 99, 0.21) 67%,
+      rgba(2, 40, 70, 0.72) 100%
+    ),
+    radial-gradient(
+      circle at 50% 49%,
+      rgba(255, 255, 255, 0.16),
+      transparent 31%
+    );
+}
+
+.portal-glow {
+  position: absolute;
+  z-index: 1;
+  top: 29%;
   left: 50%;
-  width: min(260px, 40%);
+  width: 470px;
+  height: 470px;
+  border-radius: 50%;
+  background: rgba(255, 249, 224, 0.17);
+  filter: blur(46px);
   transform: translateX(-50%);
+}
+
+.portal-top-content {
+  position: relative;
+  z-index: 4;
+  max-width: 530px;
+}
+
+.portal-eyebrow {
+  margin: 0 0 12px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.portal-top-content h2 {
+  max-width: 510px;
+  margin: 0;
+  color: white;
+  font-size: clamp(28px, 2.6vw, 40px);
+  font-weight: 830;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+  text-shadow: 0 5px 24px rgba(3, 54, 99, 0.26);
+}
+
+.portal-top-content h2 span {
+  display: block;
+  color: #bff5ed;
+}
+
+.portal-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 20px;
+}
+
+.portal-features span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 33px;
+  padding: 7px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  font-size: 12px;
+  font-weight: 750;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.portal-features .feature-check-icon {
+  width: 14px;
+  height: 14px;
+  color: #8ee9dd;
+}
+
+/* =========================================================
+   CENTRALE AFBEELDING
+========================================================= */
+
+.student-circle-wrap {
+  position: absolute;
+  z-index: 3;
+  top: 50%;
+  left: 50%;
+  width: min(365px, 52%);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  transform: translate(-50%, -46%);
+}
+
+.student-circle-ring {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.student-circle-ring-one {
+  inset: -11%;
+  border: 1px solid rgba(255, 255, 255, 0.21);
+  animation: leerling-ring-pulse 4s ease-in-out infinite;
+}
+
+.student-circle-ring-two {
+  inset: -23%;
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  animation: leerling-ring-rotate 26s linear infinite;
 }
 
 .student-circle {
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter:
+    drop-shadow(0 30px 48px rgba(3, 54, 99, 0.26))
+    drop-shadow(0 4px 8px rgba(255, 255, 255, 0.16));
+}
+
+.student-status {
   position: absolute;
-  top: 220px;
-  left: 50%;
-  width: min(340px, 54%);
-  transform: translateX(-50%);
-  filter: drop-shadow(0 18px 28px rgba(3, 54, 99, 0.16));
+  z-index: 5;
+  right: -22px;
+  bottom: 14%;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 999px;
+  color: var(--sago-navy);
+  background: rgba(255, 255, 255, 0.91);
+  box-shadow: 0 13px 28px rgba(3, 54, 99, 0.18);
+  font-size: 12px;
+  font-weight: 850;
+  white-space: nowrap;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.student-status > span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #46b96b;
+  box-shadow: 0 0 0 4px rgba(70, 185, 107, 0.15);
+}
+
+@keyframes leerling-ring-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.98);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.025);
+  }
+}
+
+@keyframes leerling-ring-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* =========================================================
+   PORTAALKAARTEN
+========================================================= */
+
+.portal-card-grid {
+  position: relative;
+  z-index: 4;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: auto;
 }
 
 .portal-card {
-  position: absolute;
-  bottom: 42px;
+  min-width: 0;
   display: grid;
-  grid-template-columns: 54px 1fr auto;
+  grid-template-columns: 48px minmax(0, 1fr) 30px;
   align-items: center;
   gap: 12px;
-  width: min(240px, 40%);
-  padding: 16px 18px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 16px 34px rgba(3, 54, 99, 0.14);
   color: var(--sago-navy);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow:
+    0 18px 34px rgba(3, 54, 99, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  transition:
+    transform 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease;
 }
 
-.portal-card-today {
-  left: 34px;
+.portal-card:hover {
+  transform: translateY(-4px);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow:
+    0 24px 42px rgba(3, 54, 99, 0.22),
+    inset 0 1px 0 white;
 }
 
-.portal-card-planner {
-  right: 34px;
+.portal-card-icon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: rgba(40, 185, 170, 0.1);
 }
 
-.portal-card img {
-  width: 50px;
-  height: 50px;
+.portal-card-planner .portal-card-icon {
+  background: rgba(254, 160, 32, 0.12);
 }
 
-.portal-card strong {
+.portal-card-icon img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.portal-card-copy {
+  min-width: 0;
+}
+
+.portal-card-copy span {
   display: block;
-  font-size: 16px;
+  margin-bottom: 3px;
+  color: rgba(3, 54, 99, 0.52);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
-.portal-card span {
+.portal-card-copy strong {
   display: block;
-  color: rgba(3, 54, 99, 0.58);
+  overflow: hidden;
+  color: var(--sago-navy);
   font-size: 14px;
+  font-weight: 850;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-@media (max-width: 1050px) {
+.portal-card-arrow {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: white;
+  background: var(--sago-navy);
+  font-size: 15px;
+  transition: transform 180ms ease;
+}
+
+.portal-card:hover .portal-card-arrow {
+  transform: translateX(2px);
+}
+
+.portal-footer-note {
+  position: absolute;
+  z-index: 4;
+  right: 0;
+  bottom: 14px;
+  left: 0;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+/* =========================================================
+   TOETSENBORDNAVIGATIE
+========================================================= */
+
+.back-home-button:focus-visible,
+.show-password:focus-visible,
+.forgot-password:focus-visible,
+.login-submit:focus-visible {
+  outline: 3px solid rgba(40, 185, 170, 0.3);
+  outline-offset: 3px;
+}
+
+/* =========================================================
+   KLEINERE LAPTOPS
+========================================================= */
+
+@media (max-width: 1250px) {
   .leerling-login-shell {
-    width: min(620px, 100%);
-    height: auto;
+    grid-template-columns: minmax(0, 1fr) minmax(440px, 0.88fr);
+  }
+
+  .leerling-login-left {
+    padding-right: 50px;
+    padding-left: 50px;
+  }
+
+  .student-circle-wrap {
+    width: min(330px, 57%);
+  }
+
+  .portal-card {
+    grid-template-columns: 42px minmax(0, 1fr) 28px;
+    gap: 9px;
+    padding: 12px;
+  }
+
+  .portal-card-icon {
+    width: 42px;
+    height: 42px;
+  }
+
+  .portal-card-icon img {
+    width: 35px;
+    height: 35px;
+  }
+}
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1020px) {
+  .leerling-login-page {
+    min-height: 100svh;
+    overflow-y: auto;
+  }
+
+  .leerling-login-shell {
+    width: min(670px, 100%);
     min-height: auto;
     grid-template-columns: 1fr;
+    overflow: visible;
     border-radius: 34px;
+  }
+
+  .leerling-login-left {
+    min-height: auto;
+    padding: 105px 52px 52px;
+    border-radius: 34px;
+  }
+
+  .leerling-login-left::after {
+    display: none;
   }
 
   .leerling-login-right {
     display: none;
   }
 
-  .leerling-login-left {
-    padding: 90px 38px 38px;
+  .leerling-login-form {
+    width: 100%;
+    max-width: none;
   }
 
-  .back-home-button {
-    left: 38px;
+  .login-background-shape-three {
+    display: none;
   }
 }
 
+/* =========================================================
+   MOBIEL
+========================================================= */
+
 @media (max-width: 640px) {
   .leerling-login-page {
-    padding: 14px;
+    display: block;
+    padding: 10px;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .leerling-login-shell {
+    width: 100%;
+    border-radius: 28px;
   }
 
   .leerling-login-left {
-    padding: 82px 22px 30px;
+    display: block;
+    padding: 89px 20px 30px;
+    border-radius: 28px;
   }
 
   .back-home-button {
-    left: 22px;
-    top: 22px;
+    top: 20px;
+    left: 20px;
+    min-height: 43px;
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+
+  .back-home-arrow {
+    width: 22px;
+    height: 22px;
+  }
+
+  .login-heading {
+    margin-bottom: 25px;
   }
 
   .portal-pill {
-    font-size: 11px;
+    margin-bottom: 20px;
+    padding: 10px 14px;
+    font-size: 10px;
     letter-spacing: 0.1em;
   }
 
   .leerling-login-form h1 {
-    font-size: 52px;
+    font-size: clamp(49px, 15vw, 62px);
+  }
+
+  .login-subtitle {
+    margin-top: 27px;
+    font-size: 16px;
+    line-height: 1.45;
+  }
+
+  .login-fields {
+    gap: 17px;
+  }
+
+  .login-input-wrap {
+    min-height: 61px;
+    padding: 0 13px;
+    border-radius: 18px;
+  }
+
+  .login-icon {
+    width: 33px;
+    height: 33px;
+  }
+
+  .login-input-wrap input {
+    font-size: 16px;
+  }
+
+  .show-password {
+    padding: 0 5px;
+    font-size: 13px;
   }
 
   .login-options {
     align-items: flex-start;
     flex-direction: column;
+    gap: 13px;
+    margin-top: 17px;
+  }
+
+  .login-submit {
+    min-height: 62px;
+    padding-left: 21px;
+    border-radius: 19px;
+    font-size: 16px;
+  }
+
+  .login-submit-arrow {
+    width: 47px;
+    height: 47px;
+    border-radius: 15px;
   }
 
   .account-note {
-    font-size: 16px;
+    align-items: flex-start;
+  }
+}
+
+/* =========================================================
+   ZEER KLEINE SCHERMEN
+========================================================= */
+
+@media (max-width: 380px) {
+  .leerling-login-left {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .portal-pill {
+    font-size: 9px;
+  }
+
+  .remember-me {
+    font-size: 13px;
+  }
+
+  .forgot-password {
+    font-size: 13px;
+  }
+
+  .login-submit {
+    padding-left: 17px;
+    font-size: 15px;
+  }
+}
+
+/* =========================================================
+   MINDER BEWEGING
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .login-spinner,
+  .student-circle-ring-one,
+  .student-circle-ring-two {
+    animation: none;
+  }
+
+  .back-home-button,
+  .back-home-arrow,
+  .login-input-wrap,
+  .show-password,
+  .forgot-password::after,
+  .login-submit,
+  .login-submit::before,
+  .button-arrow-icon,
+  .portal-card,
+  .portal-card-arrow {
+    transition: none;
   }
 }

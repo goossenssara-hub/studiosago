@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
 } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createPortal } from "react-dom";
 
@@ -54,7 +55,6 @@ type StudentForm = {
   doctor_name: string;
   doctor_phone: string;
   notes: string;
-  photo_consent: boolean;
 };
 
 const emptyForm: StudentForm = {
@@ -76,7 +76,6 @@ const emptyForm: StudentForm = {
   doctor_name: "",
   doctor_phone: "",
   notes: "",
-  photo_consent: false,
 };
 
 function getInitials(name: string) {
@@ -262,14 +261,6 @@ export default function AdminStudents() {
     }));
   }
 
-  function updatePhotoConsent(
-    event: ChangeEvent<HTMLInputElement>
-  ) {
-    setForm((current) => ({
-      ...current,
-      photo_consent: event.target.checked,
-    }));
-  }
 
   function openAddForm() {
     setSelectedStudent(null);
@@ -788,6 +779,13 @@ export default function AdminStudents() {
           </div>
 
           <div className="student-detail-actions">
+            <Link
+              href={`/admin/leerlingen/${selectedStudent.id}/bewerken`}
+              className="primary-action equal-button student-edit-link"
+            >
+              Gegevens aanpassen
+            </Link>
+
             <button
               type="button"
               className="availability-delete equal-button"
@@ -1139,8 +1137,7 @@ export default function AdminStudents() {
                   <div>
                     <h3>Medisch en praktisch</h3>
                     <p>
-                      Medische informatie, notities en
-                      foto-toestemming.
+                      Medische informatie en praktische notities.
                     </p>
                   </div>
                 </div>
@@ -1192,26 +1189,6 @@ export default function AdminStudents() {
                       rows={3}
                       placeholder="Andere informatie die nuttig kan zijn"
                     />
-                  </label>
-
-                  <label className="student-consent-field student-form-field-wide">
-                    <input
-                      type="checkbox"
-                      checked={form.photo_consent}
-                      onChange={updatePhotoConsent}
-                    />
-
-                    <span>
-                      <strong>
-                        Toestemming voor foto&apos;s
-                      </strong>
-
-                      <small>
-                        De ouder of voogd geeft toestemming
-                        voor het maken en gebruiken van
-                        foto&apos;s.
-                      </small>
-                    </span>
                   </label>
                 </div>
               </section>

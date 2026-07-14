@@ -26,6 +26,8 @@ export type WebshopOrderMetadata = {
 
   studentAge?: string;
   schoolYear?: string;
+  finality?: string;
+  studyDirection?: string;
   school?: string;
 
   wordCount?: string;
@@ -171,6 +173,8 @@ export async function fulfillWebshopOrder({
 
   const studentAge = clean(metadata.studentAge);
   const schoolYear = clean(metadata.schoolYear);
+  const finality = clean(metadata.finality);
+  const studyDirection = clean(metadata.studyDirection);
   const school = clean(metadata.school);
 
   const wordCount = clean(metadata.wordCount);
@@ -318,6 +322,14 @@ export async function fulfillWebshopOrder({
         ? `Studiejaar: ${schoolYear}`
         : "",
 
+      finality
+        ? `Finaliteit: ${finality}`
+        : "",
+
+      studyDirection
+        ? `Studierichting: ${studyDirection}`
+        : "",
+
       school
         ? `School: ${school}`
         : "",
@@ -405,6 +417,14 @@ export async function fulfillWebshopOrder({
 
     schoolYear
       ? `Studiejaar: ${schoolYear}`
+      : "",
+
+    finality
+      ? `Finaliteit: ${finality}`
+      : "",
+
+    studyDirection
+      ? `Studierichting: ${studyDirection}`
       : "",
 
     school

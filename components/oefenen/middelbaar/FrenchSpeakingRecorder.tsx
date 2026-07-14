@@ -2,348 +2,287 @@
 
 import { useEffect, useRef, useState } from "react";
 
-type FrenchSpeakingRecorderProps = {
-  title?: string;
-  instruction?: string;
-  expectedText?: string;
-  disabled?: boolean;
-  onRecordingComplete?: (audioBlob: Blob) => void;
-  onComplete?: (audioBlob: Blob) => void;
-
-  /*
-   * Hierdoor blijft het component bruikbaar wanneer er vanuit
-   * VoorbereidingFransClient nog andere eigenschappen worden meegegeven.
-   */
-  [key: string]: unknown;
+type SpeechRecognitionResultLike = {
+  isFinal: boolean;
+  0?: {
+    transcript?: string;
+  };
 };
 
-export default function FrenchSpeakingRecorder({
-  title = "Spreekoefening",
-  instruction = "Neem jezelf op terwijl je de Franse tekst uitspreekt.",
-  expectedText,
-  disabled = false,
-  onRecordingComplete,
-  onComplete,
-}: FrenchSpeakingRecorderProps) {
-  const [isRecording, setIsRecording] = useState(false);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [seconds, setSeconds] = useState(0);
+type SpeechRecognitionEventLike = Event & {
+  resultIndex: number;
+  results: {
+    length: number;
+    [index: number]: SpeechRecognitionResultLike;
+  };
+};
 
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+type SpeechRecognitionErrorEventLike = Event & {
+  error: string;
+};
+
+type SpeechRecognitionInstance = {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  start: () => void;
+  stop: () => void;
+  abort: () => void;
+  onstart: (() => void) | null;
+  onend: (() => void) | null;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEventLike) => void) | null;
+};
+
+type SpeechRecognitionConstructor = new () => SpeechRecognitionInstance;
+
+declare global {
+  interface Window {
+    SpeechRecognition?: SpeechRecognitionConstructor;
+    webkitSpeechRecognition?: SpeechRecognitionConstructor;
+  }
+}
+
+type FrenchSpeakingRecorderProps = {
+  exerciseId: string;
+  value: string;
+  minimumWords?: number;
+  onTranscriptChange: (transcript: string) => void;
+  onCompleted: () => void;
+};
+
+function countWords(value: string): number {
+  return value.trim().split(/\s+/).filter(Boolean).length;
+}
+
+export default function FrenchSpeakingRecorder({
+  exerciseId,
+  value,
+  minimumWords = 1,
+  onTranscriptChange,
+  onCompleted,
+}: FrenchSpeakingRecorderProps) {
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+  const latestValueRef = useRef(value);
+  const [isListening, setIsListening] = useState(false);
+  const [isSupported, setIsSupported] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    return () => {
-      stopTimer();
-      stopMediaStream();
+    latestValueRef.current = value;
+  }, [value]);
 
-      if (audioUrl) {
-        URL.revokeObjectURL(audioUrl);
-      }
-    };
-  }, [audioUrl]);
-
-  function stopTimer() {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-  }
-
-  function stopMediaStream() {
-    streamRef.current?.getTracks().forEach((track) => {
-      track.stop();
-    });
-
-    streamRef.current = null;
-  }
-
-  async function startRecording() {
-    setError(null);
-
-    if (disabled) {
-      return;
-    }
-
+  useEffect(() => {
     if (typeof window === "undefined") {
       return;
     }
 
-    if (!navigator.mediaDevices?.getUserMedia) {
-      setError(
-        "Je browser ondersteunt geen microfoonopnames. Gebruik bij voorkeur Chrome, Edge of Safari."
-      );
+    const Recognition =
+      window.SpeechRecognition ?? window.webkitSpeechRecognition;
+
+    if (!Recognition) {
+      setIsSupported(false);
       return;
     }
 
-    if (typeof MediaRecorder === "undefined") {
-      setError("Je browser ondersteunt geen audio-opnames.");
+    const recognition = new Recognition();
+    recognition.lang = "fr-FR";
+    recognition.continuous = true;
+    recognition.interimResults = false;
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      setError(null);
+    };
+
+    recognition.onresult = (event: SpeechRecognitionEventLike) => {
+      let transcript = "";
+
+      for (
+        let index = event.resultIndex;
+        index < event.results.length;
+        index += 1
+      ) {
+        const result = event.results[index];
+
+        if (result.isFinal) {
+          transcript += `${result[0]?.transcript ?? ""} `;
+        }
+      }
+
+      const cleanedTranscript = transcript.trim();
+
+      if (!cleanedTranscript) {
+        return;
+      }
+
+      const nextValue = latestValueRef.current.trim()
+        ? `${latestValueRef.current.trim()} ${cleanedTranscript}`
+        : cleanedTranscript;
+
+      latestValueRef.current = nextValue;
+      onTranscriptChange(nextValue);
+    };
+
+    recognition.onerror = (event: SpeechRecognitionErrorEventLike) => {
+      setIsListening(false);
+
+      switch (event.error) {
+        case "not-allowed":
+        case "service-not-allowed":
+          setError(
+            "Geef je browser toestemming om de microfoon te gebruiken."
+          );
+          break;
+        case "no-speech":
+          setError("Er werd geen spraak herkend. Probeer opnieuw.");
+          break;
+        case "audio-capture":
+          setError("Er werd geen werkende microfoon gevonden.");
+          break;
+        case "aborted":
+          setError(null);
+          break;
+        default:
+          setError("De opname kon niet worden verwerkt.");
+      }
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+
+      if (countWords(latestValueRef.current) >= minimumWords) {
+        onCompleted();
+      }
+    };
+
+    recognitionRef.current = recognition;
+
+    return () => {
+      recognition.onstart = null;
+      recognition.onresult = null;
+      recognition.onerror = null;
+      recognition.onend = null;
+
+      try {
+        recognition.abort();
+      } catch {
+        // De opname was mogelijk al gestopt.
+      }
+
+      recognitionRef.current = null;
+    };
+  }, [minimumWords, onCompleted, onTranscriptChange]);
+
+  function startRecording(): void {
+    if (!recognitionRef.current || isListening) {
       return;
     }
 
     try {
-      if (audioUrl) {
-        URL.revokeObjectURL(audioUrl);
-        setAudioUrl(null);
-      }
-
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-      });
-
-      streamRef.current = stream;
-      chunksRef.current = [];
-
-      const recorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = recorder;
-
-      recorder.addEventListener("dataavailable", (event) => {
-        if (event.data.size > 0) {
-          chunksRef.current.push(event.data);
-        }
-      });
-
-      recorder.addEventListener("stop", () => {
-        const mimeType =
-          recorder.mimeType || chunksRef.current[0]?.type || "audio/webm";
-
-        const audioBlob = new Blob(chunksRef.current, {
-          type: mimeType,
-        });
-
-        const newAudioUrl = URL.createObjectURL(audioBlob);
-
-        setAudioUrl(newAudioUrl);
-        setIsRecording(false);
-
-        stopTimer();
-        stopMediaStream();
-
-        onRecordingComplete?.(audioBlob);
-        onComplete?.(audioBlob);
-      });
-
-      recorder.addEventListener("error", () => {
-        setError("De opname kon niet worden gemaakt.");
-        setIsRecording(false);
-
-        stopTimer();
-        stopMediaStream();
-      });
-
-      recorder.start();
-      setSeconds(0);
-      setIsRecording(true);
-
-      timerRef.current = setInterval(() => {
-        setSeconds((currentSeconds) => currentSeconds + 1);
-      }, 1000);
-    } catch (recordingError) {
-      console.error("Microfoonfout:", recordingError);
-
-      setError(
-        "De microfoon kon niet worden geopend. Controleer of je toestemming hebt gegeven."
-      );
-
-      setIsRecording(false);
-      stopTimer();
-      stopMediaStream();
+      setError(null);
+      recognitionRef.current.start();
+    } catch {
+      setError("De opname kon niet gestart worden. Probeer opnieuw.");
     }
   }
 
-  function stopRecording() {
-    const recorder = mediaRecorderRef.current;
-
-    if (!recorder) {
+  function stopRecording(): void {
+    if (!recognitionRef.current || !isListening) {
       return;
     }
 
-    if (recorder.state !== "inactive") {
-      recorder.stop();
+    try {
+      recognitionRef.current.stop();
+    } catch {
+      setIsListening(false);
     }
   }
 
-  function deleteRecording() {
-    if (audioUrl) {
-      URL.revokeObjectURL(audioUrl);
+  function clearTranscript(): void {
+    if (isListening) {
+      stopRecording();
     }
 
-    setAudioUrl(null);
-    setSeconds(0);
+    latestValueRef.current = "";
+    onTranscriptChange("");
     setError(null);
+
+    try {
+      window.localStorage.removeItem(
+        `studiosago:frans-spreken:${exerciseId}`
+      );
+    } catch {
+      // Local storage kan uitgeschakeld zijn.
+    }
   }
 
-  function formatTime(totalSeconds: number) {
-    const minutes = Math.floor(totalSeconds / 60);
-    const remainingSeconds = totalSeconds % 60;
+  const wordCount = countWords(value);
+  const requirementReached = wordCount >= minimumWords;
 
-    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+  if (!isSupported) {
+    return (
+      <div>
+        <p>
+          Spraakherkenning wordt niet ondersteund door deze browser.
+          Typ je antwoord hieronder.
+        </p>
+
+        <textarea
+          value={value}
+          onChange={(event) =>
+            onTranscriptChange(event.target.value)
+          }
+          placeholder="Typ hier je Franse antwoord..."
+          rows={5}
+        />
+      </div>
+    );
   }
 
   return (
-    <section
-      style={{
-        display: "grid",
-        gap: "14px",
-        padding: "20px",
-        border: "1px solid rgba(3, 54, 99, 0.14)",
-        borderRadius: "18px",
-        background: "rgba(255, 255, 255, 0.88)",
-        boxShadow: "0 12px 30px rgba(3, 54, 99, 0.08)",
-      }}
-    >
+    <div>
       <div>
-        <h3
-          style={{
-            margin: "0 0 6px",
-            color: "#033663",
-            fontSize: "1.15rem",
-          }}
+        <button
+          type="button"
+          onClick={isListening ? stopRecording : startRecording}
         >
-          🎙️ {title}
-        </h3>
+          {isListening ? "⏹ Stop opname" : "🎙️ Start opname"}
+        </button>
 
-        <p
-          style={{
-            margin: 0,
-            color: "#41566b",
-            lineHeight: 1.6,
-          }}
+        <button
+          type="button"
+          onClick={clearTranscript}
+          disabled={!value.trim()}
         >
-          {instruction}
-        </p>
+          Wissen
+        </button>
       </div>
 
-      {expectedText ? (
-        <div
-          style={{
-            padding: "14px 16px",
-            borderRadius: "14px",
-            background: "#f4f8fb",
-            color: "#033663",
-            fontWeight: 700,
-            lineHeight: 1.6,
-          }}
-        >
-          {expectedText}
-        </div>
-      ) : null}
+      <p aria-live="polite">
+        {isListening
+          ? "Ik luister... Spreek rustig en duidelijk Frans."
+          : "Druk op start en spreek je antwoord in."}
+      </p>
 
-      {error ? (
-        <p
-          role="alert"
-          style={{
-            margin: 0,
-            padding: "12px 14px",
-            borderRadius: "12px",
-            background: "#fff1f0",
-            color: "#9f2f2f",
-            fontWeight: 700,
-          }}
-        >
-          {error}
-        </p>
-      ) : null}
+      <textarea
+        value={value}
+        onChange={(event) =>
+          onTranscriptChange(event.target.value)
+        }
+        placeholder="Je gesproken antwoord verschijnt hier..."
+        rows={5}
+      />
 
-      {isRecording ? (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-            color: "#b42318",
-            fontWeight: 800,
-          }}
-        >
-          <span
-            aria-hidden="true"
-            style={{
-              width: "12px",
-              height: "12px",
-              borderRadius: "50%",
-              background: "#d92d20",
-            }}
-          />
+      <p>
+        {wordCount} van minstens {minimumWords} woorden
+      </p>
 
-          Opname bezig — {formatTime(seconds)}
-        </div>
-      ) : null}
+      {requirementReached && (
+        <p role="status">✅ Voldoende woorden.</p>
+      )}
 
-      {audioUrl ? (
-        <audio
-          controls
-          src={audioUrl}
-          style={{
-            width: "100%",
-          }}
-        >
-          Je browser ondersteunt het afspelen van audio niet.
-        </audio>
-      ) : null}
-
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "10px",
-        }}
-      >
-        {!isRecording ? (
-          <button
-            type="button"
-            onClick={startRecording}
-            disabled={disabled}
-            style={{
-              border: 0,
-              borderRadius: "12px",
-              padding: "11px 16px",
-              background: disabled ? "#b8c2cc" : "#28b9aa",
-              color: "#ffffff",
-              fontWeight: 800,
-              cursor: disabled ? "not-allowed" : "pointer",
-            }}
-          >
-            {audioUrl ? "Opnieuw opnemen" : "Start opname"}
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={stopRecording}
-            style={{
-              border: 0,
-              borderRadius: "12px",
-              padding: "11px 16px",
-              background: "#d92d20",
-              color: "#ffffff",
-              fontWeight: 800,
-              cursor: "pointer",
-            }}
-          >
-            Stop opname
-          </button>
-        )}
-
-        {audioUrl && !isRecording ? (
-          <button
-            type="button"
-            onClick={deleteRecording}
-            style={{
-              border: "1px solid rgba(3, 54, 99, 0.18)",
-              borderRadius: "12px",
-              padding: "11px 16px",
-              background: "#ffffff",
-              color: "#033663",
-              fontWeight: 800,
-              cursor: "pointer",
-            }}
-          >
-            Verwijder opname
-          </button>
-        ) : null}
-      </div>
-    </section>
+      {error && <p role="alert">⚠️ {error}</p>}
+    </div>
   );
 }

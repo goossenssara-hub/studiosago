@@ -1,5 +1,14 @@
 import type { SecondaryExercise } from "./types";
-import { createRandom, type ExerciseInput } from "./generators/shared";
+import {
+  selectAdaptiveExercises,
+  type AdaptiveSelectionOptions,
+} from "./adaptiveSelection";
+import {
+  createRandom,
+  type ExerciseInput,
+  type Random,
+} from "./generators/shared";
+import { generateSupplementalExercises } from "./generators/supplemental";
 import { generateHoofdrekenen } from "./generators/hoofdrekenen";
 import { generateVraagstukken } from "./generators/vraagstukken";
 import { generateBreuken } from "./generators/breuken";
@@ -14,6 +23,8 @@ import { generateSamenvatten } from "./generators/samenvatten";
 import { generateOpdrachten } from "./generators/opdrachten";
 import { generateLerenLeren } from "./generators/lerenLeren";
 
+export type ExerciseGenerationOptions = AdaptiveSelectionOptions;
+
 const clampLevel = (level: number) =>
   Math.max(1, Math.min(10, Math.round(level || 1)));
 
@@ -27,25 +38,21 @@ function normalizeSkill(skill: string) {
 
 function makeExercises(
   skill: string,
-  level: number,
+  requestedLevel: number,
   seed: number,
   inputs: ExerciseInput[]
 ): SecondaryExercise[] {
   return inputs.map((exercise, index) => ({
     ...exercise,
-    id: `${skill}-niveau-${level}-${seed}-${index + 1}`,
+    id: `${skill}-niveau-${requestedLevel}-${seed}-${index + 1}`,
   }));
 }
 
-export function generateExercisesEerste(
-  skill: string,
-  requestedLevel: number,
-  seed = Date.now()
-): SecondaryExercise[] {
-  const level = clampLevel(requestedLevel);
-  const normalizedSkill = normalizeSkill(skill);
-  const random = createRandom(seed + level * 1009);
-
+function generateSkillInputs(
+  normalizedSkill: string,
+  level: number,
+  random: Random
+): ExerciseInput[] {
   let inputs: ExerciseInput[];
 
   switch (normalizedSkill) {
@@ -89,7 +96,7 @@ export function generateExercisesEerste(
       inputs = generateLerenLeren(level, random);
       break;
     default:
-      inputs = [
+      return [
         {
           category: `Onbekend onderdeel · niveau ${level}`,
           question: "Dit onderdeel is nog niet correct gekoppeld.",
@@ -99,5 +106,43 @@ export function generateExercisesEerste(
       ];
   }
 
-  return makeExercises(normalizedSkill, level, seed, inputs);
+  if (inputs.length >= 15) return inputs;
+
+  return [
+    ...inputs,
+    ...generateSupplementalExercises(normalizedSkill, level, random),
+  ];
+}
+
+export function generateExercisesEerste(
+  skill: string,
+  requestedLevel: number,
+  seed = Date.now(),
+  options: ExerciseGenerationOptions = {}
+): SecondaryExercise[] {
+  const level = clampLevel(requestedLevel);
+  const normalizedSkill = normalizeSkill(skill);
+  const random = createRandom(seed + level * 1009);
+
+  const levelsToGenerate = Array.from(
+    new Set([Math.max(1, level - 1), level, Math.min(10, level + 1)])
+  );
+
+  const pools = levelsToGenerate.map((poolLevel) => ({
+    level: poolLevel,
+    exercises: generateSkillInputs(
+      normalizedSkill,
+      poolLevel,
+      createRandom(seed + poolLevel * 1009 + 37)
+    ),
+  }));
+
+  const selectedInputs = selectAdaptiveExercises(
+    random,
+    level,
+    pools,
+    options
+  );
+
+  return makeExercises(normalizedSkill, level, seed, selectedInputs);
 }

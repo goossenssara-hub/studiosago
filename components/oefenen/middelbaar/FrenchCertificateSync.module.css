@@ -1,0 +1,53 @@
+.notice {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  margin: 24px 0;
+  padding: 18px 20px;
+  border-radius: 18px;
+  color: #033663;
+}
+
+.notice > span {
+  font-size: 1.8rem;
+}
+
+.notice strong {
+  display: block;
+  font-size: 1rem;
+}
+
+.notice p {
+  margin: 5px 0 0;
+  line-height: 1.55;
+}
+
+.notice a,
+.notice button {
+  display: inline-flex;
+  margin-top: 10px;
+  border: 0;
+  padding: 0;
+  color: #033663;
+  background: transparent;
+  font: inherit;
+  font-weight: 850;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.saving {
+  border: 1px solid rgba(254, 160, 32, 0.3);
+  background: rgba(254, 160, 32, 0.12);
+}
+
+.success {
+  border: 1px solid rgba(84, 149, 92, 0.3);
+  background: rgba(84, 149, 92, 0.12);
+}
+
+.error {
+  border: 1px solid rgba(201, 63, 75, 0.3);
+  background: rgba(201, 63, 75, 0.1);
+}

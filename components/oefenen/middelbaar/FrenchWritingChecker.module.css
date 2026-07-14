@@ -1,0 +1,240 @@
+.checker {
+  margin-top: 18px;
+  padding: 22px;
+  border: 1px solid rgba(3, 54, 99, 0.12);
+  border-radius: 20px;
+  background: linear-gradient(145deg, #f8fcff, #ffffff);
+}
+
+.heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.heading h3 {
+  margin: 4px 0 8px;
+  color: #033663;
+  font-size: 1.3rem;
+}
+
+.heading p {
+  max-width: 760px;
+  margin: 0;
+  color: #536d84;
+  line-height: 1.55;
+}
+
+.eyebrow {
+  color: #9b81b8;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.bestScore {
+  min-width: 112px;
+  padding: 12px 15px;
+  border-radius: 16px;
+  background: #033663;
+  color: white;
+  text-align: center;
+}
+
+.bestScore span {
+  display: block;
+  font-size: 0.72rem;
+  opacity: 0.82;
+}
+
+.bestScore strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 1.5rem;
+}
+
+.checkButton,
+.useVersionButton {
+  border: 0;
+  border-radius: 13px;
+  font: inherit;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.checkButton {
+  margin-top: 18px;
+  padding: 12px 18px;
+  background: #033663;
+  color: white;
+}
+
+.checkButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.resultPassed,
+.resultFailed {
+  margin-top: 18px;
+  padding: 20px;
+  border-radius: 18px;
+}
+
+.resultPassed {
+  border: 1px solid rgba(84, 149, 92, 0.35);
+  background: rgba(84, 149, 92, 0.1);
+}
+
+.resultFailed {
+  border: 1px solid rgba(201, 63, 75, 0.3);
+  background: rgba(201, 63, 75, 0.08);
+}
+
+.resultHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-end;
+}
+
+.resultHeader div span {
+  display: block;
+  color: #536d84;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.resultHeader div strong {
+  display: block;
+  color: #033663;
+  font-size: 2.2rem;
+}
+
+.resultHeader p {
+  margin: 0;
+  color: #536d84;
+}
+
+.scoreGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 17px;
+}
+
+.scoreGrid div {
+  padding: 12px;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.scoreGrid span {
+  display: block;
+  color: #62788d;
+  font-size: 0.75rem;
+}
+
+.scoreGrid strong {
+  display: block;
+  margin-top: 4px;
+  color: #033663;
+  font-size: 1.18rem;
+}
+
+.feedbackColumns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.strengths,
+.improvements,
+.correctedBox {
+  padding: 15px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.82);
+  color: #033663;
+}
+
+.strengths {
+  border-left: 4px solid #54955c;
+}
+
+.improvements {
+  border-left: 4px solid #fea020;
+}
+
+.strengths ul,
+.improvements ul {
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+
+.strengths li,
+.improvements li {
+  margin: 6px 0;
+  line-height: 1.45;
+}
+
+.correctedBox {
+  margin-top: 14px;
+  border: 1px solid rgba(3, 54, 99, 0.1);
+}
+
+.correctedBox p {
+  margin: 8px 0 0;
+  color: #254e70;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.useVersionButton {
+  margin-top: 13px;
+  padding: 10px 14px;
+  background: #28b9aa;
+  color: #033663;
+}
+
+.resultPassed small,
+.resultFailed small {
+  display: block;
+  margin-top: 14px;
+  color: #5f7180;
+  line-height: 1.45;
+}
+
+@media (max-width: 800px) {
+  .heading,
+  .resultHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .scoreGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .feedbackColumns {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .checker {
+    padding: 16px;
+  }
+
+  .checkButton,
+  .useVersionButton {
+    width: 100%;
+  }
+
+  .scoreGrid {
+    grid-template-columns: 1fr;
+  }
+}

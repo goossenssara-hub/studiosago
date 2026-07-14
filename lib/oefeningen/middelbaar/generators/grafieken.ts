@@ -1,6 +1,6 @@
-import { acceptedNumber, mc, type ExerciseInput, type Random } from "./shared";
+import { acceptedNumber, mc, randomInt, type ExerciseInput, type Random } from "./shared";
 
-export function generateGrafieken(level: number, _random: Random): ExerciseInput[] {
+export function generateGrafieken(level: number, random: Random): ExerciseInput[] {
   const category = `Tabellen en grafieken · niveau ${level}`;
   const banks: Record<number, ExerciseInput[]> = {
     1: [
@@ -84,5 +84,128 @@ export function generateGrafieken(level: number, _random: Random): ExerciseInput
       { category, question: "Voorspelling 52, werkelijk 47. Residueel?", answer: "-5" },
     ],
   };
-  return banks[level];
+  const extra = generateExtraGrafieken(level, category, random);
+  return [...banks[level], ...extra];
+}
+
+function generateExtraGrafieken(
+  level: number,
+  category: string,
+  random: Random
+): ExerciseInput[] {
+  const a = randomInt(random, 8 + level * 2, 20 + level * 5);
+  const b = randomInt(random, a + 3, a + 15 + level * 2);
+  const c = randomInt(random, Math.max(2, a - 5), b + 8);
+  const d = randomInt(random, Math.max(2, c - 4), b + 12);
+  const values = [a, b, c, d];
+  const sum = values.reduce((total, value) => total + value, 0);
+  const sorted = [...values].sort((x, y) => x - y);
+  const average = sum / values.length;
+  const median = (sorted[1] + sorted[2]) / 2;
+  const range = sorted[3] - sorted[0];
+  const increase = ((b - a) / a) * 100;
+  const total = randomInt(random, 8, 20) * 10;
+  const percentage = randomInt(random, 2, 8) * 5;
+  const count = (total * percentage) / 100;
+
+  const common: ExerciseInput[] = [
+    {
+      category,
+      question: `Tabelwaarden: ${values.join(", ")}. Bereken het gemiddelde.`,
+      answer: acceptedNumber(average),
+    },
+    {
+      category,
+      question: `Tabelwaarden: ${values.join(", ")}. Bereken de mediaan.`,
+      answer: acceptedNumber(median),
+    },
+    {
+      category,
+      question: `Tabelwaarden: ${values.join(", ")}. Bereken het bereik.`,
+      answer: String(range),
+    },
+    {
+      category,
+      question: `Een waarde stijgt van ${a} naar ${b}. Bereken de procentuele stijging.`,
+      answer: acceptedNumber(increase, "%"),
+    },
+    {
+      category,
+      question: `${percentage}% van ${total} waarnemingen hoort bij categorie A. Hoeveel waarnemingen zijn dat?`,
+      answer: acceptedNumber(count),
+    },
+    mc(
+      category,
+      "Welke grafiek gebruik je het best om categorieën met elkaar te vergelijken?",
+      ["staafdiagram", "lijngrafiek", "spreidingsdiagram", "boxplot"],
+      "staafdiagram"
+    ),
+  ];
+
+  if (level <= 3) {
+    const missing = randomInt(random, 10, 30);
+    const targetAverage = randomInt(random, 12, 24);
+    const threeSum = targetAverage * 4 - missing;
+    const x1 = randomInt(random, 3, Math.max(3, threeSum - 6));
+    const x2 = randomInt(random, 2, Math.max(2, threeSum - x1 - 2));
+    const x3 = threeSum - x1 - x2;
+
+    return [
+      ...common,
+      {
+        category,
+        question: `De waarden ${x1}, ${x2}, ${x3} en x hebben gemiddelde ${targetAverage}. Bereken x.`,
+        answer: String(missing),
+      },
+      mc(category, "Welke grafiek toont een ontwikkeling doorheen de tijd het duidelijkst?", ["lijngrafiek", "cirkeldiagram", "pictogram", "boxplot"], "lijngrafiek"),
+      mc(category, "Welke grafiek toont delen van één geheel het duidelijkst?", ["cirkeldiagram", "spreidingsdiagram", "histogram", "lijngrafiek"], "cirkeldiagram"),
+      { category, question: `De frequenties zijn ${a}, ${b}, ${c} en ${d}. Bereken de totale frequentie.`, answer: String(sum) },
+      { category, question: `In een tabel staan ${total} leerlingen. ${count} kiezen optie A. Bereken de relatieve frequentie in procent.`, answer: acceptedNumber(percentage, "%") },
+      mc(category, "Welke maat is de waarde die het vaakst voorkomt?", ["modus", "mediaan", "gemiddelde", "bereik"], "modus"),
+    ];
+  }
+
+  if (level <= 6) {
+    const q1 = randomInt(random, 10, 25);
+    const q3 = q1 + randomInt(random, 8, 20);
+    const oldAverage = randomInt(random, 12, 24);
+    const n = randomInt(random, 4, 10);
+    const newValue = oldAverage + randomInt(random, 2, 8);
+    const newAverage = (oldAverage * n + newValue) / (n + 1);
+
+    return [
+      ...common,
+      { category, question: `Bij een boxplot is Q1 = ${q1} en Q3 = ${q3}. Bereken de interkwartielafstand.`, answer: String(q3 - q1) },
+      { category, question: `Het gemiddelde van ${n} waarden is ${oldAverage}. Er wordt de waarde ${newValue} toegevoegd. Bereken het nieuwe gemiddelde.`, answer: acceptedNumber(newAverage) },
+      mc(category, "Welke grafiek past bij continue gegevens die in klassen zijn verdeeld?", ["histogram", "cirkeldiagram", "pictogram", "staafdiagram met losse categorieën"], "histogram"),
+      mc(category, "Welke centrummaat is het minst gevoelig voor een extreme uitschieter?", ["mediaan", "gemiddelde", "som", "bereik"], "mediaan"),
+      mc(category, "Wat kan een afgeknotte verticale as veroorzaken?", ["verschillen lijken groter", "het gemiddelde verandert", "de gegevens verdwijnen", "de steekproef wordt groter"], "verschillen lijken groter"),
+      { category, question: `Een index stijgt van 100 naar ${100 + percentage}. Hoeveel procent bedraagt de stijging?`, answer: acceptedNumber(percentage, "%") },
+    ];
+  }
+
+  const mean = randomInt(random, 40, 80);
+  const sd = randomInt(random, 3, 10);
+  const z = randomInt(random, -2, 3);
+  const observed = mean + z * sd;
+  const slope = randomInt(random, 2, 6);
+  const intercept = randomInt(random, -10, 15);
+  const x = randomInt(random, 5, 20);
+  const predicted = slope * x + intercept;
+  const residual = randomInt(random, -6, 6);
+  const actual = predicted + residual;
+  const growth = randomInt(random, 2, 8);
+  const start = randomInt(random, 10, 30) * 10;
+  const periods = randomInt(random, 2, 5);
+  const end = start * Math.pow(1 + growth / 100, periods);
+
+  return [
+    ...common,
+    { category, question: `Gemiddelde ${mean}, standaardafwijking ${sd}. Welke z-score heeft de waarde ${observed}?`, answer: String(z) },
+    { category, question: `Regressielijn y = ${slope}x ${intercept >= 0 ? "+" : "-"} ${Math.abs(intercept)}. Bereken y voor x = ${x}.`, answer: String(predicted) },
+    { category, question: `Een regressiemodel voorspelt ${predicted}, maar de gemeten waarde is ${actual}. Bereken het residu (gemeten - voorspeld).`, answer: String(residual) },
+    { category, question: `Een waarde van ${start} groeit ${growth}% per periode gedurende ${periods} perioden. Bereken de eindwaarde.`, answer: acceptedNumber(end) },
+    mc(category, "Wat betekent correlatie?", ["samenhang, niet automatisch oorzaak", "altijd een oorzakelijk verband", "geen enkel verband", "gelijke gemiddelden"], "samenhang, niet automatisch oorzaak"),
+    mc(category, "Welke correlatiecoëfficiënt wijst op een sterke negatieve samenhang?", ["-0,92", "-0,08", "0,15", "0,88"], "-0,92"),
+  ];
 }

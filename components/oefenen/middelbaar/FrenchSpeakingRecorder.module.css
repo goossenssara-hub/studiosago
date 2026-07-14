@@ -1,0 +1,290 @@
+.speakingLab {
+  margin-top: 18px;
+  padding: 22px;
+  border: 1px solid rgba(3, 54, 99, 0.12);
+  border-radius: 20px;
+  background: linear-gradient(145deg, #f7fbff, #ffffff);
+}
+
+.labHeading {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.labHeading h3 {
+  margin: 4px 0 8px;
+  color: #033663;
+  font-size: 1.3rem;
+}
+
+.labHeading p {
+  max-width: 760px;
+  margin: 0;
+  color: #536d84;
+  line-height: 1.55;
+}
+
+.labEyebrow {
+  color: #9b81b8;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.bestScore {
+  min-width: 112px;
+  padding: 12px 15px;
+  border-radius: 16px;
+  background: #033663;
+  color: white;
+  text-align: center;
+}
+
+.bestScore span {
+  display: block;
+  font-size: 0.72rem;
+  opacity: 0.8;
+}
+
+.bestScore strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 1.5rem;
+}
+
+.recordingActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.recordButton,
+.stopButton,
+.retryButton,
+.assessButton {
+  border: 0;
+  border-radius: 13px;
+  padding: 12px 18px;
+  font: inherit;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.recordButton {
+  background: #033663;
+  color: white;
+}
+
+.stopButton {
+  background: #c93f4b;
+  color: white;
+}
+
+.retryButton {
+  background: #edf4fa;
+  color: #033663;
+}
+
+.assessButton {
+  margin-top: 16px;
+  background: #28b9aa;
+  color: #033663;
+}
+
+.retryButton:disabled,
+.assessButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.recordingStatus {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 13px;
+  background: rgba(201, 63, 75, 0.1);
+  color: #8a2430;
+  font-weight: 750;
+}
+
+.recordingDot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #c93f4b;
+  animation: pulse 1s infinite;
+}
+
+.transcriptBox,
+.audioBox {
+  margin-top: 14px;
+  padding: 15px;
+  border-radius: 14px;
+  background: white;
+  border: 1px solid rgba(3, 54, 99, 0.1);
+}
+
+.transcriptBox strong,
+.audioBox strong {
+  display: block;
+  margin-bottom: 7px;
+  color: #033663;
+}
+
+.transcriptBox p {
+  margin: 0;
+  color: #254e70;
+  line-height: 1.6;
+}
+
+.interim {
+  opacity: 0.55;
+}
+
+.audioBox audio {
+  width: 100%;
+}
+
+.errorMessage {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(201, 63, 75, 0.1);
+  color: #8a2430;
+}
+
+.assessmentPassed,
+.assessmentFailed {
+  margin-top: 18px;
+  padding: 20px;
+  border-radius: 18px;
+}
+
+.assessmentPassed {
+  border: 1px solid rgba(84, 149, 92, 0.35);
+  background: rgba(84, 149, 92, 0.1);
+}
+
+.assessmentFailed {
+  border: 1px solid rgba(201, 63, 75, 0.3);
+  background: rgba(201, 63, 75, 0.08);
+}
+
+.assessmentHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-end;
+}
+
+.assessmentHeader div span {
+  display: block;
+  color: #536d84;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.assessmentHeader div strong {
+  display: block;
+  color: #033663;
+  font-size: 2.2rem;
+}
+
+.assessmentHeader p {
+  margin: 0;
+  color: #536d84;
+}
+
+.rubricGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 17px;
+}
+
+.rubricGrid div {
+  padding: 12px;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.rubricGrid span {
+  display: block;
+  color: #62788d;
+  font-size: 0.75rem;
+}
+
+.rubricGrid strong {
+  display: block;
+  margin-top: 4px;
+  color: #033663;
+  font-size: 1.18rem;
+}
+
+.feedbackList {
+  margin-top: 16px;
+  color: #033663;
+}
+
+.feedbackList ul {
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+
+.feedbackList li {
+  margin: 5px 0;
+  line-height: 1.45;
+}
+
+.assessmentPassed small,
+.assessmentFailed small {
+  display: block;
+  margin-top: 14px;
+  color: #5f7180;
+  line-height: 1.45;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.8); }
+}
+
+@media (max-width: 800px) {
+  .labHeading,
+  .assessmentHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .rubricGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .speakingLab {
+    padding: 16px;
+  }
+
+  .recordingActions {
+    flex-direction: column;
+  }
+
+  .recordButton,
+  .stopButton,
+  .retryButton,
+  .assessButton {
+    width: 100%;
+  }
+
+  .rubricGrid {
+    grid-template-columns: 1fr;
+  }
+}

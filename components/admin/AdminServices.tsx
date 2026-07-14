@@ -3,6 +3,12 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import styles from "./AdminServices.module.css";
 
+type ServiceCategory =
+  | "Lager onderwijs"
+  | "Secundair onderwijs"
+  | "Correctie van teksten"
+  | "Digitale producten";
+
 type Service = {
   id: string;
   title: string;
@@ -23,7 +29,7 @@ type Service = {
 type ServiceForm = {
   title: string;
   subtitle: string;
-  category: string;
+  category: ServiceCategory | "";
   description: string;
   price: string;
   button_text: string;
@@ -34,10 +40,45 @@ type ServiceForm = {
   sort_order: string;
 };
 
+const CATEGORY_OPTIONS: ReadonlyArray<{
+  value: ServiceCategory;
+  label: string;
+  explanation: string;
+}> = [
+  {
+    value: "Lager onderwijs",
+    label: "Lager onderwijs",
+    explanation:
+      "Beurtenkaarten, begeleiding en voorbereiding voor de basisschool.",
+  },
+  {
+    value: "Secundair onderwijs",
+    label: "Secundair onderwijs",
+    explanation:
+      "Studiebegeleiding, leren leren en voorbereiding op het middelbaar.",
+  },
+  {
+    value: "Correctie van teksten",
+    label: "Correctie van teksten",
+    explanation:
+      "Tekstcorrectie, taalnazicht, formulering en copywriting.",
+  },
+  {
+    value: "Digitale producten",
+    label: "Digitale producten",
+    explanation:
+      "Werkboeken, planners, oefenbundels en downloads.",
+  },
+];
+
+const VALID_CATEGORIES = new Set<ServiceCategory>(
+  CATEGORY_OPTIONS.map((option) => option.value)
+);
+
 const emptyForm: ServiceForm = {
   title: "",
   subtitle: "",
-  category: "Begeleiding",
+  category: "",
   description: "",
   price: "",
   button_text: "Bekijk",
@@ -48,11 +89,15 @@ const emptyForm: ServiceForm = {
   sort_order: "0",
 };
 
+function isServiceCategory(value: string): value is ServiceCategory {
+  return VALID_CATEGORIES.has(value as ServiceCategory);
+}
+
 function toForm(service: Service): ServiceForm {
   return {
     title: service.title ?? "",
     subtitle: service.subtitle ?? "",
-    category: service.category ?? "Begeleiding",
+    category: isServiceCategory(service.category) ? service.category : "",
     description: service.description ?? "",
     price: String(service.price ?? ""),
     button_text: service.button_text ?? "Bekijk",
@@ -89,6 +134,13 @@ export default function AdminServices() {
     [services]
   );
 
+  const selectedCategoryExplanation = useMemo(
+    () =>
+      CATEGORY_OPTIONS.find((option) => option.value === form.category)
+        ?.explanation ?? "",
+    [form.category]
+  );
+
   const loadServices = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -102,7 +154,9 @@ export default function AdminServices() {
       const payload = await response.json();
 
       if (!response.ok) {
-        throw new Error(payload.error || "De diensten konden niet geladen worden.");
+        throw new Error(
+          payload.error || "De diensten konden niet geladen worden."
+        );
       }
 
       setServices(payload.services ?? []);
@@ -139,7 +193,11 @@ export default function AdminServices() {
     setEditingId(service.id);
     setForm(toForm(service));
     setMessage("");
-    setError("");
+    setError(
+      isServiceCategory(service.category)
+        ? ""
+        : `De bestaande categorie "${service.category}" wordt niet door de webshop herkend. Kies hieronder eerst een geldige categorie.`
+    );
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -154,6 +212,12 @@ export default function AdminServices() {
 
     if (!form.title.trim()) {
       setError("Vul een titel in.");
+      setSaving(false);
+      return;
+    }
+
+    if (!form.category || !isServiceCategory(form.category)) {
+      setError("Kies een geldige categorie uit de keuzelijst.");
       setSaving(false);
       return;
     }
@@ -173,7 +237,7 @@ export default function AdminServices() {
     const body = {
       title: form.title.trim(),
       subtitle: form.subtitle.trim() || null,
-      category: form.category.trim() || "Begeleiding",
+      category: form.category,
       description: form.description.trim() || null,
       price,
       button_text: form.button_text.trim() || "Bekijk",
@@ -200,7 +264,9 @@ export default function AdminServices() {
         throw new Error(payload.error || "Opslaan is mislukt.");
       }
 
-      setMessage(editingId ? "De dienst is aangepast." : "De dienst is toegevoegd.");
+      setMessage(
+        editingId ? "De dienst is aangepast." : "De dienst is toegevoegd."
+      );
       setEditingId(null);
       setForm(emptyForm);
       await loadServices();
@@ -227,7 +293,9 @@ export default function AdminServices() {
       const payload = await response.json();
 
       if (!response.ok) {
-        throw new Error(payload.error || "De zichtbaarheid kon niet aangepast worden.");
+        throw new Error(
+          payload.error || "De zichtbaarheid kon niet aangepast worden."
+        );
       }
 
       setServices((current) =>
@@ -346,12 +414,32 @@ export default function AdminServices() {
           </label>
 
           <label>
-            <span>Categorie</span>
-            <input
+            <span>Categorie *</span>
+            <select
               value={form.category}
-              onChange={(event) => updateField("category", event.target.value)}
-              placeholder="Begeleiding"
-            />
+              onChange={(event) =>
+                updateField(
+                  "category",
+                  event.target.value as ServiceCategory | ""
+                )
+              }
+              required
+            >
+              <option value="">Kies een categorie</option>
+              {CATEGORY_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            {selectedCategoryExplanation ? (
+              <small>{selectedCategoryExplanation}</small>
+            ) : (
+              <small>
+                De gekozen categorie bepaalt waar de dienst in de webshop
+                verschijnt.
+              </small>
+            )}
           </label>
 
           <label>
@@ -462,8 +550,8 @@ export default function AdminServices() {
           {saving
             ? "Bezig met opslaan..."
             : editingId
-            ? "Wijzigingen opslaan"
-            : "Dienst toevoegen"}
+              ? "Wijzigingen opslaan"
+              : "Dienst toevoegen"}
         </button>
       </form>
 
@@ -491,81 +579,95 @@ export default function AdminServices() {
           </div>
         ) : (
           <div className={styles.cards}>
-            {sortedServices.map((service) => (
-              <article
-                key={service.id}
-                className={`${styles.serviceCard} ${
-                  !service.is_visible ? styles.hiddenCard : ""
-                }`}
-              >
-                <div className={styles.cardTop}>
-                  <div>
-                    <span className={styles.category}>{service.category}</span>
-                    <h3>{service.title}</h3>
-                    {service.subtitle && <p>{service.subtitle}</p>}
-                    {service.event_dates && (
-                      <p className={styles.dates}>{service.event_dates}</p>
-                    )}
+            {sortedServices.map((service) => {
+              const hasInvalidCategory = !isServiceCategory(service.category);
+
+              return (
+                <article
+                  key={service.id}
+                  className={`${styles.serviceCard} ${
+                    !service.is_visible ? styles.hiddenCard : ""
+                  }`}
+                >
+                  <div className={styles.cardTop}>
+                    <div>
+                      <span className={styles.category}>
+                        {service.category || "Geen categorie"}
+                      </span>
+                      <h3>{service.title}</h3>
+                      {service.subtitle && <p>{service.subtitle}</p>}
+                      {service.event_dates && (
+                        <p className={styles.dates}>{service.event_dates}</p>
+                      )}
+                    </div>
+
+                    <span
+                      className={`${styles.status} ${
+                        service.is_visible
+                          ? styles.statusVisible
+                          : styles.statusHidden
+                      }`}
+                    >
+                      {service.is_visible
+                        ? "Zichtbaar in webshop"
+                        : "Verborgen uit webshop"}
+                    </span>
                   </div>
 
-                  <span
-                    className={`${styles.status} ${
-                      service.is_visible
-                        ? styles.statusVisible
-                        : styles.statusHidden
-                    }`}
-                  >
-                    {service.is_visible
-                      ? "Zichtbaar in webshop"
-                      : "Verborgen uit webshop"}
-                  </span>
-                </div>
+                  {hasInvalidCategory && (
+                    <div className={styles.hiddenNotice}>
+                      Deze categorie wordt niet door de webshop herkend. Klik op
+                      “Aanpassen” en kies een categorie uit de keuzelijst.
+                    </div>
+                  )}
 
-                {!service.is_visible && (
-                  <div className={styles.hiddenNotice}>
-                    Deze dienst is momenteel niet zichtbaar voor bezoekers van de webshop.
+                  {!service.is_visible && (
+                    <div className={styles.hiddenNotice}>
+                      Deze dienst is momenteel niet zichtbaar voor bezoekers van
+                      de webshop.
+                    </div>
+                  )}
+
+                  {service.description && (
+                    <p className={styles.description}>{service.description}</p>
+                  )}
+
+                  <div className={styles.cardMeta}>
+                    <strong>{formatPrice(Number(service.price))}</strong>
+                    <span>Volgorde: {service.sort_order}</span>
+                    <span>{service.href}</span>
                   </div>
-                )}
 
-                {service.description && (
-                  <p className={styles.description}>{service.description}</p>
-                )}
+                  <div className={styles.actions}>
+                    <button
+                      type="button"
+                      className={styles.editButton}
+                      onClick={() => startEditing(service)}
+                    >
+                      Aanpassen
+                    </button>
 
-                <div className={styles.cardMeta}>
-                  <strong>{formatPrice(Number(service.price))}</strong>
-                  <span>Volgorde: {service.sort_order}</span>
-                  <span>{service.href}</span>
-                </div>
+                    <button
+                      type="button"
+                      className={styles.visibilityButton}
+                      onClick={() => void toggleVisibility(service)}
+                    >
+                      {service.is_visible
+                        ? "Verbergen uit webshop"
+                        : "Opnieuw tonen in webshop"}
+                    </button>
 
-                <div className={styles.actions}>
-                  <button
-                    type="button"
-                    className={styles.editButton}
-                    onClick={() => startEditing(service)}
-                  >
-                    Aanpassen
-                  </button>
-
-                  <button
-                    type="button"
-                    className={styles.visibilityButton}
-                    onClick={() => void toggleVisibility(service)}
-                  >
-                    {service.is_visible
-                      ? "Verbergen uit webshop"
-                      : "Opnieuw tonen in webshop"}
-                  </button>
-
-                  <button
-                    type="button"
-                    className={styles.deleteButton}
-                    onClick={() => void deleteService(service)}
-                  >
-                    Verwijderen
-                  </button>
-                </div>
-              </article>
-            ))}
+                    <button
+                      type="button"
+                      className={styles.deleteButton}
+                      onClick={() => void deleteService(service)}
+                    >
+                      Verwijderen
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         )}
       </section>

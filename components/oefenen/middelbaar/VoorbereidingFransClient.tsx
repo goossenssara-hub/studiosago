@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
   frenchPreparationExercises,
@@ -82,17 +83,23 @@ function isFrenchCategory(value: unknown): value is FrenchExerciseCategory {
 }
 
 function speakFrench(text: string) {
-  if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-    window.alert("Je browser ondersteunt voorlezen niet.");
+  if (typeof window === "undefined") {
     return;
   }
 
-  window.speechSynthesis.cancel();
+  const speechSynthesis = window.speechSynthesis;
+
+  if (!speechSynthesis) {
+    globalThis.alert("Je browser ondersteunt voorlezen niet.");
+    return;
+  }
+
+  speechSynthesis.cancel();
 
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = "fr-FR";
   utterance.rate = 0.85;
-  window.speechSynthesis.speak(utterance);
+  speechSynthesis.speak(utterance);
 }
 
 export default function VoorbereidingFransClient() {
@@ -671,13 +678,22 @@ export default function VoorbereidingFransClient() {
           </p>
         </div>
 
-        <button
-          type="button"
-          className={styles.resetButton}
-          onClick={resetAll}
-        >
-          Alles opnieuw starten
-        </button>
+        <div className={styles.footerActions}>
+          <Link
+            className={styles.backToExercisesButton}
+            href="/oefenen/middelbaar/eerste"
+          >
+            ← Terug naar de andere oefeningen
+          </Link>
+
+          <button
+            type="button"
+            className={styles.resetButton}
+            onClick={resetAll}
+          >
+            Alles opnieuw starten
+          </button>
+        </div>
       </section>
     </main>
   );

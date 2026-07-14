@@ -407,11 +407,48 @@
   opacity: 0.86;
 }
 
-.resetButton {
+.footerActions {
+  display: flex;
   flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.backToExercisesButton,
+.resetButton {
+  display: inline-flex;
+  min-height: 50px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 13px;
   padding: 13px 18px;
+  font: inherit;
+  font-weight: 850;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.backToExercisesButton {
+  border: 2px solid rgba(255, 255, 255, 0.72);
+  background: transparent;
+  color: #fff;
+}
+
+.backToExercisesButton:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.resetButton {
   background: var(--orange);
   color: var(--navy);
+}
+
+.resetButton:hover {
+  filter: brightness(1.04);
 }
 
 @media (max-width: 900px) {
@@ -427,6 +464,11 @@
   .footerCard {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .footerActions {
+    width: 100%;
+    justify-content: flex-start;
   }
 }
 
@@ -452,5 +494,14 @@
 
   .exerciseHeader {
     flex-direction: column;
+  }
+
+  .footerActions {
+    flex-direction: column;
+  }
+
+  .backToExercisesButton,
+  .resetButton {
+    width: 100%;
   }
 }

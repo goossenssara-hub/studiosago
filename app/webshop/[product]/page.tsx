@@ -1,53 +1,47 @@
 import PageShell from "@/components/PageShell";
-import WebshopOrderForm from "@/components/WebshopOrderForm";
-import { webshopProducts } from "@/lib/webshopProducts";
-import { notFound } from "next/navigation";
+import DynamicWebshopOrderForm from "@/components/DynamicWebshopOrderForm";
+import { createClient } from "@/lib/supabase/server";
+import { getBuiltInService, normalizeService } from "@/lib/webshopService";
+import { notFound, redirect } from "next/navigation";
 
-type PageProps = {
-  params: Promise<{
-    product: string;
-  }>;
-};
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
-export default async function ProductPage({ params }: PageProps) {
+type Props = { params: Promise<{ product: string }> };
+
+export default async function ProductPage({ params }: Props) {
   const { product } = await params;
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("services")
+    .select("*")
+    .or(`slug.eq.${product},href.eq./webshop/${product}`)
+    .eq("is_visible", true)
+    .limit(1)
+    .maybeSingle();
 
-  if (product === "tekstcorrectie") {
-    return (
-      <PageShell>
-        <main className="webshop-page">
-          <section className="subpage-hero">
-            <p className="eyebrow">Tekstcorrectie</p>
-            <h1>Tekst of cursus laten nalezen</h1>
-            <p>
-              Tot 2000 woorden betaal je €20. Daarna betaal je €8 per begonnen
-              1000 woorden extra.
-            </p>
-          </section>
+  // De vier begeleidingspagina's blijven bereikbaar, ook wanneer de SQL-migratie
+  // nog niet werd uitgevoerd of het product nog niet in services staat.
+  const service = data
+    ? normalizeService(data as Record<string, unknown>)
+    : getBuiltInService(product);
 
-          <WebshopOrderForm product="tekstcorrectie" />
-        </main>
-      </PageShell>
-    );
-  }
-
-  const productInfo =
-    webshopProducts[product as keyof typeof webshopProducts];
-
-  if (!productInfo) {
+  if (!service) {
+    if (error) console.error("WEBSHOP PRODUCT LOAD ERROR:", error);
     notFound();
   }
+
+  if (service.external_url) redirect(service.external_url);
 
   return (
     <PageShell>
       <main className="webshop-page">
         <section className="subpage-hero">
           <p className="eyebrow">Studio SaGo webshop</p>
-          <h1>{productInfo.name}</h1>
-          <p>Vul je gegevens in en betaal veilig online met Bancontact.</p>
+          <h1>{service.title}</h1>
+          <p>{service.description || "Vul je gegevens in en betaal veilig online via Mollie."}</p>
         </section>
-
-        <WebshopOrderForm product={product} />
+        <DynamicWebshopOrderForm service={service} />
       </main>
     </PageShell>
   );

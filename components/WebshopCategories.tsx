@@ -16,6 +16,8 @@ export type WebshopService = {
   image_url: string | null;
   is_visible: boolean;
   sort_order: number | null;
+  slug?: string | null;
+  external_url?: string | null;
 };
 
 type CategoryTheme = "lager" | "secundair" | "tekst" | "digitaal";
@@ -327,7 +329,7 @@ export default function WebshopCategories({
                 <div className={styles.productList}>
                   {category.products.map((product) => {
                     const price = formatPrice(product.price);
-                    const href = product.href?.trim();
+                    const href = product.external_url?.trim() || product.href?.trim() || (product.slug ? `/webshop/${product.slug}` : null);
                     const details = getProductDetails(product);
 
                     const content = (

@@ -269,3 +269,13 @@ font-size:.8rem;
 }
 
 }
+
+/* Herstel van de oorspronkelijke oefenberg. */
+.learning-journey-card .journey-mountain{
+  position:relative!important;height:470px!important;min-height:470px!important;border-radius:32px!important;
+  overflow:hidden!important;background-image:url("/assets/oefenreis-berg.png")!important;
+  background-position:center!important;background-size:cover!important;background-repeat:no-repeat!important;
+}
+.learning-journey-card .journey-mountain::before,.learning-journey-card .journey-mountain::after,.learning-journey-card .mountain-trail{display:none!important}
+.exercise-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin:30px 0}
+@media(max-width:800px){.exercise-list{grid-template-columns:1fr}.learning-journey-card .journey-mountain{height:360px!important;min-height:360px!important}.bottom-journey-actions{position:static;grid-template-columns:1fr}}

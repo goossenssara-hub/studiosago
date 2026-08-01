@@ -72,7 +72,6 @@ function getProductLabel(product: string) {
     "10-beurtenkaart-lager": "10-beurtenkaart lager",
     "10-beurtenkaart-secundair": "10-beurtenkaart secundair",
     "klaar-voor-de-sprong-middelbaar": "Klaar voor de Sprong middelbaar",
-    "klaar-voor-de-sprong-eerste-leerjaar": "Klaar voor de Sprong eerste leerjaar",
     tekstcorrectie: "Tekstcorrectie",
   };
   return labels[product] || product;
@@ -112,7 +111,6 @@ const products = [
   ["10-beurtenkaart-lager", "10-beurtenkaart lager"],
   ["10-beurtenkaart-secundair", "10-beurtenkaart secundair"],
   ["klaar-voor-de-sprong-middelbaar", "Klaar voor de Sprong middelbaar"],
-  ["klaar-voor-de-sprong-eerste-leerjaar", "Klaar voor de Sprong eerste leerjaar"],
   ["tekstcorrectie", "Tekstcorrectie"],
 ] as const;
 

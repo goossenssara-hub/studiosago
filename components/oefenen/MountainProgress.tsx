@@ -90,7 +90,7 @@ export default function MountainProgress({
         </div>
       )}
 
-      <div className="journey-mountain">
+      <div className="journey-mountain"><div className="mountain-summit" aria-hidden="true">🏆<span>TOP</span></div><div className="mountain-trail" aria-hidden="true" />
         {levels.map((item) => (
           <button
             key={item}

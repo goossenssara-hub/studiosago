@@ -6,25 +6,34 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "echo \"Skipping lint\""
+    "lint": "next lint",
+    "goals:3b1:dry-run": "tsx scripts/import-education-goals-3b1.ts --input ./data",
+    "goals:3b1:import": "tsx scripts/import-education-goals-3b1.ts --input ./data --commit",
+    "goals:3b1:full-snapshot": "tsx scripts/import-education-goals-3b1.ts --input ./data --commit --mark-missing-withdrawn"
   },
   "dependencies": {
     "@mollie/api-client": "^4.6.0",
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.110.0",
     "@swc/helpers": "^0.5.23",
+    "dotenv": "^17.2.2",
     "lucide-react": "^1.21.0",
+    "mammoth": "^1.12.0",
     "next": "latest",
+    "pdf-parse": "^1.1.1",
     "react": "latest",
     "react-dom": "latest",
-    "react-icons": "^5.6.0"
+    "react-icons": "^5.6.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/node": "latest",
+    "@types/pdf-parse": "^1.1.5",
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "eslint": "latest",
     "eslint-config-next": "latest",
+    "tsx": "^4.20.5",
     "typescript": "latest"
   }
 }

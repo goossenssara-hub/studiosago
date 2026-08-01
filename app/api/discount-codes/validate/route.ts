@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { applyAuthorDiscount, isValidAuthorInstagramCode } from "@/lib/authorDiscount";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -114,6 +115,14 @@ export async function POST(
       toSafeNumber(body.amount),
       0
     );
+
+    if (product === "tekstcorrectie" && isValidAuthorInstagramCode(code)) {
+      const wordCount = Math.max(toSafeNumber(body.wordCount), 0);
+      const author = applyAuthorDiscount(amount, wordCount, code);
+      if (!author.eligible) return NextResponse.json({ valid:false, error:"De auteurskorting geldt vanaf 10.000 woorden." }, { status:400 });
+      const discountAmount = roundCurrency(amount - author.amount);
+      return NextResponse.json({ valid:true, discountId:null, discountCode:code, discountAmount, finalAmount:author.amount, message:`Auteurskorting toegepast: ${author.percent}%.` });
+    }
 
     if (!code) {
       return NextResponse.json(

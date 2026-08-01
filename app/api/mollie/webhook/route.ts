@@ -22,6 +22,7 @@ type MollieMetadata = WebshopOrderMetadata & {
   deliveryType?: string;
   participantCount?: number | string;
   purchaserEmail?: string;
+  textCorrectionOrderId?: string;
 };
 
 function clean(value: unknown): string {
@@ -216,6 +217,27 @@ export async function POST(
         );
       }
     } else {
+      const textCorrectionOrderId = clean(metadata.textCorrectionOrderId);
+
+      if (textCorrectionOrderId) {
+        const { error: textCorrectionStatusError } = await supabaseAdmin
+          .from("webshop_text_correction_orders")
+          .update({
+            mollie_payment_id: payment.id,
+            payment_status: paymentStatus,
+            paid_at: paymentStatus === "paid" ? new Date().toISOString() : null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", textCorrectionOrderId);
+
+        if (textCorrectionStatusError) {
+          console.error(
+            "TEXT CORRECTION PAYMENT STATUS UPDATE ERROR:",
+            textCorrectionStatusError
+          );
+        }
+      }
+
       /*
        * Bestaande webshopbetalingen blijven
        * in webshop_payments bijgewerkt worden.

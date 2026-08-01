@@ -60,6 +60,36 @@ export function normalizeService(row: Record<string, unknown>): DynamicService {
 }
 
 const builtInServices: Record<string, Omit<DynamicService, "id">> = {
+  "teksten-nalezen-auteurs": {
+    title: "Teksten nalezen voor auteurs",
+    subtitle: "Redactie en taalcorrectie voor manuscripten",
+    category: "Correctie van teksten",
+    description: "Voor auteurs en manuscripten. Instagramkorting is geldig vanaf 10.000 woorden.",
+    price: 20,
+    button_text: "Upload je manuscript",
+    href: "/webshop/teksten-nalezen-auteurs",
+    slug: "teksten-nalezen-auteurs",
+    event_dates: null, image_url: null, is_visible: true, sort_order: 11,
+    product_type: "text", education_level: null, requires_student_data: false,
+    allows_group: false, min_participants: 1, max_participants: 1,
+    price_per_participant: null, allows_digital: true, allows_home: false, external_url: null,
+  },
+
+  "tekstcorrectie": {
+    title: "Tekstcorrectie",
+    subtitle: "Spelling, grammatica en formulering",
+    category: "Correctie van teksten",
+    description: "€20 tot en met 2000 woorden. Daarna €8 per begonnen 1000 extra woorden.",
+    price: 20,
+    button_text: "Laat je tekst nakijken",
+    href: "/webshop/tekstcorrectie",
+    slug: "tekstcorrectie",
+    event_dates: null, image_url: null, is_visible: true, sort_order: 10,
+    product_type: "text", education_level: null, requires_student_data: false,
+    allows_group: false, min_participants: 1, max_participants: 1,
+    price_per_participant: null, allows_digital: true, allows_home: false, external_url: null,
+  },
+
   "individuele-begeleiding-lager": {
     title: "Individuele begeleiding Lager onderwijs",
     subtitle: "Persoonlijke begeleiding",

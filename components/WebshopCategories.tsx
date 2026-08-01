@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import styles from "./WebshopCategories.module.css";
 
 export type WebshopService = {
@@ -16,8 +17,7 @@ export type WebshopService = {
   image_url: string | null;
   is_visible: boolean;
   sort_order: number | null;
-  slug?: string | null;
-  external_url?: string | null;
+  download_count?: number | null;
 };
 
 type CategoryTheme = "lager" | "secundair" | "tekst" | "digitaal";
@@ -54,6 +54,26 @@ function searchableText(service: WebshopService): string {
 }
 
 const categoryDefinitions: CategoryDefinition[] = [
+  {
+    id: "digitale-producten",
+    eyebrow: "Werkboeken & downloads",
+    title: "Digitale producten",
+    intro:
+      "Hier verschijnen digitale werkboeken, planners, oefenbundels en downloads.",
+    theme: "digitaal",
+    icon: "download",
+    match: (service) => {
+      /*
+       * Alleen diensten die in de admin expliciet onder
+       * "Digitale producten" staan, mogen hier verschijnen.
+       *
+       * Het woord "digitaal" in een beschrijving van begeleiding
+       * (bijvoorbeeld "digitaal of aan huis") mag een dienst dus
+       * niet langer in deze categorie plaatsen.
+       */
+      return normalize(service.category) === "digitale producten";
+    },
+  },
   {
     id: "lager-onderwijs",
     eyebrow: "Begeleiding & voorbereiding",
@@ -111,28 +131,23 @@ const categoryDefinitions: CategoryDefinition[] = [
         text.includes("copywriting")
       );
     },
-  },
-  {
-    id: "digitale-producten",
-    eyebrow: "Werkboeken & downloads",
-    title: "Digitale producten",
-    intro:
-      "Hier verschijnen digitale werkboeken, planners, oefenbundels en downloads.",
-    theme: "digitaal",
-    icon: "download",
-    match: (service) => {
-      const text = searchableText(service);
-
-      return (
-        text.includes("digitaal") ||
-        text.includes("download") ||
-        text.includes("werkboek") ||
-        text.includes("planner") ||
-        text.includes("oefenbundel")
-      );
-    },
-  },
+  }
 ];
+
+
+function isRemovedFirstGradeWorkshop(service: WebshopService): boolean {
+  const text = searchableText(service);
+  const eventDates = normalize(service.event_dates);
+  const price = normalize(service.price);
+
+  return (
+    text.includes("naar het eerste leerjaar") ||
+    text.includes("klaar voor de sprong eerste leerjaar") ||
+    text.includes("klaar-voor-de-sprong-eerste-leerjaar") ||
+    (text.includes("klaar voor de sprong") && text.includes("eerste leerjaar")) ||
+    (eventDates.includes("12, 13 & 14 augustus") && price.includes("180"))
+  );
+}
 
 function formatPrice(value: WebshopService["price"]): string | null {
   if (value === null || value === undefined || value === "") {
@@ -232,18 +247,116 @@ function ArrowIcon() {
   );
 }
 
+function EyeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" />
+      <circle cx="12" cy="12" r="2.5" />
+    </svg>
+  );
+}
+
+function DownloadIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 3v12" />
+      <path d="m7 10 5 5 5-5" />
+      <path d="M5 20h14" />
+    </svg>
+  );
+}
+
+function DownloadCountIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21.3l7.8-7.8 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z" />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m6 6 12 12M18 6 6 18" />
+    </svg>
+  );
+}
+
 export default function WebshopCategories({
   services,
 }: {
   services: WebshopService[];
 }) {
-  /*
-   * Extra veiligheidsfilter:
-   * ook wanneer per ongeluk een verborgen dienst wordt doorgegeven,
-   * verschijnt die nooit in deze component.
-   */
+  const [previewProduct, setPreviewProduct] = useState<WebshopService | null>(null);
+  const [downloadCounts, setDownloadCounts] = useState<Record<string, number>>(() =>
+    Object.fromEntries(services.map((service) => [service.id, Number(service.download_count ?? 0)]))
+  );
+
+  useEffect(() => {
+    if (!previewProduct) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setPreviewProduct(null);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [previewProduct]);
+
+  useEffect(() => {
+    const digitalProducts = services.filter(
+      (service) =>
+        service.is_visible === true &&
+        normalize(service.category) === "digitale producten" &&
+        Boolean(service.href?.toLowerCase().endsWith(".pdf"))
+    );
+
+    if (digitalProducts.length === 0) return;
+
+    let cancelled = false;
+
+    Promise.all(
+      digitalProducts.map(async (product) => {
+        try {
+          const response = await fetch(
+            `/api/digital-download/${encodeURIComponent(product.id)}?count=1`,
+            { cache: "no-store" }
+          );
+          if (!response.ok) return null;
+          const data = (await response.json()) as { count?: number };
+          return [product.id, Number(data.count ?? 0)] as const;
+        } catch {
+          return null;
+        }
+      })
+    ).then((results) => {
+      if (cancelled) return;
+      setDownloadCounts((current) => {
+        const next = { ...current };
+        for (const result of results) {
+          if (result) next[result[0]] = result[1];
+        }
+        return next;
+      });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [services]);
+
   const visibleServices = services
-    .filter((service) => service.is_visible === true)
+    .filter(
+      (service) =>
+        service.is_visible === true && !isRemovedFirstGradeWorkshop(service)
+    )
     .sort(
       (a, b) =>
         Number(a.sort_order ?? 9999) - Number(b.sort_order ?? 9999)
@@ -254,10 +367,6 @@ export default function WebshopCategories({
       ...definition,
       products: visibleServices.filter(definition.match),
     }))
-    /*
-     * Digitale producten blijft als voorbereide categorie zichtbaar.
-     * Andere categorieën verdwijnen wanneer er geen zichtbare diensten zijn.
-     */
     .filter(
       (category) =>
         category.theme === "digitaal" || category.products.length > 0
@@ -329,7 +438,7 @@ export default function WebshopCategories({
                 <div className={styles.productList}>
                   {category.products.map((product) => {
                     const price = formatPrice(product.price);
-                    const href = product.external_url?.trim() || product.href?.trim() || (product.slug ? `/webshop/${product.slug}` : null);
+                    const href = product.href?.trim();
                     const details = getProductDetails(product);
 
                     const content = (
@@ -387,6 +496,83 @@ export default function WebshopCategories({
                       );
                     }
 
+                    const isDownload =
+                      normalize(product.category) === "digitale producten" &&
+                      href.toLowerCase().endsWith(".pdf");
+
+                    if (isDownload) {
+                      const trackedDownloadHref = `/api/digital-download/${encodeURIComponent(product.id)}?file=${encodeURIComponent(href)}`;
+                      const downloadCount = Number(downloadCounts[product.id] ?? product.download_count ?? 0);
+
+                      return (
+                        <article key={product.id} className={styles.digitalProductCard}>
+                          <button
+                            type="button"
+                            className={styles.productCoverButton}
+                            onClick={() => setPreviewProduct(product)}
+                            aria-label={`Bekijk een voorbeeld van ${product.title}`}
+                          >
+                            <img
+                              src={product.image_url?.trim() || "/images/studio-sago-ontdekkingsbord-cover.png"}
+                              alt={`Voorbeeldafbeelding van ${product.title}`}
+                              className={styles.productCover}
+                            />
+                            <span className={styles.coverOverlay}>
+                              <EyeIcon />
+                              Bekijk het spel
+                            </span>
+                          </button>
+
+                          <div className={styles.digitalProductContent}>
+                            <div className={styles.productCopy}>
+                              <span className={styles.productTitleRow}>
+                                <strong>{product.title}</strong>
+                                {price ? <small>{price}</small> : null}
+                              </span>
+
+                              {details.subtitle ? (
+                                <span className={styles.productSubtitle}>{details.subtitle}</span>
+                              ) : null}
+
+                              {details.eventDates ? (
+                                <span className={styles.freeBadge}>{details.eventDates}</span>
+                              ) : null}
+
+                              {details.description ? (
+                                <span className={styles.productDescription}>{details.description}</span>
+                              ) : null}
+                            </div>
+
+                            <div className={styles.digitalProductFooter}>
+                              <div className={styles.digitalActions}>
+                                <button
+                                  type="button"
+                                  className={styles.previewButton}
+                                  onClick={() => setPreviewProduct(product)}
+                                >
+                                  <EyeIcon />
+                                  Doorbladeren
+                                </button>
+                                <a
+                                  href={trackedDownloadHref}
+                                  className={styles.downloadButton}
+                                  aria-label={`${product.button_text?.trim() || "Gratis downloaden"}: ${product.title}`}
+                                >
+                                  <DownloadIcon />
+                                  {product.button_text?.trim() || "Gratis downloaden"}
+                                </a>
+                              </div>
+
+                              <p className={styles.downloadCounter} aria-live="polite">
+                                <DownloadCountIcon />
+                                {downloadCount.toLocaleString("nl-BE")} {downloadCount === 1 ? "download" : "downloads"}
+                              </p>
+                            </div>
+                          </div>
+                        </article>
+                      );
+                    }
+
                     return (
                       <Link
                         key={product.id}
@@ -420,6 +606,57 @@ export default function WebshopCategories({
           <ArrowIcon />
         </Link>
       </section>
+
+      {previewProduct?.href ? (
+        <div
+          className={styles.modalBackdrop}
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setPreviewProduct(null);
+          }}
+        >
+          <section
+            className={styles.previewModal}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pdf-preview-title"
+          >
+            <header className={styles.modalHeader}>
+              <div>
+                <span className={styles.modalEyebrow}>Gratis spel bekijken</span>
+                <h2 id="pdf-preview-title">{previewProduct.title}</h2>
+              </div>
+              <button
+                type="button"
+                className={styles.closeButton}
+                onClick={() => setPreviewProduct(null)}
+                aria-label="Voorbeeld sluiten"
+              >
+                <CloseIcon />
+              </button>
+            </header>
+
+            <div className={styles.pdfViewerWrap}>
+              <iframe
+                src={`${previewProduct.href}#view=FitH&toolbar=1&navpanes=0`}
+                title={`Doorblader ${previewProduct.title}`}
+                className={styles.pdfViewer}
+              />
+            </div>
+
+            <footer className={styles.modalFooter}>
+              <p>Gebruik de pijlen of scroll om door de pagina’s te bladeren.</p>
+              <a
+                href={`/api/digital-download/${encodeURIComponent(previewProduct.id)}?file=${encodeURIComponent(previewProduct.href)}`}
+                className={styles.downloadButton}
+              >
+                <DownloadIcon />
+                Gratis downloaden
+              </a>
+            </footer>
+          </section>
+        </div>
+      ) : null}
     </main>
   );
 }

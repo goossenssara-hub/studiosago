@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import PageShell from "@/components/PageShell";
 import AdminDashboard from "@/components/admin/AdminDashboard";
 import AdminRequests from "@/components/admin/AdminRequests";
@@ -12,8 +13,7 @@ import DiscountCodesAdmin from "@/components/DiscountCodesAdmin";
 import AdminPlaceholder from "@/components/admin/AdminPlaceholder";
 import LogoutButton from "@/components/admin/LogoutButton";
 
-type AdminTab = "dashboard" | "requests" | "agenda" | "students" | "parents" | "cards" | "payments" | "discounts";
-
+ type AdminTab = "dashboard" | "requests" | "agenda" | "students" | "parents" | "cards" | "payments" | "discounts";
 const tabs = [
   { id: "dashboard", label: "Dashboard", icon: "📊" },
   { id: "requests", label: "Aanvragen", icon: "📥" },
@@ -24,12 +24,20 @@ const tabs = [
   { id: "payments", label: "Betalingen", icon: "💶" },
   { id: "discounts", label: "Kortingscodes", icon: "🏷️" },
 ] as const;
+const directLinks = [
+  { href: "/admin/diensten", label: "Diensten beheren", icon: "🛍️" },
+  { href: "/admin/aanvragen/tekstcorrectie", label: "Tekstcorrecties", icon: "📝" },
+  { href: "/webshop", label: "Webshop bekijken", icon: "🛒" },
+  { href: "/dashboard/oefenen", label: "Oefenplatform", icon: "🏔️" },
+  { href: "/admin/mailbox", label: "Interne mailbox", icon: "✉️" },
+  { href: "/admin", label: "Terug naar admin", icon: "↩️" },
+] as const;
 
 export default function AdminClient() {
   const [tab, setTab] = useState<AdminTab>("dashboard");
   return <PageShell>
-    <section className="admin-hero"><div className="admin-hero__content"><p className="admin-hero__eyebrow">Adminomgeving</p><h1>Studio SaGo Beheer</h1><p className="admin-hero__description">Beheer aanvragen, lessen, klanten, betalingen en beurtenkaarten vanuit één overzichtelijke omgeving.</p></div><div className="admin-hero__actions"><LogoutButton /></div></section>
-    <section className="admin-shell"><aside className="admin-sidebar-clean"><div className="admin-sidebar-header"><span>Menu</span></div><nav className="admin-sidebar-nav" aria-label="Adminmenu">{tabs.map(item=><button key={item.id} type="button" className={tab===item.id?"active":""} onClick={()=>setTab(item.id)}><span className="admin-menu-icon">{item.icon}</span><span>{item.label}</span></button>)}</nav></aside>
+    <section className="admin-hero"><div className="admin-hero__content"><p className="admin-hero__eyebrow">Adminomgeving</p><h1>Studio SaGo Beheer</h1><p className="admin-hero__description">Beheer aanvragen, diensten, leerlingen, betalingen en communicatie vanuit één omgeving.</p></div><div className="admin-hero__actions"><LogoutButton /></div></section>
+    <section className="admin-shell"><aside className="admin-sidebar-clean"><div className="admin-sidebar-header"><span>Menu</span></div><nav className="admin-sidebar-nav" aria-label="Adminmenu">{tabs.map(item=><button key={item.id} type="button" className={tab===item.id?"active":""} onClick={()=>setTab(item.id)}><span className="admin-menu-icon">{item.icon}</span><span>{item.label}</span></button>)}<div className="admin-sidebar-header" style={{marginTop:18}}><span>Snelle links</span></div>{directLinks.map(item=><Link key={item.href} href={item.href} className="admin-direct-link"><span className="admin-menu-icon">{item.icon}</span><span>{item.label}</span></Link>)}</nav></aside>
       <main className="admin-content-clean">
         {tab==="dashboard" && <AdminDashboard setTab={next=>setTab(next as AdminTab)} />}
         {tab==="requests" && <AdminRequests />}{tab==="agenda" && <AdminAgenda />}{tab==="students" && <AdminStudents />}{tab==="parents" && <AdminParents />}{tab==="cards" && <AdminLessonCards />}

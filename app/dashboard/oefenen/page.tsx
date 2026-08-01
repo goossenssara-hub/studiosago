@@ -2,31 +2,15 @@ import Link from "next/link";
 import PageShell from "@/components/PageShell";
 
 const leerjaren = [
-  {
-    title: "1e leerjaar",
-    href: "",
-    available: false,
-  },
-  {
-    title: "2e leerjaar",
-    href: "",
-    available: false,
-  },
-  {
-    title: "3e leerjaar",
-    href: "",
-    available: false,
-  },
+  { title: "1e leerjaar", href: "/dashboard/oefenen/eerste-leerjaar", available: true },
+  { title: "2e leerjaar", href: "/dashboard/oefenen/tweede-leerjaar", available: true },
+  { title: "3e leerjaar", href: "/dashboard/oefenen/derde-leerjaar", available: true },
   {
     title: "4e leerjaar",
     href: "/dashboard/oefenen/vierde-leerjaar",
     available: true,
   },
-  {
-    title: "5e leerjaar",
-    href: "",
-    available: false,
-  },
+  { title: "5e leerjaar", href: "/dashboard/oefenen/vijfde-leerjaar", available: true },
   {
     title: "6e leerjaar",
     href: "/dashboard/oefenen/zesde-leerjaar",

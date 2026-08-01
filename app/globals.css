@@ -50,6 +50,7 @@
 @import "@/app/styles/AANVULLING-oefeningen.css";
 @import "@/app/styles/admin-student-edit.css";
 @import "@/app/styles/admin-upgrade.css";
+@import "@/app/styles/webshop-upload.css";
 
 @font-face {
   font-family: "StudioFont";
@@ -963,3 +964,4 @@ h3,
     font-size: 0.92rem;
   }
 }
+.admin-direct-link{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:13px;color:#033663;text-decoration:none;font-weight:800}.admin-direct-link:hover{background:rgba(40,185,170,.1)}

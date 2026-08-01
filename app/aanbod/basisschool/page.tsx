@@ -106,21 +106,7 @@ const aanbod: AanbodItem[] = [
       "Interactieve en leerrijke workshops gekoppeld aan de leerplannen van het Vlaamse onderwijs.",
     ],
   },
-  {
-    id: PRODUCT_SLUG,
-    badge: "Maximum 9 deelnemers",
-    label: "Vierdaagse voorbereiding",
-    title: "Klaar voor de Sprong naar het middelbaar",
-    price: "€250",
-    href: `/webshop/${PRODUCT_SLUG}`,
-    buttonText: "Schrijf je nu in",
-    limited: true,
-    text: [
-      "Een intensieve voorbereiding op de overstap van het zesde leerjaar naar het eerste middelbaar.",
-      "We werken aan leren leren, plannen, organiseren, taal, wiskunde en zelfvertrouwen.",
-      "Door de groep te beperken tot maximaal 9 leerlingen is er voldoende ruimte voor persoonlijke begeleiding.",
-    ],
-  },
+
 ];
 
 async function getAantalInschrijvingen() {

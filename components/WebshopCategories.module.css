@@ -541,3 +541,366 @@
     font-size: 0.84rem;
   }
 }
+
+.digitalProductCard {
+  display: grid;
+  grid-template-columns: minmax(170px, 0.72fr) minmax(0, 1.28fr);
+  gap: 22px;
+  padding: 18px;
+  border: 1px solid rgba(3, 54, 99, 0.09);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 14px 34px rgba(3, 54, 99, 0.07);
+}
+
+.productCoverButton {
+  position: relative;
+  overflow: hidden;
+  min-height: 250px;
+  padding: 0;
+  border: 0;
+  border-radius: 18px;
+  background: var(--soft);
+  cursor: pointer;
+}
+
+.productCover {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 250px;
+  object-fit: cover;
+  transition: transform 220ms ease;
+}
+
+.coverOverlay {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: 999px;
+  background: rgba(3, 54, 99, 0.9);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 800;
+  backdrop-filter: blur(10px);
+}
+
+.coverOverlay svg,
+.previewButton svg,
+.downloadButton svg,
+.closeButton svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.9;
+}
+
+.productCoverButton:hover .productCover,
+.productCoverButton:focus-visible .productCover {
+  transform: scale(1.025);
+}
+
+.digitalProductContent {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 22px;
+  padding: 8px 4px 4px 0;
+}
+
+.freeBadge {
+  display: inline-flex;
+  width: fit-content;
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.digitalActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.previewButton,
+.downloadButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 48px;
+  padding: 11px 16px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 820;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.previewButton {
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  background: #fff;
+  color: var(--accent);
+}
+
+.downloadButton {
+  border: 1px solid transparent;
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.previewButton:hover,
+.previewButton:focus-visible,
+.downloadButton:hover,
+.downloadButton:focus-visible {
+  transform: translateY(-2px);
+}
+
+.modalBackdrop {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(2, 25, 48, 0.68);
+  backdrop-filter: blur(8px);
+}
+
+.previewModal {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: min(1080px, 100%);
+  height: min(88vh, 900px);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 28px;
+  background: #fff;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.3);
+}
+
+.modalHeader,
+.modalFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px 22px;
+}
+
+.modalHeader {
+  border-bottom: 1px solid rgba(3, 54, 99, 0.1);
+}
+
+.modalHeader h2 {
+  margin: 3px 0 0;
+  font-size: clamp(1.2rem, 2.8vw, 1.8rem);
+  letter-spacing: -0.025em;
+}
+
+.modalEyebrow {
+  color: var(--purple);
+  font-size: 0.7rem;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.closeButton {
+  display: grid;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 1px solid rgba(3, 54, 99, 0.12);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--navy);
+  cursor: pointer;
+}
+
+.pdfViewerWrap {
+  min-height: 0;
+  padding: 12px;
+  background: #eef2f6;
+}
+
+.pdfViewer {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.modalFooter {
+  border-top: 1px solid rgba(3, 54, 99, 0.1);
+}
+
+.modalFooter p {
+  margin: 0;
+  color: #667c93;
+  font-size: 0.86rem;
+}
+
+@media (max-width: 720px) {
+  .digitalProductCard {
+    grid-template-columns: 1fr;
+  }
+
+  .productCoverButton,
+  .productCover {
+    min-height: 220px;
+  }
+
+  .digitalProductContent {
+    padding: 0 2px 2px;
+  }
+
+  .digitalActions,
+  .previewButton,
+  .downloadButton {
+    width: 100%;
+  }
+
+  .previewModal {
+    height: 92vh;
+    border-radius: 22px;
+  }
+
+  .modalFooter {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+/* Digitale producten krijgen extra ruimte zodat het spelbord volledig leesbaar blijft. */
+.categoryCard.digitaal {
+  grid-column: 1 / -1;
+}
+
+.categoryCard.digitaal .productList {
+  margin-top: 34px;
+}
+
+.categoryCard.digitaal .digitalProductCard {
+  grid-template-columns: minmax(0, 1.5fr) minmax(300px, 0.72fr);
+  align-items: stretch;
+  gap: clamp(24px, 3vw, 40px);
+  padding: clamp(18px, 2.5vw, 28px);
+  border-radius: 30px;
+}
+
+.categoryCard.digitaal .productCoverButton {
+  align-self: start;
+  width: 100%;
+  min-height: 0;
+  aspect-ratio: 2000 / 1414;
+  border-radius: 22px;
+  background: #fffaf2;
+}
+
+.categoryCard.digitaal .productCover {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  aspect-ratio: 2000 / 1414;
+  object-fit: contain;
+  object-position: center;
+}
+
+.categoryCard.digitaal .digitalProductContent {
+  justify-content: center;
+  padding: 8px 8px 8px 0;
+}
+
+.categoryCard.digitaal .productTitleRow {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.categoryCard.digitaal .productTitleRow strong {
+  font-size: clamp(1.45rem, 2.6vw, 2.3rem);
+  line-height: 1.15;
+}
+
+.categoryCard.digitaal .productSubtitle {
+  font-size: 1.05rem;
+  line-height: 1.65;
+}
+
+.categoryCard.digitaal .productDescription {
+  font-size: 0.98rem;
+  line-height: 1.7;
+}
+
+.digitalProductFooter {
+  display: grid;
+  gap: 16px;
+}
+
+.downloadCounter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: #6d5c91;
+  font-size: 0.84rem;
+  font-weight: 720;
+}
+
+.downloadCounter svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+@media (max-width: 900px) {
+  .categoryCard.digitaal .digitalProductCard {
+    grid-template-columns: 1fr;
+  }
+
+  .categoryCard.digitaal .digitalProductContent {
+    padding: 0 2px 4px;
+  }
+}
+
+@media (max-width: 560px) {
+  .categoryCard.digitaal .digitalProductCard {
+    gap: 22px;
+    padding: 14px;
+    border-radius: 24px;
+  }
+
+  .categoryCard.digitaal .productCoverButton {
+    border-radius: 18px;
+  }
+
+  .downloadCounter {
+    justify-content: center;
+    text-align: center;
+  }
+}

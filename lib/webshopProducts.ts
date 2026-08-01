@@ -13,13 +13,6 @@ export const webshopProducts = {
     level: "secundair",
   },
 
-  "klaar-voor-de-sprong-eerste-leerjaar": {
-    name: "Klaar voor de Sprong naar het Eerste Leerjaar",
-    amount: "180.00",
-    category: "workshop",
-    level: "eerste-leerjaar",
-  },
-
   "klaar-voor-de-sprong-middelbaar": {
     name: "Klaar voor de Sprong naar het Middelbaar",
     amount: "250.00",

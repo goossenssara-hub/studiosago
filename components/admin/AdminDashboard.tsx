@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import styles from "./AdminDashboard.module.css";
 
 type DashboardStats = {
@@ -82,6 +83,7 @@ function formatUpcomingDate(value: string | null) {
 export default function AdminDashboard({
   setTab,
 }: AdminDashboardProps) {
+  const router = useRouter();
   const [stats, setStats] = useState<DashboardStats>(initialStats);
   const [upcoming, setUpcoming] = useState<UpcomingItem[]>([]);
   const [todayLabel, setTodayLabel] = useState("");
@@ -219,6 +221,18 @@ if (stats.revenueDifferencePercentage === null) {
           <h3>Actieve beurtenkaarten</h3>
           <p>Kaarten die momenteel gebruikt kunnen worden.</p>
           <span>Open kaarten →</span>
+        </button>
+
+        <button
+          type="button"
+          className={`${styles.mainCard} ${styles.textCorrection}`}
+          onClick={() => router.push("/admin/aanvragen/tekstcorrectie")}
+        >
+          <div className={styles.icon}>📄</div>
+          <strong>↓</strong>
+          <h3>Tekstcorrecties</h3>
+          <p>Bekijk betaalde aanvragen en download de geüploade documenten.</p>
+          <span>Open tekstcorrecties →</span>
         </button>
       </section>
 

@@ -71,12 +71,6 @@ const PRODUCT_CONFIG: Record<
     requiresStudentData: true,
   },
 
-  "klaar-voor-de-sprong-eerste-leerjaar": {
-    name: "Klaar voor de Sprong – Naar het eerste leerjaar",
-    amount: 180,
-    category: "workshop",
-    requiresStudentData: true,
-  },
 
   tekstcorrectie: {
     name: "Tekstcorrectie",
@@ -318,6 +312,7 @@ export default function WebshopOrderForm({
             studentName:
               studentName.trim(),
             amount: originalAmount,
+            wordCount: Number(wordCount || 0),
           }),
         }
       );
@@ -611,6 +606,9 @@ const checkoutEndpoint =
             school: school.trim(),
 
             notes: notes.trim(),
+
+            authorDiscountCode:
+              product === "tekstcorrectie" ? (discount?.discountCode || discountCode.trim().toUpperCase()) : "",
 
             discountCode:
               discount?.discountCode ||

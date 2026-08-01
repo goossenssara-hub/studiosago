@@ -84,7 +84,7 @@ export default async function WebshopPage() {
     image_url: "/images/studio-sago-ontdekkingsbord-cover.png",
     is_visible: true,
     sort_order: 1,
-    download_count: 500,
+    download_count: 0,
   });
 
   for (const slug of ["tekstcorrectie", "teksten-nalezen-auteurs"]) {

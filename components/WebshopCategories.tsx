@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import styles from "./WebshopCategories.module.css";
 
 export type WebshopService = {
@@ -288,18 +288,28 @@ export default function WebshopCategories({
   services: WebshopService[];
 }) {
   const [previewProduct, setPreviewProduct] = useState<WebshopService | null>(null);
+  const [gateProduct, setGateProduct] = useState<WebshopService | null>(null);
+  const [gateMode, setGateMode] = useState<"preview" | "download">("preview");
+  const [email, setEmail] = useState("");
+  const [marketingConsent, setMarketingConsent] = useState(false);
+  const [gateError, setGateError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [unlockedEmails, setUnlockedEmails] = useState<Record<string, string>>({});
   const [downloadCounts, setDownloadCounts] = useState<Record<string, number>>(() =>
     Object.fromEntries(services.map((service) => [service.id, Number(service.download_count ?? 0)]))
   );
 
   useEffect(() => {
-    if (!previewProduct) return;
+    if (!previewProduct && !gateProduct) return;
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setPreviewProduct(null);
+      if (event.key === "Escape") {
+        setPreviewProduct(null);
+        setGateProduct(null);
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -308,7 +318,7 @@ export default function WebshopCategories({
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [previewProduct]);
+  }, [previewProduct, gateProduct]);
 
   useEffect(() => {
     const digitalProducts = services.filter(
@@ -351,6 +361,112 @@ export default function WebshopCategories({
       cancelled = true;
     };
   }, [services]);
+
+
+  function openGate(product: WebshopService, mode: "preview" | "download") {
+    const knownEmail = unlockedEmails[product.id];
+
+    if (knownEmail) {
+      if (mode === "preview") {
+        setPreviewProduct(product);
+      } else {
+        void startDownload(product, knownEmail);
+      }
+      return;
+    }
+
+    setGateMode(mode);
+    setGateProduct(product);
+    setGateError("");
+  }
+
+  async function registerPreviewAccess(product: WebshopService, userEmail: string) {
+    const response = await fetch(`/api/digital-preview/${encodeURIComponent(product.id)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: userEmail, marketingConsent }),
+    });
+
+    const data = (await response.json().catch(() => ({}))) as { error?: string };
+    if (!response.ok) throw new Error(data.error || "Het voorbeeld kon niet worden geopend.");
+  }
+
+  async function startDownload(product: WebshopService, userEmail: string) {
+    if (!product.href) return;
+
+    setIsSubmitting(true);
+    setGateError("");
+
+    try {
+      const response = await fetch(`/api/digital-download/${encodeURIComponent(product.id)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: userEmail,
+          file: product.href,
+          marketingConsent,
+        }),
+      });
+
+      const data = (await response.json().catch(() => ({}))) as {
+        count?: number;
+        downloadUrl?: string;
+        error?: string;
+      };
+
+      if (!response.ok || !data.downloadUrl) {
+        throw new Error(data.error || "De download kon niet worden gestart.");
+      }
+
+      setDownloadCounts((current) => ({
+        ...current,
+        [product.id]: Number(data.count ?? current[product.id] ?? 0),
+      }));
+      setUnlockedEmails((current) => ({ ...current, [product.id]: userEmail }));
+      setGateProduct(null);
+
+      const link = document.createElement("a");
+      link.href = data.downloadUrl;
+      link.download = data.downloadUrl.split("/").pop() || "studio-sago-download.pdf";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      setGateError(error instanceof Error ? error.message : "Er ging iets mis.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function submitGate(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!gateProduct) return;
+
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      setGateError("Vul een geldig e-mailadres in.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setGateError("");
+
+    try {
+      if (gateMode === "preview") {
+        await registerPreviewAccess(gateProduct, normalizedEmail);
+        setUnlockedEmails((current) => ({ ...current, [gateProduct.id]: normalizedEmail }));
+        const product = gateProduct;
+        setGateProduct(null);
+        setPreviewProduct(product);
+      } else {
+        await startDownload(gateProduct, normalizedEmail);
+      }
+    } catch (error) {
+      setGateError(error instanceof Error ? error.message : "Er ging iets mis.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   const visibleServices = services
     .filter(
@@ -501,7 +617,6 @@ export default function WebshopCategories({
                       href.toLowerCase().endsWith(".pdf");
 
                     if (isDownload) {
-                      const trackedDownloadHref = `/api/digital-download/${encodeURIComponent(product.id)}?file=${encodeURIComponent(href)}`;
                       const downloadCount = Number(downloadCounts[product.id] ?? product.download_count ?? 0);
 
                       return (
@@ -509,7 +624,7 @@ export default function WebshopCategories({
                           <button
                             type="button"
                             className={styles.productCoverButton}
-                            onClick={() => setPreviewProduct(product)}
+                            onClick={() => openGate(product, "preview")}
                             aria-label={`Bekijk een voorbeeld van ${product.title}`}
                           >
                             <img
@@ -548,19 +663,20 @@ export default function WebshopCategories({
                                 <button
                                   type="button"
                                   className={styles.previewButton}
-                                  onClick={() => setPreviewProduct(product)}
+                                  onClick={() => openGate(product, "preview")}
                                 >
                                   <EyeIcon />
                                   Doorbladeren
                                 </button>
-                                <a
-                                  href={trackedDownloadHref}
+                                <button
+                                  type="button"
                                   className={styles.downloadButton}
+                                  onClick={() => openGate(product, "download")}
                                   aria-label={`${product.button_text?.trim() || "Gratis downloaden"}: ${product.title}`}
                                 >
                                   <DownloadIcon />
                                   {product.button_text?.trim() || "Gratis downloaden"}
-                                </a>
+                                </button>
                               </div>
 
                               <p className={styles.downloadCounter} aria-live="polite">
@@ -607,6 +723,90 @@ export default function WebshopCategories({
         </Link>
       </section>
 
+      {gateProduct ? (
+        <div
+          className={`${styles.modalBackdrop} ${styles.downloadGateBackdrop}`}
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !isSubmitting) setGateProduct(null);
+          }}
+        >
+          <section
+            className={styles.downloadGateModal}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="email-gate-title"
+          >
+            <header className={styles.modalHeader}>
+              <div>
+                <span className={styles.modalEyebrow}>Gratis Studio SaGo-product</span>
+                <h2 id="email-gate-title">
+                  {gateMode === "preview" ? "Bekijk eerst het voorbeeld" : "Ontvang je gratis download"}
+                </h2>
+              </div>
+              <button
+                type="button"
+                className={styles.closeButton}
+                onClick={() => setGateProduct(null)}
+                aria-label="Venster sluiten"
+                disabled={isSubmitting}
+              >
+                <CloseIcon />
+              </button>
+            </header>
+
+            <form className={styles.downloadGateForm} onSubmit={submitGate}>
+              <p className={styles.downloadGateIntro}>
+                Laat je e-mailadres achter om het Studio SaGo Ontdekkingsbord
+                {gateMode === "preview" ? " te kunnen doorbladeren." : " gratis te downloaden."}
+              </p>
+
+              <label className={styles.emailField}>
+                E-mailadres <span aria-hidden="true">*</span>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="jouwnaam@email.be"
+                  autoComplete="email"
+                  required
+                  autoFocus
+                />
+              </label>
+
+              <label className={styles.consentRow}>
+                <input
+                  type="checkbox"
+                  checked={marketingConsent}
+                  onChange={(event) => setMarketingConsent(event.target.checked)}
+                />
+                <span>
+Stuur me af en toe gratis educatieve tips, nieuwe downloads en exclusieve Studio SaGo-materialen. Je kunt je op elk moment uitschrijven.                </span>
+              </label>
+
+              <p className={styles.privacyNote}>
+                Je e-mailadres wordt gebruikt om toegang te geven tot dit gratis product.
+              </p>
+
+              {gateError ? <p className={styles.formError} role="alert">{gateError}</p> : null}
+
+              <button
+                type="submit"
+                className={`${styles.downloadButton} ${styles.downloadSubmitButton}`}
+                disabled={isSubmitting}
+              >
+                {gateMode === "preview" ? <EyeIcon /> : <DownloadIcon />}
+                {isSubmitting
+                  ? "Even geduld…"
+                  : gateMode === "preview"
+                    ? "Bevestigen en voorbeeld bekijken"
+                    : "Bevestigen en gratis downloaden"}
+              </button>
+            </form>
+          </section>
+        </div>
+      ) : null}
+
       {previewProduct?.href ? (
         <div
           className={styles.modalBackdrop}
@@ -646,13 +846,14 @@ export default function WebshopCategories({
 
             <footer className={styles.modalFooter}>
               <p>Gebruik de pijlen of scroll om door de pagina’s te bladeren.</p>
-              <a
-                href={`/api/digital-download/${encodeURIComponent(previewProduct.id)}?file=${encodeURIComponent(previewProduct.href)}`}
+              <button
+                type="button"
                 className={styles.downloadButton}
+                onClick={() => openGate(previewProduct, "download")}
               >
                 <DownloadIcon />
                 Gratis downloaden
-              </a>
+              </button>
             </footer>
           </section>
         </div>

@@ -24,6 +24,18 @@ function headers(serviceKey: string) {
   };
 }
 
+function isValidEmail(value: string): boolean {
+  return value.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function isAllowedDownloadFile(value: string): boolean {
+  return (
+    value.startsWith("/downloads/") &&
+    value.toLowerCase().endsWith(".pdf") &&
+    !value.includes("..")
+  );
+}
+
 async function readCount(productId: string): Promise<number> {
   const { url, serviceKey } = getSupabaseConfig();
   const response = await fetch(
@@ -39,17 +51,30 @@ async function readCount(productId: string): Promise<number> {
   return Number(rows[0]?.download_count ?? 0);
 }
 
-async function incrementCount(productId: string): Promise<number> {
+async function registerDownload(input: {
+  productId: string;
+  email: string;
+  marketingConsent: boolean;
+}): Promise<number> {
   const { url, serviceKey } = getSupabaseConfig();
-  const response = await fetch(`${url}/rest/v1/rpc/increment_digital_product_download`, {
-    method: "POST",
-    headers: headers(serviceKey),
-    body: JSON.stringify({ p_product_id: productId }),
-    cache: "no-store",
-  });
+  const response = await fetch(
+    `${url}/rest/v1/rpc/register_digital_product_download`,
+    {
+      method: "POST",
+      headers: headers(serviceKey),
+      body: JSON.stringify({
+        p_product_id: input.productId,
+        p_email: input.email,
+        p_marketing_consent: input.marketingConsent,
+      }),
+      cache: "no-store",
+    }
+  );
 
   if (!response.ok) {
-    throw new Error(`Downloadteller verhogen mislukt (${response.status}).`);
+    const detail = await response.text();
+    console.error("Supabase downloadregistratie:", detail);
+    throw new Error(`Download registreren mislukt (${response.status}).`);
   }
 
   return Number(await response.json());
@@ -66,24 +91,71 @@ export async function GET(
       return NextResponse.json({ error: "Product-ID ontbreekt." }, { status: 400 });
     }
 
-    if (request.nextUrl.searchParams.get("count") === "1") {
-      const count = await readCount(productId);
+    if (request.nextUrl.searchParams.get("count") !== "1") {
       return NextResponse.json(
-        { count },
-        { headers: { "Cache-Control": "no-store, max-age=0" } }
+        { error: "Voor downloaden is een e-mailadres vereist." },
+        { status: 405, headers: { Allow: "POST" } }
       );
     }
 
-    const file = request.nextUrl.searchParams.get("file") ?? "";
-    if (!file.startsWith("/downloads/") || !file.toLowerCase().endsWith(".pdf")) {
+    const count = await readCount(productId);
+    return NextResponse.json(
+      { count },
+      { headers: { "Cache-Control": "no-store, max-age=0" } }
+    );
+  } catch (error) {
+    console.error("Downloadtellerfout:", error);
+    return NextResponse.json(
+      { error: "De downloadteller kon niet worden geladen." },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(
+  request: NextRequest,
+  context: { params: Promise<{ productId: string }> }
+) {
+  try {
+    const { productId } = await context.params;
+    const body = (await request.json()) as {
+      email?: unknown;
+      file?: unknown;
+      marketingConsent?: unknown;
+    };
+
+    const email = String(body.email ?? "").trim().toLowerCase();
+    const file = String(body.file ?? "").trim();
+    const marketingConsent = body.marketingConsent === true;
+
+    if (!productId) {
+      return NextResponse.json({ error: "Product-ID ontbreekt." }, { status: 400 });
+    }
+
+    if (!isValidEmail(email)) {
+      return NextResponse.json(
+        { error: "Vul een geldig e-mailadres in." },
+        { status: 400 }
+      );
+    }
+
+    if (!isAllowedDownloadFile(file)) {
       return NextResponse.json(
         { error: "Ongeldig downloadbestand." },
         { status: 400 }
       );
     }
 
-    await incrementCount(productId);
-    return NextResponse.redirect(new URL(file, request.url), 307);
+    const count = await registerDownload({
+      productId,
+      email,
+      marketingConsent,
+    });
+
+    return NextResponse.json(
+      { count, downloadUrl: file },
+      { headers: { "Cache-Control": "no-store, max-age=0" } }
+    );
   } catch (error) {
     console.error("Digitale downloadfout:", error);
     return NextResponse.json(

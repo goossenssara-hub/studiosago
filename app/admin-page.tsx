@@ -12,9 +12,8 @@ import AdminStudents from "@/components/admin/AdminStudents";
 import DiscountCodesAdmin from "@/components/DiscountCodesAdmin";
 import AdminPlaceholder from "@/components/admin/AdminPlaceholder";
 import LogoutButton from "@/components/admin/LogoutButton";
-import AdminNewsletterLeads from "@/components/admin/AdminNewsletterLeads";
 
- type AdminTab = "dashboard" | "requests" | "agenda" | "students" | "parents" | "cards" | "payments" | "discounts" | "newsletter";
+ type AdminTab = "dashboard" | "requests" | "agenda" | "students" | "parents" | "cards" | "payments" | "discounts";
 const tabs = [
   { id: "dashboard", label: "Dashboard", icon: "📊" },
   { id: "requests", label: "Aanvragen", icon: "📥" },
@@ -24,7 +23,6 @@ const tabs = [
   { id: "cards", label: "Beurtenkaarten", icon: "🎟️" },
   { id: "payments", label: "Betalingen", icon: "💶" },
   { id: "discounts", label: "Kortingscodes", icon: "🏷️" },
-  { id: "newsletter", label: "Nieuwsbrief", icon: "📧" },
 ] as const;
 const directLinks = [
   { href: "/admin/diensten", label: "Diensten beheren", icon: "🛍️" },
@@ -45,7 +43,6 @@ export default function AdminClient() {
         {tab==="requests" && <AdminRequests />}{tab==="agenda" && <AdminAgenda />}{tab==="students" && <AdminStudents />}{tab==="parents" && <AdminParents />}{tab==="cards" && <AdminLessonCards />}
         {tab==="payments" && <AdminPlaceholder title="Betalingen" text="Hier volg je Mollie-betalingen en terugbetalingen op." />}
         {tab==="discounts" && <DiscountCodesAdmin />}
-        {tab==="newsletter" && <AdminNewsletterLeads />}
       </main></section>
   </PageShell>;
 }

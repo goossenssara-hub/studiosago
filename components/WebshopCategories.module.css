@@ -904,3 +904,156 @@
     text-align: center;
   }
 }
+
+/* Verplicht e-mailadres vóór een gratis download. */
+.downloadGateBackdrop {
+  z-index: 1100;
+}
+
+.downloadGateModal {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  width: min(620px, 100%);
+  max-height: min(90vh, 760px);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 28px;
+  background: #fff;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.3);
+}
+
+.downloadGateForm {
+  display: grid;
+  gap: 18px;
+  min-height: 0;
+  padding: 24px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.downloadGateIntro {
+  margin: 0;
+  color: #607a93;
+  line-height: 1.65;
+}
+
+.emailField {
+  display: grid;
+  gap: 8px;
+  color: var(--navy);
+  font-size: 0.9rem;
+  font-weight: 780;
+}
+
+.emailField input {
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 15px;
+  border: 1px solid rgba(3, 54, 99, 0.18);
+  border-radius: 15px;
+  background: #fff;
+  color: var(--navy);
+  font: inherit;
+  font-weight: 500;
+  outline: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.emailField input:focus {
+  border-color: var(--purple);
+  box-shadow: 0 0 0 4px rgba(155, 129, 184, 0.14);
+}
+
+.consentRow {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  align-items: start;
+  gap: 11px;
+  color: #5f758c;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  cursor: pointer;
+}
+
+.consentRow input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: var(--purple);
+}
+
+.privacyNote {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(155, 129, 184, 0.08);
+  color: #667c93;
+  font-size: 0.76rem;
+  line-height: 1.55;
+}
+
+.formError {
+  margin: 0;
+  padding: 11px 13px;
+  border: 1px solid rgba(190, 45, 45, 0.18);
+  border-radius: 12px;
+  background: rgba(190, 45, 45, 0.07);
+  color: #a52f2f;
+  font-size: 0.84rem;
+}
+
+.downloadSubmitButton {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 58px;
+  padding: 15px 20px;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  background: var(--purple, #9b81b8);
+  color: #ffffff;
+  font: inherit;
+  font-weight: 800;
+  line-height: 1.25;
+  text-align: center;
+  cursor: pointer;
+  opacity: 1;
+  visibility: visible;
+  box-shadow: 0 -12px 24px rgba(255, 255, 255, 0.98), 0 12px 28px rgba(155, 129, 184, 0.28);
+}
+
+.downloadSubmitButton svg {
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+}
+
+.downloadSubmitButton:hover,
+.downloadSubmitButton:focus-visible {
+  background: #876cab;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.downloadSubmitButton:disabled,
+.closeButton:disabled {
+  cursor: wait;
+  opacity: 0.65;
+  transform: none;
+}
+
+@media (max-width: 560px) {
+  .downloadGateModal {
+    border-radius: 22px;
+  }
+
+  .downloadGateForm {
+    padding: 20px;
+  }
+}

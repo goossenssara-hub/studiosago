@@ -1,0 +1,125 @@
+import { NextResponse } from "next/server";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+type LeadRow = {
+  product_id: string;
+  email: string;
+  marketing_consent: boolean;
+  first_at: string;
+  last_at: string;
+  interaction_count: number;
+  source: "preview" | "download";
+};
+
+function getSupabaseConfig() {
+  const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !serviceKey) throw new Error("Supabase-configuratie ontbreekt.");
+  return { url: url.replace(/\/$/, ""), serviceKey };
+}
+
+async function loadRows(table: string, select: string, orderColumn: string) {
+  const { url, serviceKey } = getSupabaseConfig();
+  const response = await fetch(
+    `${url}/rest/v1/${table}?select=${encodeURIComponent(select)}&order=${encodeURIComponent(orderColumn)}.desc.nullslast`,
+    {
+      headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` },
+      cache: "no-store",
+    }
+  );
+  if (!response.ok) throw new Error(`${table} kon niet geladen worden: ${await response.text()}`);
+  return (await response.json()) as Record<string, unknown>[];
+}
+
+export async function GET() {
+  try {
+    const [previews, downloads] = await Promise.all([
+      loadRows(
+        "digital_product_preview_leads",
+        "product_id,email,marketing_consent,first_previewed_at,last_previewed_at,preview_count",
+        "last_previewed_at"
+      ),
+      loadRows(
+        "digital_product_leads",
+        "product_id,email,marketing_consent,first_downloaded_at,last_downloaded_at,download_count",
+        "last_downloaded_at"
+      ),
+    ]);
+
+    const rows: LeadRow[] = [
+      ...previews.map((row) => ({
+        product_id: String(row.product_id ?? ""),
+        email: String(row.email ?? ""),
+        marketing_consent: row.marketing_consent === true,
+        first_at: String(row.first_previewed_at ?? ""),
+        last_at: String(row.last_previewed_at ?? ""),
+        interaction_count: Number(row.preview_count ?? 0),
+        source: "preview" as const,
+      })),
+      ...downloads.map((row) => ({
+        product_id: String(row.product_id ?? ""),
+        email: String(row.email ?? ""),
+        marketing_consent: row.marketing_consent === true,
+        first_at: String(row.first_downloaded_at ?? ""),
+        last_at: String(row.last_downloaded_at ?? ""),
+        interaction_count: Number(row.download_count ?? 0),
+        source: "download" as const,
+      })),
+    ];
+
+    const merged = new Map<string, {
+      email: string; productIds: Set<string>; sources: Set<string>;
+      marketingConsent: boolean; firstAt: string; lastAt: string; interactionCount: number;
+    }>();
+
+    for (const row of rows) {
+      const key = row.email.trim().toLowerCase();
+      if (!key) continue;
+      const current = merged.get(key);
+      if (!current) {
+        merged.set(key, {
+          email: key,
+          productIds: new Set(row.product_id ? [row.product_id] : []),
+          sources: new Set([row.source]),
+          marketingConsent: row.marketing_consent,
+          firstAt: row.first_at,
+          lastAt: row.last_at,
+          interactionCount: row.interaction_count,
+        });
+      } else {
+        if (row.product_id) current.productIds.add(row.product_id);
+        current.sources.add(row.source);
+        current.marketingConsent = current.marketingConsent || row.marketing_consent;
+        if (row.first_at && (!current.firstAt || row.first_at < current.firstAt)) current.firstAt = row.first_at;
+        if (row.last_at && (!current.lastAt || row.last_at > current.lastAt)) current.lastAt = row.last_at;
+        current.interactionCount += row.interaction_count;
+      }
+    }
+
+    const leads = Array.from(merged.values())
+      .map((lead) => ({
+        email: lead.email,
+        productIds: Array.from(lead.productIds),
+        sources: Array.from(lead.sources),
+        marketingConsent: lead.marketingConsent,
+        firstAt: lead.firstAt,
+        lastAt: lead.lastAt,
+        interactionCount: lead.interactionCount,
+      }))
+      .sort((a, b) => b.lastAt.localeCompare(a.lastAt));
+
+    return NextResponse.json({
+      leads,
+      totals: {
+        all: leads.length,
+        newsletter: leads.filter((lead) => lead.marketingConsent).length,
+        withoutConsent: leads.filter((lead) => !lead.marketingConsent).length,
+      },
+    }, { headers: { "Cache-Control": "no-store, max-age=0" } });
+  } catch (error) {
+    console.error("NEWSLETTER LEADS ERROR:", error);
+    return NextResponse.json({ error: error instanceof Error ? error.message : "E-mailadressen konden niet geladen worden." }, { status: 500 });
+  }
+}

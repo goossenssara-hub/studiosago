@@ -56,13 +56,26 @@ export default async function WebshopPage() {
     );
   }
 
+  function isLegacyTextCorrectionService(service: Record<string, unknown>): boolean {
+    const slug = normalizeServiceValue(service.slug);
+    const title = normalizeServiceValue(service.title);
+
+    return (
+      slug === "tekstcorrectie" ||
+      slug === "teksten-nalezen" ||
+      slug === "teksten-nalezen-auteurs" ||
+      title === "tekstcorrectie" ||
+      title === "teksten nalezen" ||
+      title === "teksten nalezen voor auteurs"
+    );
+  }
+
   const services = [...(data ?? [])].filter(
-    (service) => !isRemovedFirstGradeWorkshop(service)
+    (service) =>
+      !isRemovedFirstGradeWorkshop(service) &&
+      !isLegacyTextCorrectionService(service)
   ) as Array<Record<string, unknown>>;
 
-  const existingSlugs = new Set(
-    services.map((service) => String(service.slug ?? "").trim())
-  );
 
   // Gratis digitaal product: Studio SaGo Ontdekkingsbord.
   // Plaats de PDF in: public/downloads/studio-sago-ontdekkingsbord.pdf
@@ -87,27 +100,24 @@ export default async function WebshopPage() {
     download_count: 0,
   });
 
-  for (const slug of ["tekstcorrectie", "teksten-nalezen-auteurs"]) {
-    if (existingSlugs.has(slug)) continue;
+  const textCorrection = getBuiltInService("tekstcorrectie");
 
-    const builtIn = getBuiltInService(slug);
-    if (!builtIn) continue;
-
+  if (textCorrection) {
     services.push({
-      id: builtIn.id,
-      title: builtIn.title,
-      subtitle: builtIn.subtitle,
-      category: builtIn.category,
-      description: builtIn.description,
-      price: builtIn.price,
-      button_text: builtIn.button_text,
-      href: builtIn.href,
-      slug: builtIn.slug,
-      external_url: builtIn.external_url,
-      event_dates: builtIn.event_dates,
-      image_url: builtIn.image_url,
-      is_visible: builtIn.is_visible,
-      sort_order: builtIn.sort_order,
+      id: textCorrection.id,
+      title: textCorrection.title,
+      subtitle: textCorrection.subtitle,
+      category: textCorrection.category,
+      description: textCorrection.description,
+      price: textCorrection.price,
+      button_text: textCorrection.button_text,
+      href: textCorrection.href,
+      slug: textCorrection.slug,
+      external_url: textCorrection.external_url,
+      event_dates: textCorrection.event_dates,
+      image_url: textCorrection.image_url,
+      is_visible: textCorrection.is_visible,
+      sort_order: textCorrection.sort_order,
     });
   }
 

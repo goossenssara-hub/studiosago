@@ -13,6 +13,13 @@ export const webshopProducts = {
     level: "secundair",
   },
 
+  "tekstcorrectie": {
+    name: "Tekstcorrectie",
+    amount: "20.00",
+    category: "text",
+    level: "algemeen",
+  },
+
   "klaar-voor-de-sprong-middelbaar": {
     name: "Klaar voor de Sprong naar het Middelbaar",
     amount: "250.00",

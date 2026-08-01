@@ -587,11 +587,6 @@ export default function WebshopCategories({
                             </span>
                           ) : null}
 
-                          {!details.hasDetails ? (
-                            <span className={styles.productDescription}>
-                              Bekijk alle informatie over dit aanbod.
-                            </span>
-                          ) : null}
                         </span>
 
                         <span className={styles.arrow}>

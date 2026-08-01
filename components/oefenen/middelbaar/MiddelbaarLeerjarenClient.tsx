@@ -45,8 +45,8 @@ export default function MiddelbaarLeerjarenClient() {
   return (
     <main className="oefenpagina">
       <div className="exercise-back">
-        <Link className="back-button" href="/oefenen">
-          ← Terug naar alle oefeningen
+        <Link className="back-button" href="/dashboard/oefenen">
+          ← Alle leerjaren
         </Link>
       </div>
 

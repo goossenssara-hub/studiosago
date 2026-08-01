@@ -1,15 +1,15 @@
 import { shuffle, type ExerciseInput, type Random } from "./generators/shared";
 
-export const EXERCISES_PER_SESSION = 15;
+export const EXERCISES_PER_SESSION = 24;
 
 export type AdaptiveSelectionOptions = {
-  /** Zet adaptieve selectie uit en kies gewoon 15 oefeningen op het huidige niveau. */
+  /** Zet adaptieve selectie uit en kies gewoon 24 oefeningen op het huidige niveau. */
   adaptive?: boolean;
-  /** Aantal herhalingsoefeningen uit het vorige niveau. Standaard 5. */
+  /** Aantal herhalingsoefeningen uit het vorige niveau. Standaard 6. */
   reviewCount?: number;
-  /** Aantal oefeningen uit het huidige niveau. Standaard 5. */
+  /** Aantal oefeningen uit het huidige niveau. Standaard 12. */
   currentCount?: number;
-  /** Aantal uitdagendere oefeningen uit het volgende niveau. Standaard 5. */
+  /** Aantal uitdagendere oefeningen uit het volgende niveau. Standaard 6. */
   challengeCount?: number;
 };
 
@@ -69,9 +69,9 @@ export function selectAdaptiveExercises(
     );
   }
 
-  let reviewCount = clampCount(options.reviewCount, 5);
-  let currentCount = clampCount(options.currentCount, 5);
-  let challengeCount = clampCount(options.challengeCount, 5);
+  let reviewCount = clampCount(options.reviewCount, 6);
+  let currentCount = clampCount(options.currentCount, 12);
+  let challengeCount = clampCount(options.challengeCount, 6);
 
   const requestedTotal = reviewCount + currentCount + challengeCount;
   if (requestedTotal !== EXERCISES_PER_SESSION) {
@@ -86,7 +86,7 @@ export function selectAdaptiveExercises(
     (pool) => pool.level === Math.min(10, requestedLevel + 1)
   );
 
-  // Op niveau 1 bestaat geen lager niveau. Die vijf vragen blijven dan
+  // Op niveau 1 bestaat geen lager niveau. Die herhalingsvragen blijven dan
   // op het huidige niveau. Op niveau 10 geldt hetzelfde voor uitdaging.
   if (requestedLevel === 1) {
     currentCount += reviewCount;

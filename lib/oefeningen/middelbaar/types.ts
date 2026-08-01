@@ -4,6 +4,9 @@ export type SecondaryExercise = {
   question: string;
   answer: string | string[];
   options?: string[];
+  goalId?: string;
+  goalText?: string;
+  hint?: string;
 };
 
 export type SecondaryLevelProgress = {

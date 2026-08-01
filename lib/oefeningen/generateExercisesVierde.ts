@@ -1,4 +1,4 @@
-import type { Exercise } from "@/lib/oefeningen/types";
+import type { Exercise, LearningSubject } from "@/lib/oefeningen/types";
 
 function seededRandom(seed: number) {
   let value = seed % 2147483647;
@@ -17,272 +17,263 @@ function shuffle<T>(items: T[], random: () => number): T[] {
 function createExercise(
   level: number,
   id: string,
-  category: string,
+  subject: LearningSubject,
+  skill: string,
+  goalId: string,
+  goalText: string,
   question: string,
-  answer: string | string[]
+  answer: string | string[],
+  hint?: string
 ): Exercise {
   return {
     id: `vierde-${level}-${id}`,
-    category,
+    category: skill,
+    subject,
+    skill,
+    goalId,
+    goalText,
     question,
     answer,
+    hint,
   };
 }
 
 export function generateExercisesVierde(level: number, seed = 1): Exercise[] {
   const random = seededRandom(seed + level * 1000);
   const exercises: Exercise[] = [];
-
   const maxNumber = 1000 + level * 800;
 
-  for (let i = 1; i <= 8; i++) {
+  for (let i = 1; i <= 6; i++) {
     const a = Math.floor(random() * maxNumber) + 100;
     const b = Math.floor(random() * maxNumber) + 100;
-
     exercises.push(
       createExercise(
         level,
         `optellen-${i}`,
         "Wiskunde",
+        "Optellen",
+        "WIS-4-GET-01",
+        "Natuurlijke getallen doelgericht optellen.",
         `${a} + ${b} =`,
-        String(a + b)
-      )
-    );
-  }
-
-  for (let i = 1; i <= 8; i++) {
-    const a = Math.floor(random() * maxNumber) + 500;
-    const b = Math.floor(random() * a);
-
-    exercises.push(
-      createExercise(
-        level,
-        `aftrekken-${i}`,
-        "Wiskunde",
-        `${a} - ${b} =`,
-        String(a - b)
-      )
-    );
-  }
-
-  for (let i = 1; i <= 8; i++) {
-    const a = Math.floor(random() * 9) + 2;
-    const b = Math.floor(random() * (8 + level)) + 2;
-
-    exercises.push(
-      createExercise(
-        level,
-        `maal-${i}`,
-        "Wiskunde",
-        `${a} × ${b} =`,
-        String(a * b)
+        String(a + b),
+        "Werk stap voor stap: eenheden, tientallen en honderdtallen."
       )
     );
   }
 
   for (let i = 1; i <= 6; i++) {
+    const a = Math.floor(random() * maxNumber) + 500;
+    const b = Math.floor(random() * a);
+    exercises.push(
+      createExercise(
+        level,
+        `aftrekken-${i}`,
+        "Wiskunde",
+        "Aftrekken",
+        "WIS-4-GET-02",
+        "Natuurlijke getallen doelgericht aftrekken.",
+        `${a} - ${b} =`,
+        String(a - b),
+        "Controleer je antwoord door opnieuw op te tellen."
+      )
+    );
+  }
+
+  for (let i = 1; i <= 6; i++) {
+    const a = Math.floor(random() * 9) + 2;
+    const b = Math.floor(random() * (8 + level)) + 2;
+    exercises.push(
+      createExercise(
+        level,
+        `maal-${i}`,
+        "Wiskunde",
+        "Vermenigvuldigen",
+        "WIS-4-BEW-01",
+        "Vermenigvuldigingen vlot en correct uitvoeren.",
+        `${a} × ${b} =`,
+        String(a * b),
+        "Denk aan een gekende tafel en bouw van daaruit verder."
+      )
+    );
+  }
+
+  for (let i = 1; i <= 5; i++) {
     const divisor = Math.floor(random() * 9) + 2;
     const quotient = Math.floor(random() * (8 + level)) + 2;
-    const total = divisor * quotient;
-
     exercises.push(
       createExercise(
         level,
         `delen-${i}`,
         "Wiskunde",
-        `${total} : ${divisor} =`,
-        String(quotient)
+        "Delen",
+        "WIS-4-BEW-02",
+        "Delingen begrijpen en correct oplossen.",
+        `${divisor * quotient} : ${divisor} =`,
+        String(quotient),
+        "Welke vermenigvuldiging hoort bij deze deling?"
       )
     );
   }
 
-  const breuken: [string, string][] = [
-    ["1/2 van 48", "24"],
-    ["1/4 van 80", "20"],
-    ["1/3 van 60", "20"],
-    ["1/5 van 100", "20"],
-    ["1/10 van 250", "25"],
-    ["1/2 van 96", "48"],
-    ["1/4 van 120", "30"],
-    ["1/3 van 90", "30"],
-    ["3/4 van 100", "75"],
-    ["2/5 van 50", "20"],
-  ];
-
-  shuffle(breuken, random)
-    .slice(0, 6)
-    .forEach(([vraag, antwoord], index) => {
-      exercises.push(
-        createExercise(
-          level,
-          `breuken-${index + 1}`,
-          "Wiskunde",
-          `Bereken: ${vraag} =`,
-          antwoord
-        )
-      );
-    });
-
   const meten: [string, string][] = [
-    ["Hoeveel cm is 1 m?", "100"],
-    ["Hoeveel m is 1 km?", "1000"],
-    ["Hoeveel ml is 1 l?", "1000"],
-    ["Hoeveel g is 1 kg?", "1000"],
+    ["Hoeveel centimeter is 1 meter?", "100"],
+    ["Hoeveel meter is 1 kilometer?", "1000"],
+    ["Hoeveel milliliter is 1 liter?", "1000"],
+    ["Hoeveel gram is 1 kilogram?", "1000"],
     ["Hoeveel minuten zitten er in 1 uur?", "60"],
-    ["Hoeveel seconden zitten er in 1 minuut?", "60"],
     ["Hoeveel kwartieren zitten er in 1 uur?", "4"],
-    ["Hoeveel dagen zitten er in 2 weken?", "14"],
   ];
 
-  shuffle(meten, random)
-    .slice(0, 5)
-    .forEach(([vraag, antwoord], index) => {
-      exercises.push(
-        createExercise(level, `meten-${index + 1}`, "Wiskunde", vraag, antwoord)
-      );
-    });
+  shuffle(meten, random).forEach(([question, answer], index) => {
+    exercises.push(
+      createExercise(
+        level,
+        `meten-${index + 1}`,
+        "Wiskunde",
+        "Meten",
+        "WIS-4-MET-01",
+        "Courante maateenheden kennen en omzetten.",
+        question,
+        answer,
+        "Schrijf eerst op welke eenheden je met elkaar vergelijkt."
+      )
+    );
+  });
 
   const vraagstukken: [string, string | string[]][] = [
-    [
-      "Lina heeft 4 dozen met telkens 12 potloden. Hoeveel potloden heeft ze samen?",
-      "48",
-    ],
-    [
-      "Een boek telt 96 pagina's. Noor leest elke dag 12 pagina's. Na hoeveel dagen is het boek uit?",
-      "8",
-    ],
-    [
-      "Er zitten 125 stickers in een doos. Er worden 38 stickers uitgedeeld. Hoeveel blijven er over?",
-      "87",
-    ],
-    [
-      "Een klas spaart 6 weken lang telkens 15 euro. Hoeveel euro sparen ze samen?",
-      "90",
-    ],
-    [
-      "Een treinrit duurt 45 minuten. De rit start om 10:00. Hoe laat kom je aan?",
-      ["10:45", "10u45"],
-    ],
-    ["Een brood kost €3. Je koopt 4 broden. Hoeveel betaal je?", "12"],
-    [
-      "In een doos zitten 8 zakjes met 6 knikkers. Hoeveel knikkers zijn dat samen?",
-      "48",
-    ],
+    ["Lina heeft 4 dozen met telkens 12 potloden. Hoeveel potloden heeft ze samen?", "48"],
+    ["Een boek telt 96 pagina's. Noor leest elke dag 12 pagina's. Na hoeveel dagen is het boek uit?", "8"],
+    ["Er zitten 125 stickers in een doos. Er worden 38 stickers uitgedeeld. Hoeveel blijven er over?", "87"],
+    ["Een treinrit duurt 45 minuten. De rit start om 10:00. Hoe laat kom je aan?", ["10:45", "10u45"]],
   ];
 
-  shuffle(vraagstukken, random)
-    .slice(0, 5)
-    .forEach(([vraag, antwoord], index) => {
-      exercises.push(
-        createExercise(level, `vraagstuk-${index + 1}`, "Wiskunde", vraag, antwoord)
-      );
-    });
+  shuffle(vraagstukken, random).forEach(([question, answer], index) => {
+    exercises.push(
+      createExercise(
+        level,
+        `vraagstuk-${index + 1}`,
+        "Wiskunde",
+        "Probleemoplossend denken",
+        "WIS-4-PRO-01",
+        "Een passende bewerking kiezen bij een eenvoudig probleem.",
+        question,
+        answer,
+        "Markeer wat je weet en wat je precies moet zoeken."
+      )
+    );
+  });
 
-  const taal: [string, string][] = [
+  const werkwoorden: [string, string][] = [
     ["Ik ___ naar school. Kies: fiets / fietst", "fiets"],
     ["Hij ___ een brief. Kies: schrijf / schrijft", "schrijft"],
     ["Wij ___ buiten. Kies: spelen / speelt", "spelen"],
     ["Jij ___ goed mee. Kies: werk / werkt", "werkt"],
     ["De kinderen ___ naar huis. Kies: wandelen / wandelt", "wandelen"],
     ["Mama ___ soep. Kies: maak / maakt", "maakt"],
-    ["De hond ___ luid. Kies: blaf / blaft", "blaft"],
-    ["Ik ___ mijn boekentas. Kies: neem / neemt", "neem"],
-    ["Zij ___ een lied. Kies: zing / zingt", "zingt"],
-    ["Papa ___ de krant. Kies: lees / leest", "leest"],
   ];
 
-  shuffle(taal, random)
-    .slice(0, 8)
-    .forEach(([vraag, antwoord], index) => {
-      exercises.push(
-        createExercise(level, `werkwoorden-${index + 1}`, "Taal", vraag, antwoord)
-      );
-    });
+  shuffle(werkwoorden, random).forEach(([question, answer], index) => {
+    exercises.push(
+      createExercise(
+        level,
+        `werkwoorden-${index + 1}`,
+        "Taal",
+        "Werkwoorden",
+        "TAAL-4-SCH-01",
+        "Werkwoordsvormen in een zin correct gebruiken.",
+        question,
+        answer,
+        "Zoek eerst wie of wat iets doet."
+      )
+    );
+  });
 
   const woordsoorten: [string, string][] = [
     ["Duid het zelfstandig naamwoord aan: De juf schrijft op het bord.", "juf"],
     ["Duid het werkwoord aan: De jongen loopt snel.", "loopt"],
-    [
-      "Duid het bijvoeglijk naamwoord aan: De groene jas hangt aan de kapstok.",
-      "groene",
-    ],
+    ["Duid het bijvoeglijk naamwoord aan: De groene jas hangt aan de kapstok.", "groene"],
     ["Duid het zelfstandig naamwoord aan: De hond slaapt in de mand.", "hond"],
     ["Duid het werkwoord aan: Sara leest een spannend boek.", "leest"],
-    ["Duid het bijvoeglijk naamwoord aan: Het kleine kind lacht.", "kleine"],
-    ["Duid het zelfstandig naamwoord aan: De tafel staat in de keuken.", "tafel"],
-    ["Duid het werkwoord aan: De vogels vliegen hoog.", "vliegen"],
   ];
 
-  shuffle(woordsoorten, random)
-    .slice(0, 6)
-    .forEach(([vraag, antwoord], index) => {
-      exercises.push(
-        createExercise(level, `woordsoorten-${index + 1}`, "Taal", vraag, antwoord)
-      );
-    });
+  shuffle(woordsoorten, random).forEach(([question, answer], index) => {
+    exercises.push(
+      createExercise(
+        level,
+        `woordsoorten-${index + 1}`,
+        "Taal",
+        "Woordsoorten",
+        "TAAL-4-TAALB-01",
+        "Veelgebruikte woordsoorten in een zin herkennen.",
+        question,
+        answer,
+        "Vraag jezelf af: is het een persoon, dier, ding, eigenschap of handeling?"
+      )
+    );
+  });
 
   const begrijpendLezen: [string, string[]][] = [
     [
       "Lotte neemt haar regenjas mee, want de lucht is donker. Waarom neemt Lotte haar regenjas mee?",
-      [
-        "Omdat het waarschijnlijk gaat regenen.",
-        "omdat het gaat regenen",
-        "het gaat regenen",
-      ],
+      ["omdat het waarschijnlijk gaat regenen", "omdat het gaat regenen", "het gaat regenen"],
     ],
     [
       "Milan zet zijn wekker vroeger, want hij wil rustig ontbijten. Waarom zet Milan zijn wekker vroeger?",
-      ["Omdat hij rustig wil ontbijten.", "rustig ontbijten"],
+      ["omdat hij rustig wil ontbijten", "rustig ontbijten"],
     ],
     [
       "De klas is stil, want de toets begint. Waarom is de klas stil?",
-      ["Omdat de toets begint.", "de toets begint"],
-    ],
-    [
-      "Noor doet haar jas uit, want ze heeft het warm. Waarom doet Noor haar jas uit?",
-      ["Omdat ze het warm heeft.", "ze heeft het warm"],
+      ["omdat de toets begint", "de toets begint"],
     ],
   ];
 
-  begrijpendLezen.forEach(([vraag, antwoord], index) => {
+  begrijpendLezen.forEach(([question, answer], index) => {
     exercises.push(
-      createExercise(level, `begrijpend-lezen-${index + 1}`, "Taal", vraag, antwoord)
+      createExercise(
+        level,
+        `begrijpend-lezen-${index + 1}`,
+        "Taal",
+        "Begrijpend lezen",
+        "TAAL-4-LEZ-01",
+        "Expliciete informatie en eenvoudige verbanden uit een tekst halen.",
+        question,
+        answer,
+        "Lees de zin opnieuw en zoek het woord ‘want’."
+      )
     );
   });
 
-  const wo: [string, string | string[]][] = [
-    ["Hoeveel seizoenen zijn er?", "4"],
-    ["Op welke planeet leven wij?", ["Aarde", "de aarde"]],
-    ["Hoe heet water in vaste vorm?", "ijs"],
-    ["Welk kompaspunt ligt bovenaan een kaart?", "noord"],
-    ["Hoeveel dagen telt een schrikkeljaar?", "366"],
-    ["Welk orgaan pompt bloed rond?", "hart"],
-    ["Welke kleur krijg je door blauw en geel te mengen?", "groen"],
-    ["Hoe heet het jong van een koe?", "kalf"],
-    ["Welke maand komt na maart?", "april"],
-    ["Welke maand komt voor december?", "november"],
-    ["Hoe noemen we iemand die in het verleden dingen onderzoekt?", "historicus"],
-    ["Wat gebruik je om het noorden te vinden?", "kompas"],
-    ["Welke energiebron komt van de zon?", ["zonne-energie", "zonneenergie"]],
-    [
-      "Wat hebben planten nodig om te groeien? Noem één ding.",
-      ["water", "zonlicht", "licht", "lucht", "grond"],
-    ],
+  const woItems: Array<{
+    question: string;
+    answer: string | string[];
+    skill: string;
+    goalId: string;
+    goalText: string;
+  }> = [
+    { question: "Hoeveel seizoenen zijn er?", answer: "4", skill: "Tijd", goalId: "WO-4-TIJD-01", goalText: "Tijd cyclisch ordenen met maanden en seizoenen." },
+    { question: "Op welke planeet leven wij?", answer: ["aarde", "de aarde"], skill: "Natuur", goalId: "WO-4-NAT-01", goalText: "Basiskennis over aarde en natuur gebruiken." },
+    { question: "Hoe heet water in vaste vorm?", answer: "ijs", skill: "Natuur", goalId: "WO-4-NAT-02", goalText: "Toestanden van water herkennen." },
+    { question: "Welk kompaspunt ligt bovenaan een kaart?", answer: "noord", skill: "Ruimte", goalId: "WO-4-RUIMTE-01", goalText: "Zich oriënteren met kaart en windrichtingen." },
+    { question: "Welk orgaan pompt bloed rond?", answer: "hart", skill: "Mens", goalId: "WO-4-MENS-01", goalText: "Belangrijke organen en hun functie herkennen." },
+    { question: "Welke energiebron komt van de zon?", answer: ["zonne-energie", "zonneenergie"], skill: "Techniek en milieu", goalId: "WO-4-TECH-01", goalText: "Voorbeelden van duurzame energie herkennen." },
+    { question: "Wat gebruik je om het noorden te vinden?", answer: "kompas", skill: "Ruimte", goalId: "WO-4-RUIMTE-01", goalText: "Zich oriënteren met kaart en windrichtingen." },
+    { question: "Wat hebben planten nodig om te groeien? Noem één ding.", answer: ["water", "zonlicht", "licht", "lucht", "grond"], skill: "Natuur", goalId: "WO-4-NAT-03", goalText: "Voorwaarden voor groei van planten herkennen." },
   ];
 
-  shuffle(wo, random)
-    .slice(0, 8)
-    .forEach(([vraag, antwoord], index) => {
-      exercises.push(
-        createExercise(
-          level,
-          `wereldorientatie-${index + 1}`,
-          "Wereldoriëntatie",
-          vraag,
-          antwoord
-        )
-      );
-    });
+  shuffle(woItems, random).forEach((item, index) => {
+    exercises.push(
+      createExercise(
+        level,
+        `wereldorientatie-${index + 1}`,
+        "Wereldoriëntatie",
+        item.skill,
+        item.goalId,
+        item.goalText,
+        item.question,
+        item.answer
+      )
+    );
+  });
 
-  return exercises;
+  return shuffle(exercises, random);
 }

@@ -1,10 +1,10 @@
 import PageShell from "@/components/PageShell";
-import OefenpaginaVierdeClient from "@/components/oefenen/OefenpaginaVierdeClient";
+import OefenpaginaLagerClient from "@/components/oefenen/OefenpaginaLagerClient";
 
 export default function VierdeLeerjaarPage() {
   return (
     <PageShell>
-      <OefenpaginaVierdeClient />
+      <OefenpaginaLagerClient grade={4} />
     </PageShell>
   );
 }

@@ -1,8 +1,15 @@
+export type LearningSubject = "Wiskunde" | "Taal" | "Wereldoriëntatie" | "Frans";
+
 export type Exercise = {
   id: string;
   category: string;
+  subject: LearningSubject;
+  skill: string;
+  goalId: string;
+  goalText: string;
   question: string;
   answer: string | string[];
+  hint?: string;
 };
 
 export type LevelProgress = {

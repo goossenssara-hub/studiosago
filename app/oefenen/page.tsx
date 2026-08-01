@@ -1,10 +1,5 @@
-import PageShell from "@/components/PageShell";
-import OefenenOverzichtClient from "@/components/oefenen/middelbaar/OefenenOverzichtClient";
+import { redirect } from "next/navigation";
 
-export default function OefenenPage() {
-  return (
-    <PageShell>
-      <OefenenOverzichtClient />
-    </PageShell>
-  );
+export default function OefenenRedirectPage() {
+  redirect("/dashboard/oefenen");
 }

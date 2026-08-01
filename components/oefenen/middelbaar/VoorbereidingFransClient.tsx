@@ -10,684 +10,331 @@ import {
 } from "@/lib/oefeningen/middelbaar/generators/fransVoorbereiding";
 import FrenchSpeakingRecorder from "./FrenchSpeakingRecorder";
 import FrenchWritingChecker from "./FrenchWritingChecker";
-import FrenchCertificateSync from "./FrenchCertificateSync";
 import styles from "./VoorbereidingFransClient.module.css";
 
 type Answers = Record<string, string>;
 type Checked = Record<string, boolean>;
-type VisibleExamples = Record<string, boolean>;
-
-type SavedFrenchProgress = {
+type Attempts = Record<string, number>;
+type SavedProgress = {
   activeSection: FrenchExerciseCategory;
+  activeExerciseId: string;
   answers: Answers;
   checked: Checked;
-  showExamples: VisibleExamples;
+  attempts: Attempts;
 };
 
-const STORAGE_KEY = "studiosago:voorbereiding-frans:progress:v2";
+const STORAGE_KEY = "studiosago:voorbereiding-frans:progress:v4";
 const DEFAULT_SECTION: FrenchExerciseCategory = "woordenschat";
 
 function normalize(value: string): string {
   return value
     .trim()
     .toLocaleLowerCase("fr")
-    .replace(/[.!?]/g, "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[.!?,;:]/g, "")
     .replace(/[’]/g, "'")
     .replace(/\s+/g, " ");
 }
 
 function isCorrect(exercise: FrenchExercise, value: string): boolean {
-  if (!exercise.answer) {
-    return false;
+  if (!exercise.answer) return false;
+  const accepted = Array.isArray(exercise.answer) ? exercise.answer : [exercise.answer];
+  return accepted.some((answer) => normalize(answer) === normalize(value));
+}
+
+type VoiceGender = "female" | "male";
+
+const FEMALE_VOICE_HINTS = [
+  "amelie",
+  "amélie",
+  "audrey",
+  "aurelie",
+  "aurélie",
+  "marie",
+  "lea",
+  "léa",
+  "celine",
+  "céline",
+  "julie",
+  "hortense",
+  "virginie",
+  "sylvie",
+];
+
+const MALE_VOICE_HINTS = [
+  "thomas",
+  "nicolas",
+  "henri",
+  "paul",
+  "luc",
+  "louis",
+  "remy",
+  "rémy",
+];
+
+function normalizeVoiceName(value: string): string {
+  return value
+    .toLocaleLowerCase("fr")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function selectFrenchVoice(gender: VoiceGender): SpeechSynthesisVoice | null {
+  const voices = window.speechSynthesis.getVoices();
+  const frenchVoices = voices.filter((voice) =>
+    voice.lang.toLocaleLowerCase().startsWith("fr")
+  );
+  const preferredLocales = ["fr-BE", "fr-FR", "fr-CA", "fr-CH"];
+  const hints = gender === "female" ? FEMALE_VOICE_HINTS : MALE_VOICE_HINTS;
+
+  for (const locale of preferredLocales) {
+    const localeVoices = frenchVoices.filter(
+      (voice) => voice.lang.toLocaleLowerCase() === locale.toLocaleLowerCase()
+    );
+    const namedMatch = localeVoices.find((voice) => {
+      const name = normalizeVoiceName(voice.name);
+      return hints.some((hint) => name.includes(normalizeVoiceName(hint)));
+    });
+    if (namedMatch) return namedMatch;
   }
 
-  const acceptedAnswers = Array.isArray(exercise.answer)
-    ? exercise.answer
-    : [exercise.answer];
+  const namedFrenchMatch = frenchVoices.find((voice) => {
+    const name = normalizeVoiceName(voice.name);
+    return hints.some((hint) => name.includes(normalizeVoiceName(hint)));
+  });
 
-  return acceptedAnswers.some(
-    (answer) => normalize(answer) === normalize(value)
-  );
+  return namedFrenchMatch ?? frenchVoices[0] ?? null;
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function toStringRecord(value: unknown): Answers {
-  if (!isRecord(value)) {
-    return {};
+function speakFrench(
+  text: string,
+  speaker: { name: string; gender: VoiceGender } = {
+    name: "Madame Martin",
+    gender: "female",
   }
+): void {
+  if (typeof window === "undefined" || !window.speechSynthesis || !text.trim()) return;
 
-  return Object.fromEntries(
-    Object.entries(value).filter(
-      (entry): entry is [string, string] => typeof entry[1] === "string"
-    )
-  );
-}
+  const play = () => {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    const voice = selectFrenchVoice(speaker.gender);
 
-function toBooleanRecord(value: unknown): Record<string, boolean> {
-  if (!isRecord(value)) {
-    return {};
-  }
+    utterance.lang = voice?.lang || "fr-BE";
+    utterance.voice = voice;
+    utterance.rate = 0.82;
+    utterance.pitch = speaker.gender === "female" ? 1.08 : 0.94;
+    utterance.volume = 1;
 
-  return Object.fromEntries(
-    Object.entries(value).filter(
-      (entry): entry is [string, boolean] => typeof entry[1] === "boolean"
-    )
-  );
-}
+    window.speechSynthesis.speak(utterance);
+  };
 
-function isFrenchCategory(value: unknown): value is FrenchExerciseCategory {
-  return frenchPreparationSections.some((section) => section.id === value);
-}
-
-function speakFrench(text: string): void {
-  if (typeof window === "undefined") {
+  if (window.speechSynthesis.getVoices().length === 0) {
+    window.speechSynthesis.addEventListener("voiceschanged", play, { once: true });
     return;
   }
 
-  const speechSynthesis = window.speechSynthesis;
+  play();
+}
 
-  if (!speechSynthesis) {
-    window.alert("Je browser ondersteunt voorlezen niet.");
-    return;
-  }
-
-  speechSynthesis.cancel();
-
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "fr-FR";
-  utterance.rate = 0.85;
-  speechSynthesis.speak(utterance);
+function Icon({ name }: { name: string }) {
+  const common = { viewBox: "0 0 24 24", "aria-hidden": true } as const;
+  if (name === "headphones") return <svg {...common}><path d="M4 13v-2a8 8 0 0 1 16 0v2"/><path d="M4 13h3v7H5a1 1 0 0 1-1-1v-6Zm16 0h-3v7h2a1 1 0 0 0 1-1v-6Z"/></svg>;
+  if (name === "pen") return <svg {...common}><path d="m4 20 4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Z"/><path d="m14.5 7 3 3"/></svg>;
+  if (name === "mic") return <svg {...common}><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v4M9 21h6"/></svg>;
+  if (name === "globe") return <svg {...common}><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>;
+  if (name === "blocks") return <svg {...common}><rect x="3" y="4" width="8" height="7" rx="2"/><rect x="13" y="4" width="8" height="7" rx="2"/><rect x="8" y="13" width="8" height="7" rx="2"/></svg>;
+  return <svg {...common}><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v16H6.5A2.5 2.5 0 0 0 4 21.5v-16ZM20 5.5A2.5 2.5 0 0 0 17.5 3H13v16h4.5a2.5 2.5 0 0 1 2.5 2.5v-16Z"/></svg>;
 }
 
 export default function VoorbereidingFransClient() {
-  const [activeSection, setActiveSection] =
-    useState<FrenchExerciseCategory>(DEFAULT_SECTION);
+  const [activeSection, setActiveSection] = useState<FrenchExerciseCategory>(DEFAULT_SECTION);
+  const [activeExerciseId, setActiveExerciseId] = useState(frenchPreparationExercises[0]?.id ?? "");
   const [answers, setAnswers] = useState<Answers>({});
   const [checked, setChecked] = useState<Checked>({});
-  const [showExamples, setShowExamples] = useState<VisibleExamples>({});
-  const [progressLoaded, setProgressLoaded] = useState(false);
+  const [attempts, setAttempts] = useState<Attempts>({});
+  const [showHint, setShowHint] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     try {
-      const savedProgress = window.localStorage.getItem(STORAGE_KEY);
-
-      if (!savedProgress) {
-        return;
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw) as Partial<SavedProgress>;
+        if (saved.activeSection) setActiveSection(saved.activeSection);
+        if (saved.activeExerciseId) setActiveExerciseId(saved.activeExerciseId);
+        setAnswers(saved.answers ?? {});
+        setChecked(saved.checked ?? {});
+        setAttempts(saved.attempts ?? {});
       }
-
-      const parsed: unknown = JSON.parse(savedProgress);
-
-      if (!isRecord(parsed)) {
-        return;
-      }
-
-      if (isFrenchCategory(parsed.activeSection)) {
-        setActiveSection(parsed.activeSection);
-      }
-
-      setAnswers(toStringRecord(parsed.answers));
-      setChecked(toBooleanRecord(parsed.checked));
-      setShowExamples(toBooleanRecord(parsed.showExamples));
     } catch (error) {
-      console.error(
-        "De bewaarde Franse voortgang kon niet geladen worden:",
-        error
-      );
+      console.error("Franse voortgang laden mislukt:", error);
     } finally {
-      setProgressLoaded(true);
+      setLoaded(true);
     }
   }, []);
 
   useEffect(() => {
-    if (!progressLoaded) {
-      return;
-    }
-
-    const progressToSave: SavedFrenchProgress = {
-      activeSection,
-      answers,
-      checked,
-      showExamples,
-    };
-
-    try {
-      window.localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(progressToSave)
-      );
-    } catch (error) {
-      console.error("De Franse voortgang kon niet bewaard worden:", error);
-    }
-  }, [activeSection, answers, checked, showExamples, progressLoaded]);
+    if (!loaded) return;
+    const state: SavedProgress = { activeSection, activeExerciseId, answers, checked, attempts };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }, [activeSection, activeExerciseId, answers, checked, attempts, loaded]);
 
   const sectionExercises = useMemo(
-    () =>
-      frenchPreparationExercises.filter(
-        (exercise) => exercise.category === activeSection
-      ),
+    () => frenchPreparationExercises.filter((exercise) => exercise.category === activeSection),
     [activeSection]
   );
 
-  const scoreableExercises = useMemo(
-    () =>
-      frenchPreparationExercises.filter((exercise) =>
-        Boolean(exercise.answer)
-      ),
-    []
-  );
+  useEffect(() => {
+    if (!sectionExercises.some((exercise) => exercise.id === activeExerciseId)) {
+      setActiveExerciseId(sectionExercises[0]?.id ?? "");
+    }
+  }, [sectionExercises, activeExerciseId]);
 
-  const checkedScoreableExercises = scoreableExercises.filter(
-    (exercise) => checked[exercise.id]
-  );
-
-  const correctScoreableExercises = checkedScoreableExercises.filter(
-    (exercise) => isCorrect(exercise, answers[exercise.id] ?? "")
-  );
-
-  const score =
-    checkedScoreableExercises.length === 0
-      ? 0
-      : Math.round(
-          (correctScoreableExercises.length /
-            checkedScoreableExercises.length) *
-            100
-        );
-
-  const completed = frenchPreparationExercises.filter(
-    (exercise) => checked[exercise.id]
+  const activeIndex = Math.max(0, sectionExercises.findIndex((exercise) => exercise.id === activeExerciseId));
+  const exercise = sectionExercises[activeIndex];
+  const completed = frenchPreparationExercises.filter((item) => checked[item.id]).length;
+  const mastered = frenchPreparationExercises.filter(
+    (item) => checked[item.id] && (!item.answer || isCorrect(item, answers[item.id] ?? ""))
   ).length;
+  const readiness = completed === 0 ? "Startklaar" : completed < frenchPreparationExercises.length ? "In groei" : mastered === frenchPreparationExercises.length ? "Klaar voor de sprong" : "Nog versterken";
 
-  const total = frenchPreparationExercises.length;
-  const progress = total === 0 ? 0 : Math.round((completed / total) * 100);
-
-  function updateAnswer(id: string, value: string): void {
-    setAnswers((current) => ({
-      ...current,
-      [id]: value,
-    }));
-
-    setChecked((current) => ({
-      ...current,
-      [id]: false,
-    }));
+  function chooseSection(section: FrenchExerciseCategory) {
+    const first = frenchPreparationExercises.find((item) => item.category === section);
+    setActiveSection(section);
+    setActiveExerciseId(first?.id ?? "");
+    setShowHint(false);
   }
 
-  function markExerciseCompleted(id: string): void {
-    setChecked((current) => ({
-      ...current,
-      [id]: true,
-    }));
+  function updateAnswer(value: string) {
+    if (!exercise) return;
+    setAnswers((current) => ({ ...current, [exercise.id]: value }));
+    setChecked((current) => ({ ...current, [exercise.id]: false }));
   }
 
-  function checkExercise(exercise: FrenchExercise): void {
-    const value = answers[exercise.id]?.trim();
-
-    if (!value) {
-      window.alert("Vul eerst een antwoord in.");
-      return;
-    }
-
-    markExerciseCompleted(exercise.id);
+  function checkCurrent() {
+    if (!exercise) return;
+    const value = (answers[exercise.id] ?? "").trim();
+    if (!value) return;
+    setAttempts((current) => ({ ...current, [exercise.id]: (current[exercise.id] ?? 0) + 1 }));
+    setChecked((current) => ({ ...current, [exercise.id]: true }));
   }
 
-  function markOpenExercise(exercise: FrenchExercise): void {
-    const value = answers[exercise.id]?.trim() ?? "";
-    const wordCount = value.split(/\s+/).filter(Boolean).length;
-
-    if (!value) {
-      window.alert("Schrijf eerst je antwoord of voorbereiding.");
-      return;
-    }
-
-    if (
-      typeof exercise.minimumWords === "number" &&
-      wordCount < exercise.minimumWords
-    ) {
-      window.alert(
-        `Schrijf nog iets meer. Je hebt ${wordCount} woorden en hebt er minstens ${exercise.minimumWords} nodig.`
-      );
-      return;
-    }
-
-    markExerciseCompleted(exercise.id);
+  function completeOpen() {
+    if (!exercise) return;
+    const value = (answers[exercise.id] ?? "").trim();
+    const words = value.split(/\s+/).filter(Boolean).length;
+    if (!value || (exercise.minimumWords && words < exercise.minimumWords)) return;
+    setChecked((current) => ({ ...current, [exercise.id]: true }));
   }
 
-  function getSectionResult(sectionId: FrenchExerciseCategory): {
-    isFinished: boolean;
-    score: number | null;
-    passed: boolean;
-  } {
-    const exercises = frenchPreparationExercises.filter(
-      (exercise) => exercise.category === sectionId
-    );
-
-    const isFinished =
-      exercises.length > 0 &&
-      exercises.every((exercise) => Boolean(checked[exercise.id]));
-
-    if (!isFinished) {
-      return {
-        isFinished: false,
-        score: null,
-        passed: false,
-      };
+  function go(offset: number) {
+    const next = sectionExercises[activeIndex + offset];
+    if (next) {
+      setActiveExerciseId(next.id);
+      setShowHint(false);
     }
-
-    const scoreable = exercises.filter((exercise) =>
-      Boolean(exercise.answer)
-    );
-
-    if (scoreable.length === 0) {
-      return {
-        isFinished: true,
-        score: 100,
-        passed: true,
-      };
-    }
-
-    const correct = scoreable.filter((exercise) =>
-      isCorrect(exercise, answers[exercise.id] ?? "")
-    ).length;
-
-    const sectionScore = Math.round(
-      (correct / scoreable.length) * 100
-    );
-
-    return {
-      isFinished: true,
-      score: sectionScore,
-      passed: sectionScore >= 75,
-    };
   }
 
-  function resetAll(): void {
-    const confirmed = window.confirm(
-      "Weet je zeker dat je alle Franse antwoorden en voortgang wilt wissen?"
-    );
+  if (!exercise) return null;
 
-    if (!confirmed) {
-      return;
-    }
-
-    window.speechSynthesis?.cancel();
-    window.localStorage.removeItem(STORAGE_KEY);
-
-    for (let index = window.localStorage.length - 1; index >= 0; index -= 1) {
-      const key = window.localStorage.key(index);
-
-      if (
-        key?.startsWith("studiosago:frans-spreken:") ||
-        key?.startsWith("studiosago:frans-schrijven:")
-      ) {
-        window.localStorage.removeItem(key);
-      }
-    }
-
-    setAnswers({});
-    setChecked({});
-    setShowExamples({});
-    setActiveSection(DEFAULT_SECTION);
-  }
+  const value = answers[exercise.id] ?? "";
+  const hasBeenChecked = Boolean(checked[exercise.id]);
+  const correct = hasBeenChecked && (!exercise.answer || isCorrect(exercise, value));
+  const attemptCount = attempts[exercise.id] ?? 0;
 
   return (
     <main className={styles.page}>
       <section className={styles.hero}>
         <div>
           <p className={styles.eyebrow}>Klaar voor de sprong</p>
-          <h1>Voorbereiding Frans voor het middelbaar</h1>
-          <p className={styles.intro}>
-            Oefen de basis uit het vijfde en zesde leerjaar. Je werkt aan
-            woordenschat, grammatica, cultuur, lezen, luisteren, schrijven
-            en spreken.
-          </p>
+          <h1>Frans voor de stap naar het middelbaar</h1>
+          <p className={styles.intro}>Een rustige, doelgerichte voorbereiding met basiswoordenschat, grammatica, lezen, luisteren, schrijven, spreken en kennis van de Franstalige wereld.</p>
         </div>
-
-        <div className={styles.scoreCard}>
-          <span>Voortgang</span>
-          <strong>{progress}%</strong>
-
-          <div
-            className={styles.progressTrack}
-            role="progressbar"
-            aria-label="Algemene voortgang"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={progress}
-          >
-            <div
-              className={styles.progressFill}
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-
-          <small>
-            {completed} van {total} oefeningen afgewerkt
-          </small>
-        </div>
+        <aside className={styles.readinessCard}>
+          <span>Jouw groeifase</span>
+          <strong>{readiness}</strong>
+          <small>{completed} van {frenchPreparationExercises.length} oefeningen verkend</small>
+        </aside>
       </section>
 
-      <section className={styles.goalGrid}>
-        <article>
-          <span>Doel</span>
-          <strong>Minstens 75%</strong>
-          <p>
-            Je score wordt berekend op de oefeningen met een vast antwoord.
-          </p>
-        </article>
-
-        <article>
-          <span>Jouw score</span>
-          <strong>{score}%</strong>
-          <p>
-            {checkedScoreableExercises.length} controleerbare oefeningen
-            nagekeken.
-          </p>
-        </article>
-
-        <article>
-          <span>Niveau</span>
-          <strong>5e en 6e leerjaar</strong>
-          <p>
-            Een rustige voorbereiding op Frans in het eerste middelbaar.
-          </p>
-        </article>
+      <section className={styles.overviewStrip}>
+        <article><span>Focus</span><strong>Praktische basis</strong><p>Wat je nodig hebt om in het eerste middelbaar mee te kunnen.</p></article>
+        <article><span>Opbouw</span><strong>Van herkennen naar toepassen</strong><p>De oefeningen worden geleidelijk complexer.</p></article>
+        <article><span>Feedback</span><strong>Eerst denken, dan helpen</strong><p>Een oplossing verschijnt niet meteen bij een fout antwoord.</p></article>
       </section>
 
-      <FrenchCertificateSync
-        completedExercises={completed}
-        totalExercises={total}
-        score={score}
-      />
-
-      <nav className={styles.tabs} aria-label="Onderwerpen Frans">
+      <nav className={styles.sectionGrid} aria-label="Onderdelen Frans">
         {frenchPreparationSections.map((section) => {
-          const result = getSectionResult(section.id);
-          const isActive = activeSection === section.id;
-
-          const tabClassName = [
-            styles.tab,
-            isActive && !result.isFinished ? styles.activeTab : "",
-            result.isFinished && result.passed
-              ? styles.completedPassed
-              : "",
-            result.isFinished && !result.passed
-              ? styles.completedFailed
-              : "",
-            isActive && result.isFinished
-              ? styles.activeCompletedTab
-              : "",
-          ]
-            .filter(Boolean)
-            .join(" ");
-
+          const items = frenchPreparationExercises.filter((item) => item.category === section.id);
+          const done = items.filter((item) => checked[item.id]).length;
           return (
-            <button
-              key={section.id}
-              type="button"
-              className={tabClassName}
-              aria-pressed={isActive}
-              onClick={() => setActiveSection(section.id)}
-            >
-              <span className={styles.tabTitleRow}>
-                <strong>{section.title}</strong>
-
-                {result.isFinished && (
-                  <span className={styles.sectionResult}>
-                    {result.score}%
-                  </span>
-                )}
-              </span>
-
-              <span className={styles.tabDescription}>
-                {section.description}
-              </span>
-
-              {result.isFinished && (
-                <span className={styles.sectionStatus}>
-                  {result.passed ? "Behaald" : "Opnieuw oefenen"}
-                </span>
-              )}
+            <button key={section.id} type="button" className={activeSection === section.id ? styles.activeSection : styles.sectionCard} onClick={() => chooseSection(section.id)}>
+              <span className={styles.sectionIcon}><Icon name={section.icon} /></span>
+              <span className={styles.sectionCopy}><strong>{section.title}</strong><small>{section.description}</small><em>{done} van {items.length} verkend</em></span>
             </button>
           );
         })}
       </nav>
 
-      <section className={styles.exerciseList}>
-        {sectionExercises.map((exercise, index) => {
-          const value = answers[exercise.id] ?? "";
-          const hasBeenChecked = Boolean(checked[exercise.id]);
-          const correct = hasBeenChecked && isCorrect(exercise, value);
-          const isOpen = exercise.type === "open";
+      <section className={styles.workspace}>
+        <aside className={styles.exerciseRail}>
+          <p className={styles.railLabel}>{frenchPreparationSections.find((item) => item.id === activeSection)?.title}</p>
+          {sectionExercises.map((item, index) => (
+            <button key={item.id} type="button" className={item.id === exercise.id ? styles.activeExerciseButton : styles.exerciseButton} onClick={() => { setActiveExerciseId(item.id); setShowHint(false); }}>
+              <span>{index + 1}</span>
+              <div><strong>{item.title}</strong><small>Niveau {item.difficulty} · {checked[item.id] ? "verkend" : "nog te ontdekken"}</small></div>
+            </button>
+          ))}
+        </aside>
 
-          return (
-            <article className={styles.exerciseCard} key={exercise.id}>
-              <div className={styles.number}>{index + 1}</div>
+        <article className={styles.exercisePanel}>
+          <header className={styles.exerciseHeader}>
+            <div><span className={styles.goalBadge}>{exercise.learningGoal}</span><p>Oefening {activeIndex + 1} van {sectionExercises.length}</p></div>
+            <span className={styles.difficultyBadge}>Niveau {exercise.difficulty}</span>
+          </header>
 
-              <div className={styles.exerciseContent}>
-                <div className={styles.exerciseHeader}>
-                  <div>
-                    <span className={styles.category}>
-                      {exercise.category}
-                    </span>
-                    <h2>{exercise.title}</h2>
-                  </div>
+          <h2>{exercise.title}</h2>
+          <p className={styles.instruction}>{exercise.instruction}</p>
 
-                  {hasBeenChecked && (
-                    <span
-                      className={
-                        isOpen || correct
-                          ? styles.correctBadge
-                          : styles.wrongBadge
-                      }
-                    >
-                      {isOpen
-                        ? "Afgewerkt"
-                        : correct
-                          ? "Juist"
-                          : "Nog eens proberen"}
-                    </span>
-                  )}
-                </div>
+          {exercise.type === "listening" && exercise.audioText && (
+            <button className={styles.listenButton} type="button" onClick={() => speakFrench(exercise.audioText ?? "", exercise.audioSpeaker)}><Icon name="headphones" /> Luister opnieuw</button>
+          )}
 
-                <p className={styles.instruction}>
-                  {exercise.instruction}
-                </p>
+          {exercise.category === "spreken" ? (
+            <FrenchSpeakingRecorder exerciseId={exercise.id} value={value} minimumWords={exercise.minimumWords} onTranscriptChange={updateAnswer} onCompleted={() => setChecked((c) => ({ ...c, [exercise.id]: true }))} />
+          ) : exercise.category === "schrijven" ? (
+            <><textarea className={styles.textarea} value={value} onChange={(e) => updateAnswer(e.target.value)} placeholder="Schrijf hier je Franse tekst..." rows={7}/><FrenchWritingChecker exerciseId={exercise.id} value={value} minimumWords={exercise.minimumWords} onValueChange={updateAnswer} onCompleted={() => setChecked((c) => ({ ...c, [exercise.id]: true }))}/></>
+          ) : exercise.options ? (
+            <div className={styles.options}>{exercise.options.map((option, index) => <label className={value === option ? styles.selectedOption : styles.option} key={option}><input type="radio" name={exercise.id} value={option} checked={value === option} onChange={(e) => updateAnswer(e.target.value)}/><span className={styles.optionLetter}>{String.fromCharCode(65 + index)}</span><span>{option}</span></label>)}</div>
+          ) : exercise.type === "open" ? (
+            <textarea className={styles.textarea} value={value} onChange={(e) => updateAnswer(e.target.value)} placeholder="Schrijf hier je antwoord..." rows={6}/>
+          ) : (
+            <input className={styles.textInput} value={value} onChange={(e) => updateAnswer(e.target.value)} placeholder="Typ je antwoord..." autoComplete="off"/>
+          )}
 
-                {exercise.type === "listening" && exercise.audioText && (
-                  <button
-                    className={styles.listenButton}
-                    type="button"
-                    onClick={() => speakFrench(exercise.audioText ?? "")}
-                  >
-                    <span aria-hidden="true">🔊</span> Luisteren
-                  </button>
-                )}
+          {exercise.hint && <div className={styles.hintWrap}><button type="button" className={styles.hintButton} onClick={() => setShowHint((v) => !v)}>{showHint ? "Verberg hint" : "Ik wil een kleine hint"}</button>{showHint && <p>{exercise.hint}</p>}</div>}
 
-                {exercise.category === "spreken" ? (
-                  <FrenchSpeakingRecorder
-                    exerciseId={exercise.id}
-                    value={value}
-                    minimumWords={exercise.minimumWords}
-                    onTranscriptChange={(transcript: string) =>
-                      updateAnswer(exercise.id, transcript)
-                    }
-                    onCompleted={() =>
-                      markExerciseCompleted(exercise.id)
-                    }
-                  />
-                ) : exercise.category === "schrijven" ? (
-                  <>
-                    <textarea
-                      className={styles.textarea}
-                      value={value}
-                      onChange={(event) =>
-                        updateAnswer(exercise.id, event.target.value)
-                      }
-                      placeholder="Schrijf hier je Franse tekst..."
-                      rows={6}
-                    />
+          {hasBeenChecked && exercise.answer && (
+            <div className={correct ? styles.feedbackCorrect : styles.feedbackWrong} aria-live="polite">
+              <strong>{correct ? "Goed aangepakt." : attemptCount < 2 ? "Kijk nog eens rustig naar de opdracht." : "Deze stap vraagt nog wat oefening."}</strong>
+              <p>{correct ? exercise.explanation : attemptCount < 2 ? exercise.hint : `${exercise.explanation ?? "Vergelijk je antwoord met de regel of informatie uit de opdracht."}`}</p>
+              {!correct && attemptCount >= 2 && <small>Mogelijk antwoord: {Array.isArray(exercise.answer) ? exercise.answer[0] : exercise.answer}</small>}
+            </div>
+          )}
 
-                    <FrenchWritingChecker
-                      exerciseId={exercise.id}
-                      value={value}
-                      minimumWords={exercise.minimumWords}
-                      onValueChange={(nextValue: string) =>
-                        updateAnswer(exercise.id, nextValue)
-                      }
-                      onCompleted={() =>
-                        markExerciseCompleted(exercise.id)
-                      }
-                    />
-                  </>
-                ) : exercise.options ? (
-                  <div className={styles.options}>
-                    {exercise.options.map((option) => (
-                      <label className={styles.option} key={option}>
-                        <input
-                          type="radio"
-                          name={exercise.id}
-                          value={option}
-                          checked={value === option}
-                          onChange={(event) =>
-                            updateAnswer(
-                              exercise.id,
-                              event.target.value
-                            )
-                          }
-                        />
-                        <span>{option}</span>
-                      </label>
-                    ))}
-                  </div>
-                ) : isOpen ? (
-                  <textarea
-                    className={styles.textarea}
-                    value={value}
-                    onChange={(event) =>
-                      updateAnswer(exercise.id, event.target.value)
-                    }
-                    placeholder="Schrijf hier je voorbereiding of antwoord..."
-                    rows={6}
-                  />
-                ) : (
-                  <input
-                    className={styles.textInput}
-                    value={value}
-                    onChange={(event) =>
-                      updateAnswer(exercise.id, event.target.value)
-                    }
-                    placeholder="Typ je antwoord..."
-                    autoComplete="off"
-                  />
-                )}
-
-                <div className={styles.actions}>
-                  {exercise.category !== "spreken" &&
-                    exercise.category !== "schrijven" && (
-                      <button
-                        type="button"
-                        className={styles.checkButton}
-                        onClick={() =>
-                          isOpen
-                            ? markOpenExercise(exercise)
-                            : checkExercise(exercise)
-                        }
-                      >
-                        {isOpen
-                          ? "Markeer als afgewerkt"
-                          : "Controleer"}
-                      </button>
-                    )}
-
-                  {exercise.example && (
-                    <button
-                      type="button"
-                      className={styles.exampleButton}
-                      onClick={() =>
-                        setShowExamples((current) => ({
-                          ...current,
-                          [exercise.id]: !current[exercise.id],
-                        }))
-                      }
-                    >
-                      {showExamples[exercise.id]
-                        ? "Verberg voorbeeld"
-                        : "Toon voorbeeld"}
-                    </button>
-                  )}
-                </div>
-
-                {showExamples[exercise.id] && exercise.example && (
-                  <div className={styles.exampleBox}>
-                    <strong>Voorbeeld</strong>
-                    <p>{exercise.example}</p>
-                  </div>
-                )}
-
-                {hasBeenChecked && !isOpen && (
-                  <div
-                    className={
-                      correct
-                        ? styles.feedbackCorrect
-                        : styles.feedbackWrong
-                    }
-                    aria-live="polite"
-                  >
-                    <strong>
-                      {correct
-                        ? "Goed gedaan!"
-                        : `Het juiste antwoord is: ${
-                            Array.isArray(exercise.answer)
-                              ? exercise.answer[0]
-                              : exercise.answer
-                          }`}
-                    </strong>
-
-                    {exercise.explanation && (
-                      <p>{exercise.explanation}</p>
-                    )}
-                  </div>
-                )}
-              </div>
-            </article>
-          );
-        })}
+          <footer className={styles.exerciseActions}>
+            <button type="button" className={styles.secondaryButton} disabled={activeIndex === 0} onClick={() => go(-1)}>← Vorige</button>
+            {exercise.category !== "spreken" && exercise.category !== "schrijven" && <button type="button" className={styles.primaryButton} disabled={!value.trim()} onClick={exercise.type === "open" ? completeOpen : checkCurrent}>{exercise.type === "open" ? "Markeer als verkend" : "Kijk mijn antwoord na"}</button>}
+            <button type="button" className={styles.secondaryButton} disabled={activeIndex === sectionExercises.length - 1} onClick={() => go(1)}>Volgende →</button>
+          </footer>
+        </article>
       </section>
 
       <section className={styles.footerCard}>
-        <div>
-          <p className={styles.eyebrow}>Resultaat</p>
-          <h2>
-            {score >= 75
-              ? "Je bent goed op weg naar het middelbaar!"
-              : "Blijf rustig verder oefenen."}
-          </h2>
-          <p>
-            Werk ook de spreek- en schrijfoefeningen af. Die tellen niet
-            mee in de automatische totaalscore, maar zijn belangrijk voor
-            een sterke start.
-          </p>
-        </div>
-
-        <div className={styles.footerActions}>
-          <Link
-            className={styles.backToExercisesButton}
-            href="/oefenen/middelbaar/eerste"
-          >
-            ← Terug naar de andere oefeningen
-          </Link>
-
-          <button
-            type="button"
-            className={styles.resetButton}
-            onClick={resetAll}
-          >
-            Alles opnieuw starten
-          </button>
-        </div>
+        <div><p className={styles.eyebrow}>Volgende stap</p><h2>Oefen breed, niet alleen snel.</h2><p>Een sterke start in het middelbaar vraagt dat je woorden begrijpt, zinnen kunt bouwen én durft luisteren, schrijven en spreken.</p></div>
+        <Link className={styles.backButton} href="/oefenen/middelbaar/eerste">Terug naar alle oefeningen</Link>
       </section>
     </main>
   );

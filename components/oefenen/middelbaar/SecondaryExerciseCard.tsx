@@ -2,255 +2,165 @@
 
 import { useMemo } from "react";
 import type { SecondaryExercise } from "@/lib/oefeningen/middelbaar/types";
+import { getSecondaryAnswerExamples } from "@/lib/oefeningen/middelbaar/utils";
 
 type Props = {
   exercise: SecondaryExercise;
-  index: number;
+  position: number;
+  total: number;
   value: string;
   checked: boolean;
   correct: boolean;
+  attempts: number;
   onChange: (id: string, value: string) => void;
+  onCheck: () => void;
+  onPrevious: () => void;
+  onNext: () => void;
 };
 
-function createSeed(text: string) {
+function seed(text: string) {
   let hash = 0;
-
-  for (let index = 0; index < text.length; index += 1) {
-    hash = (hash * 31 + text.charCodeAt(index)) >>> 0;
-  }
-
+  for (const character of text) hash = (hash * 31 + character.charCodeAt(0)) >>> 0;
   return hash;
 }
 
-function shuffleStable<T>(
-  values: readonly T[],
-  seedText: string
-): T[] {
-  const shuffled = [...values];
-  let seed = createSeed(seedText);
+function shuffle<T>(values: readonly T[], text: string) {
+  const result = [...values];
+  let state = seed(text);
 
-  function random() {
-    seed = (seed * 1664525 + 1013904223) >>> 0;
-    return seed / 4294967296;
+  for (let index = result.length - 1; index > 0; index -= 1) {
+    state = (state * 1664525 + 1013904223) >>> 0;
+    const swapIndex = Math.floor((state / 4294967296) * (index + 1));
+    [result[index], result[swapIndex]] = [result[swapIndex], result[index]];
   }
 
-  for (
-    let currentIndex = shuffled.length - 1;
-    currentIndex > 0;
-    currentIndex -= 1
-  ) {
-    const randomIndex = Math.floor(
-      random() * (currentIndex + 1)
-    );
-
-    [shuffled[currentIndex], shuffled[randomIndex]] = [
-      shuffled[randomIndex],
-      shuffled[currentIndex],
-    ];
-  }
-
-  return shuffled;
+  return result;
 }
 
 export default function SecondaryExerciseCard({
   exercise,
-  index,
+  position,
+  total,
   value,
   checked,
   correct,
+  attempts,
   onChange,
+  onCheck,
+  onPrevious,
+  onNext,
 }: Props) {
-  const correctAnswer = Array.isArray(exercise.answer)
-    ? exercise.answer[0]
-    : exercise.answer;
+  const options = useMemo(
+    () =>
+      exercise.options?.length
+        ? shuffle(exercise.options, exercise.id + exercise.question)
+        : [],
+    [exercise.id, exercise.options, exercise.question],
+  );
 
-  const acceptedAnswers = Array.isArray(exercise.answer)
-    ? exercise.answer
-    : [exercise.answer];
-
-  const hasOptions =
-    Array.isArray(exercise.options) &&
-    exercise.options.length > 0;
-
-  const shuffledOptions = useMemo(() => {
-    if (!exercise.options?.length) {
-      return [];
-    }
-
-    return shuffleStable(
-      exercise.options,
-      `${exercise.id}-${exercise.question}`
-    );
-  }, [
-    exercise.id,
-    exercise.options,
-    exercise.question,
-  ]);
+  const revealAnswer = checked && !correct && attempts >= 2;
+  const examples = getSecondaryAnswerExamples(exercise.answer);
 
   return (
-    <article
-      className={[
-        "exercise-card",
-        hasOptions ? "exercise-card-choice" : "",
-        checked
-          ? correct
-            ? "correct"
-            : "wrong"
-          : "",
-      ]
-        .filter(Boolean)
-        .join(" ")}
-    >
-      <div className="exercise-header">
-        <p className="exercise-number">
-          Oefening {index + 1}
-        </p>
+    <article className={`single-exercise-card ${checked ? (correct ? "correct" : "wrong") : ""}`}>
+      <header className="single-exercise-header">
+        <div>
+          <span className="goal-badge">Doel {exercise.goalId || "1A-B"}</span>
+          <p className="exercise-step">Oefening {position + 1} van {total}</p>
+        </div>
+        <span className="skill-chip">{exercise.category}</span>
+      </header>
 
-        {hasOptions && (
-          <span className="exercise-badge">
-            Meerkeuze
-          </span>
-        )}
+      <div className="curriculum-goal">
+        <small>Ik leer</small>
+        <p>{exercise.goalText || exercise.category}</p>
       </div>
 
-      <h3 className="exercise-question">
-        {exercise.question}
-      </h3>
+      <h2>{exercise.question}</h2>
 
-      {hasOptions ? (
-        <div
-          className="exercise-options"
-          role="radiogroup"
-          aria-label={`Antwoord op oefening ${
-            index + 1
-          }`}
-        >
-          {shuffledOptions.map(
-            (option, optionIndex) => {
-              const selected = value === option;
-              const optionCorrect =
-                acceptedAnswers.includes(option);
-
-              const optionClassName = [
-                "exercise-option",
-                selected ? "selected" : "",
-                checked && optionCorrect
-                  ? "option-correct"
-                  : "",
-                checked &&
-                selected &&
-                !optionCorrect
-                  ? "option-wrong"
-                  : "",
-              ]
-                .filter(Boolean)
-                .join(" ");
-
-              return (
-                <button
-                  key={`${exercise.id}-${option}`}
-                  type="button"
-                  disabled={checked}
-                  role="radio"
-                  aria-checked={selected}
-                  aria-label={`Optie ${String.fromCharCode(
-                    65 + optionIndex
-                  )}: ${option}`}
-                  onClick={() =>
-                    onChange(
-                      exercise.id,
-                      option
-                    )
-                  }
-                  className={optionClassName}
-                >
-                  <span
-                    className="exercise-option-letter"
-                    aria-hidden="true"
-                  >
-                    {String.fromCharCode(
-                      65 + optionIndex
-                    )}
-                  </span>
-
-                  <span className="exercise-option-text">
-                    {option}
-                  </span>
-
-                  <span
-                    className="exercise-option-status"
-                    aria-hidden="true"
-                  >
-                    {checked && optionCorrect
-                      ? "✓"
-                      : checked &&
-                          selected &&
-                          !optionCorrect
-                        ? "×"
-                        : selected
-                          ? "✓"
-                          : ""}
-                  </span>
-                </button>
-              );
-            }
-          )}
+      {options.length ? (
+        <div className="secondary-option-grid" role="radiogroup" aria-label="Kies een antwoord">
+          {options.map((option, index) => (
+            <button
+              key={option}
+              type="button"
+              className={`secondary-option ${value === option ? "selected" : ""}`}
+              onClick={() => onChange(exercise.id, option)}
+              role="radio"
+              aria-checked={value === option}
+            >
+              <span>{String.fromCharCode(65 + index)}</span>
+              {option}
+            </button>
+          ))}
         </div>
       ) : (
-        <input
-          className="exercise-answer-input"
-          aria-label={`Antwoord op oefening ${
-            index + 1
-          }`}
-          autoComplete="off"
-          disabled={checked}
-          onChange={(event) =>
-            onChange(
-              exercise.id,
-              event.target.value
-            )
-          }
-          placeholder="Typ je antwoord..."
-          type="text"
-          value={value}
-        />
+        <label className="answer-field">
+          <span>Mijn antwoord</span>
+          <input
+            value={value}
+            onChange={(event) => onChange(exercise.id, event.target.value)}
+            placeholder="Typ je antwoord…"
+            onKeyDown={(event) => {
+              if (event.key === "Enter") onCheck();
+            }}
+            autoFocus
+          />
+        </label>
       )}
 
-      {checked && (
+      {exercise.hint ? (
+        <details className="hint-box">
+          <summary>Ik wil een hint</summary>
+          <p>{exercise.hint}</p>
+        </details>
+      ) : null}
+
+      {checked ? (
         <div
-          className={[
-            "exercise-feedback",
-            correct
-              ? "feedback-correct"
-              : "feedback-wrong",
-          ].join(" ")}
+          className={`formative-feedback ${correct ? "is-correct" : "needs-growth"}`}
+          role="status"
         >
-          <span
-            className="feedback-icon"
-            aria-hidden="true"
-          >
-            {correct ? "✓" : "!"}
-          </span>
+          <strong>
+            {correct
+              ? "Goed beredeneerd!"
+              : attempts < 2
+                ? "Nog niet helemaal. Probeer opnieuw."
+                : "We bekijken mogelijke antwoorden."}
+          </strong>
 
-          <div className="exercise-feedback-content">
-            <strong>
-              {correct
-                ? "Juist! Goed gedaan."
-                : "Nog niet juist."}
-            </strong>
-
-            {!correct && (
+          {correct ? (
+            <p>Je antwoord wordt aanvaard. Een gelijkwaardige formulering of notatie mag anders geschreven zijn.</p>
+          ) : revealAnswer ? (
+            <div>
+              <p>Een passend antwoord kan op verschillende manieren geformuleerd worden.</p>
               <p>
-                Correct antwoord:
-                <br />
-                <strong>
-                  {correctAnswer}
-                </strong>
+                <strong>{examples.length > 1 ? "Mogelijke antwoorden:" : "Een mogelijk antwoord:"}</strong>{" "}
+                {examples.join(" · ")}
               </p>
-            )}
-          </div>
+            </div>
+          ) : (
+            <p>Herlees de opdracht, gebruik de hint en probeer een andere aanpak. De oplossing blijft nog verborgen.</p>
+          )}
         </div>
-      )}
+      ) : null}
+
+      <div className="exercise-navigation">
+        <button type="button" onClick={onPrevious} disabled={position === 0}>
+          ← Vorige
+        </button>
+        <button
+          type="button"
+          className="check-answer-button"
+          onClick={onCheck}
+          disabled={!value.trim()}
+        >
+          Kijk mijn antwoord na
+        </button>
+        <button type="button" onClick={onNext} disabled={position === total - 1}>
+          Volgende →
+        </button>
+      </div>
     </article>
   );
 }

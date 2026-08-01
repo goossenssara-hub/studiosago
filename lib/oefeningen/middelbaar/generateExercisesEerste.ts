@@ -22,6 +22,7 @@ import { generateTaalbeschouwing } from "./generators/taalbeschouwing";
 import { generateSamenvatten } from "./generators/samenvatten";
 import { generateOpdrachten } from "./generators/opdrachten";
 import { generateLerenLeren } from "./generators/lerenLeren";
+import { SECONDARY_GOALS } from "../curriculumGoals";
 
 export type ExerciseGenerationOptions = AdaptiveSelectionOptions;
 
@@ -42,9 +43,17 @@ function makeExercises(
   seed: number,
   inputs: ExerciseInput[]
 ): SecondaryExercise[] {
+  const curriculum = SECONDARY_GOALS[skill] ?? { code: "1A-B", text: "Ik pas kennis en vaardigheden toe in een betekenisvolle oefening." };
   return inputs.map((exercise, index) => ({
     ...exercise,
     id: `${skill}-niveau-${requestedLevel}-${seed}-${index + 1}`,
+    goalId: curriculum.code,
+    goalText: curriculum.text,
+    hint: requestedLevel <= 3
+      ? "Noteer eerst wat je weet en kies daarna een passende strategie."
+      : requestedLevel <= 7
+        ? "Werk in tussenstappen en controleer of je resultaat logisch is."
+        : "Vergelijk mogelijke strategieën en motiveer waarom jouw aanpak past.",
   }));
 }
 

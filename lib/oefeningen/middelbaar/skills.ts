@@ -14,7 +14,7 @@ export const firstSecondarySkills: SkillConfig[] = [
     title: "Vraagstukken begrijpen",
     description:
       "Leer de vraag ontleden, belangrijke gegevens aanduiden en de juiste bewerking kiezen.",
-    icon: "🧠",
+    icon: "◇",
     focus: [
       "Wat weet ik?",
       "Wat zoek ik?",
@@ -28,7 +28,7 @@ export const firstSecondarySkills: SkillConfig[] = [
     title: "Hoofdrekenen",
     description:
       "Oefen optellen, aftrekken, vermenigvuldigen en delen zonder rekenmachine.",
-    icon: "➗",
+    icon: "∑",
     focus: ["Rekenvolgorde", "Schatten", "Handige rekenstrategieën"],
   },
   {
@@ -55,7 +55,7 @@ export const firstSecondarySkills: SkillConfig[] = [
     title: "Meetkunde",
     description:
       "Oefen omtrek, oppervlakte, hoeken en ruimtelijk inzicht.",
-    icon: "📐",
+    icon: "△",
     focus: ["Omtrek", "Oppervlakte", "Hoeken"],
   },
   {
@@ -64,7 +64,7 @@ export const firstSecondarySkills: SkillConfig[] = [
     title: "Tabellen en grafieken",
     description:
       "Lees gegevens correct af en trek besluiten uit tabellen en grafieken.",
-    icon: "📊",
+    icon: "▥",
     focus: ["Aflezen", "Vergelijken", "Besluiten"],
   },
   {
@@ -73,7 +73,7 @@ export const firstSecondarySkills: SkillConfig[] = [
     title: "Opdrachten begrijpen",
     description:
       "Herken instructiewoorden en formuleer in eigen woorden wat je moet doen.",
-    icon: "🔎",
+    icon: "⌕",
     focus: ["Instructiewoorden", "Sleutelwoorden", "Vraag herformuleren"],
   },
   {
@@ -82,7 +82,7 @@ export const firstSecondarySkills: SkillConfig[] = [
     title: "Begrijpend lezen",
     description:
       "Zoek hoofdgedachten, verwijswoorden, tekstverbanden en bewijzen in een tekst.",
-    icon: "📖",
+    icon: "Aa",
     focus: ["Hoofdgedachte", "Tekstverband", "Bewijszin"],
   },
   {
@@ -91,7 +91,7 @@ export const firstSecondarySkills: SkillConfig[] = [
     title: "Woordenschat en schooltaal",
     description:
       "Oefen woorden die vaak voorkomen in toetsen, opdrachten en schoolboeken.",
-    icon: "💬",
+    icon: "abc",
     focus: ["Schooltaal", "Synoniemen", "Betekenis uit context"],
   },
   {
@@ -100,7 +100,7 @@ export const firstSecondarySkills: SkillConfig[] = [
     title: "Spelling",
     description:
       "Herhaal werkwoordspelling, leestekens en vaak voorkomende spellingregels.",
-    icon: "✍️",
+    icon: "✎",
     focus: ["Werkwoorden", "Leestekens", "Moeilijke woorden"],
   },
   {
@@ -109,7 +109,7 @@ export const firstSecondarySkills: SkillConfig[] = [
     title: "Taalbeschouwing",
     description:
       "Oefen persoonsvorm, onderwerp, woordsoorten en zinsdelen.",
-    icon: "🧩",
+    icon: "{ }",
     focus: ["Persoonsvorm", "Onderwerp", "Woordsoorten"],
   },
   {
@@ -118,7 +118,7 @@ export const firstSecondarySkills: SkillConfig[] = [
     title: "Samenvatten en structureren",
     description:
       "Haal kernwoorden uit een tekst en bouw een duidelijke samenvatting op.",
-    icon: "📝",
+    icon: "≡",
     focus: ["Kernwoorden", "Hoofd- en bijzaken", "Schema"],
   },
   {
@@ -127,7 +127,7 @@ export const firstSecondarySkills: SkillConfig[] = [
     title: "Plannen en studeren",
     description:
       "Leer taken opdelen, prioriteiten bepalen en je werk controleren.",
-    icon: "🗓️",
+    icon: "✓",
     focus: ["Plannen", "Prioriteiten", "Zelfcontrole"],
   },
 ];

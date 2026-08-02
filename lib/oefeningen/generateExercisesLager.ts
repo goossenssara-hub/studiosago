@@ -173,7 +173,7 @@ export function generateExercisesLager(grade: Grade, level: number, seed = Date.
     3: [["bom", "bommen"], ["boot", "boten"], ["stad", "steden"], ["brief", "brieven"]],
     4: [["gebeuren", "gebeurt"], ["worden", "wordt"], ["antwoorden", "antwoordt"], ["vinden", "vindt"]],
     5: [["verhuizen", "verhuist"], ["beloven", "belooft"], ["gebeuren", "gebeurt"], ["bedoelen", "bedoelt"]],
-    6: [["beantwoorden", "beantwoordt"], ["veranderen", "verandert"], ["gebeuren", "gebeurt"], ["worden", "wordt"]],
+    6: [["beantwoorden", "beantwoordt"], ["veranderen", "verandert"], ["ontdekken", "ontdekt"], ["gebeuren", "gebeurt"], ["worden", "wordt"], ["bedoelen", "bedoelt"]],
   };
 
   for (let i = 0; i < 4; i += 1) {
@@ -195,45 +195,65 @@ export function generateExercisesLager(grade: Grade, level: number, seed = Date.
     ["Noor neemt een paraplu mee omdat het regent.", "Waarom neemt Noor een paraplu mee?", ["omdat het regent", "het regent"]],
     ["De klas vertrekt vroeger zodat ze op tijd bij het museum aankomt.", "Waarom vertrekt de klas vroeger?", ["om op tijd bij het museum aan te komen", "zodat ze op tijd aankomt"]],
     ["De gemeente plant extra bomen om meer schaduw te creëren.", "Wat is het doel van de extra bomen?", ["meer schaduw", "om meer schaduw te creëren"]],
+    ["Amir controleert zijn planning voor hij aan zijn huiswerk begint.", "Wat doet Amir vóór zijn huiswerk?", ["hij controleert zijn planning", "zijn planning controleren"]],
+    ["Lotte zet haar fietslicht aan, want het begint donker te worden.", "Waarom zet Lotte haar fietslicht aan?", ["omdat het donker wordt", "het wordt donker"]],
+    ["De leerlingen vergelijken twee bronnen om te controleren welke informatie betrouwbaar is.", "Waarom vergelijken de leerlingen twee bronnen?", ["om de betrouwbaarheid te controleren", "om te controleren welke informatie betrouwbaar is"]],
+    ["De bakker weegt alle ingrediënten zorgvuldig af zodat het deeg goed lukt.", "Waarom weegt de bakker de ingrediënten af?", ["zodat het deeg goed lukt", "om het deeg te laten lukken"]],
+    ["Sara maakt eerst een schets voordat ze aan haar schilderij begint.", "Wat doet Sara eerst?", ["ze maakt een schets", "een schets maken"]],
+    ["De trein had vertraging door een technisch probleem aan het spoor.", "Waardoor had de trein vertraging?", ["door een technisch probleem", "een technisch probleem aan het spoor"]],
+    ["De buurt organiseert een opruimactie om het park netjes te houden.", "Wat is het doel van de opruimactie?", ["het park netjes houden", "om het park netjes te houden"]],
+    ["Mila trekt haar jas aan omdat het koud is.", "Waarom trekt Mila haar jas aan?", ["omdat het koud is", "het is koud"]],
+    ["De onderzoeker noteert haar waarnemingen onmiddellijk, zodat ze geen details vergeet.", "Waarom noteert de onderzoeker haar waarnemingen onmiddellijk?", ["zodat ze geen details vergeet", "om geen details te vergeten"]],
   ] as const;
-  for (let i = 0; i < 3; i += 1) {
-    const [text, question, answers] = readingTexts[(i + grade) % readingTexts.length];
+  shuffle(random, [...readingTexts]).slice(0, 3).forEach(([text, question, accepted], index) => {
     add(
       "Taal",
       "Begrijpend lezen",
-      `TAAL-${grade}-LEZ-${String(i + 1).padStart(2, "0")}`,
-      "Ik vind informatie in een korte tekst en leg een verband uit.",
+      `TAAL-${grade}-LEZ-${String(index + 1).padStart(2, "0")}`,
+      "Ik vind informatie in een tekst en leg verbanden uit.",
       `${text} ${question}`,
-      [...answers],
-      "Zoek in de zin naar een signaalwoord zoals omdat, zodat of om. Lees daarna het deel erna opnieuw."
+      [...accepted],
+      "Zoek het stukje van de zin dat de reden, het doel of de volgorde uitlegt. Formuleer dat in je eigen woorden."
     );
-  }
+  });
 
-  const sentences = [
-    "De kinderen spelen buiten.",
-    "Morgen bezoekt de klas het museum.",
-    "Mijn broer maakt een grote tekening.",
-  ];
-  for (let i = 0; i < 3; i += 1) {
-    const sentence = sentences[i];
-    const pv = ["spelen", "bezoekt", "maakt"][i];
+  const sentenceBank = [
+    ["De kinderen spelen buiten.", "spelen"],
+    ["Morgen bezoekt de klas het museum.", "bezoekt"],
+    ["Mijn broer maakt een grote tekening.", "maakt"],
+    ["De buurvrouw verzorgt elke ochtend haar planten.", "verzorgt"],
+    ["Na de pauze leest de leerkracht een verhaal voor.", "leest"],
+    ["Gisteren vonden de wandelaars een kortere route.", "vonden"],
+    ["Op het plein wacht een groep leerlingen op de bus.", "wacht"],
+    ["De nieuwe computer start opvallend snel op.", "start"],
+    ["Tijdens de proef noteerden we alle veranderingen.", "noteerden"],
+    ["Volgende week organiseert de school een boekenbeurs.", "organiseert"],
+  ] as const;
+  shuffle(random, [...sentenceBank]).slice(0, 3).forEach(([sentence, pv], index) => {
+    if (grade <= 2) {
+      const word = pick(random, ["school", "boek", "tafel", "maan", "vis", "raam", "boom"] as const);
+      add(
+        "Taal",
+        "Taalbeschouwing",
+        `TAAL-${grade}-TB-${String(index + 1).padStart(2, "0")}`,
+        "Ik herken letters, woorden en zinnen.",
+        `Met welke letter begint het woord ${word}?`,
+        word[0],
+        "Zeg het woord langzaam en luister naar de eerste klank."
+      );
+      return;
+    }
+
     add(
       "Taal",
       "Taalbeschouwing",
-      `TAAL-${grade}-TB-${String(i + 1).padStart(2, "0")}`,
-      grade <= 2 ? "Ik herken letters, woorden en zinnen." : "Ik vind de persoonsvorm met de ja-neevraag.",
-      grade <= 2 ? `Met welke letter begint het woord ${pick(random, ["school", "boek", "tafel"])}?` : `Wat is de persoonsvorm in de zin: ${sentence}`,
-      grade <= 2 ? ["s", "b", "t"] : [pv],
-      grade <= 2
-        ? "Spreek het woord traag uit en luister naar de eerste klank."
-        : `Maak een ja-neevraag van de zin. Het werkwoord dat vooraan komt, is de persoonsvorm.`
+      `TAAL-${grade}-TB-${String(index + 1).padStart(2, "0")}`,
+      "Ik vind de persoonsvorm met de ja-neevraag.",
+      `Wat is de persoonsvorm in de zin: ${sentence}`,
+      pv,
+      `Maak van de zin een ja-neevraag. Het werkwoord dat vooraan komt te staan, is de persoonsvorm.`
     );
-    if (grade <= 2) {
-      const last = exercises[exercises.length - 1];
-      const word = last.question.split(" ").at(-1)?.replace("?", "") || "school";
-      last.answer = word[0];
-    }
-  }
+  });
 
   for (let i = 0; i < 2; i += 1) {
     const words = grade <= 2 ? ["zon", "maan", "ster"] : ["rustig", "zorgvuldig", "duidelijk"];
@@ -280,27 +300,42 @@ export function generateExercisesLager(grade: Grade, level: number, seed = Date.
       ["In welke eeuw ligt het jaar 1789?", ["18e eeuw", "achttiende eeuw", "18"], "Tijd", "Ik plaats een jaartal in de juiste eeuw.", "De jaren 1701 tot en met 1800 vormen dezelfde eeuw."],
       ["Welke schaal geeft aan hoeveel kleiner een kaart is dan de werkelijkheid?", ["kaartschaal", "schaal"], "Ruimte", "Ik begrijp het doel van een kaartschaal.", "Je vindt dit vaak onderaan een kaart als verhouding."],
       ["Waarom is recycleren belangrijk?", ["minder afval", "grondstoffen besparen", "hergebruik van grondstoffen"], "Maatschappij", "Ik leg het belang van duurzaam omgaan met grondstoffen uit.", "Denk aan afval én het opnieuw gebruiken van materialen."],
+      ["Welke laag van de aarde bestaat uit vast gesteente waarop wij leven?", ["aardkorst", "de aardkorst"], "Ruimte", "Ik herken de opbouw van de aarde in grote lijnen.", "Denk aan de buitenste laag van de aarde."],
+      ["Welke organen nemen zuurstof op uit de lucht?", ["longen", "de longen"], "Mens", "Ik leg een basisfunctie van het ademhalingsstelsel uit.", "Ze bevinden zich in je borstkas."],
+      ["Wat is een belangrijke taak van de gemeenteraad?", ["beslissingen nemen voor de gemeente", "gemeentelijke beslissingen nemen", "het bestuur van de gemeente controleren"], "Maatschappij", "Ik herken taken van het lokale bestuur.", "Denk aan regels en beslissingen voor de gemeente."],
+      ["Waarom bevat een stroomkring een schakelaar?", ["om de stroomkring te openen en sluiten", "om de stroom aan en uit te zetten", "stroom aan en uit zetten"], "Techniek", "Ik begrijp de functie van onderdelen in een eenvoudige stroomkring.", "Met dit onderdeel onderbreek of herstel je de verbinding."],
+      ["Welke denkbeeldige lijn loopt van de noordpool naar de zuidpool?", ["lengtegraad", "meridiaan", "een meridiaan"], "Ruimte", "Ik gebruik geografische referentielijnen.", "Deze lijn helpt om oostelijke en westelijke ligging te bepalen."],
+      ["Wat is het verschil tussen weer en klimaat?", ["weer is tijdelijk en klimaat is gemiddeld over een lange periode", "weer is van korte duur klimaat van lange duur"], "Natuur", "Ik onderscheid weer van klimaat.", "Vergelijk wat vandaag gebeurt met patronen over vele jaren."],
     ],
     6: [
-      ["Welke kracht zorgt ervoor dat voorwerpen naar de aarde vallen?", ["zwaartekracht", "de zwaartekracht"], "Natuur", "Ik verklaar eenvoudige natuurkundige verschijnselen.", "Denk aan de kracht die je ook voelt wanneer je springt."],
-      ["In welke eeuw begon het jaar 1901?", ["20e eeuw", "twintigste eeuw", "20"], "Tijd", "Ik plaats jaartallen correct in een eeuw.", "De jaren 1901 tot en met 2000 horen bij dezelfde eeuw."],
-      ["Welke windrichting ligt tussen noord en oost?", ["noordoost", "noord-oost", "NO"], "Ruimte", "Ik gebruik hoofd- en tussenwindrichtingen.", "Combineer de twee genoemde hoofdwindrichtingen."],
-      ["Waarom is biodiversiteit belangrijk?", ["voor een gezond ecosysteem", "voor het evenwicht in de natuur", "soorten zijn van elkaar afhankelijk"], "Natuur", "Ik leg uit waarom soortenrijkdom belangrijk is.", "Denk aan voedselketens en afhankelijkheid tussen organismen."],
+      ["Welke bestuursniveaus zijn er in België naast de gemeente?", ["provincie gewest gemeenschap federaal", "provinciaal gewestelijk gemeenschaps- en federaal niveau", "provincie gewest gemeenschap federale overheid"], "Maatschappij", "Ik herken verschillende bestuursniveaus in België.", "Denk van lokaal naar het niveau van heel België."],
+      ["Wat betekent democratie?", ["het volk kiest vertegenwoordigers", "bestuur door het volk", "burgers kiezen hun vertegenwoordigers"], "Maatschappij", "Ik leg een basisprincipe van democratie uit.", "Denk aan verkiezingen en vertegenwoordiging."],
+      ["Welke schaal hoort bij een kaart waarop 1 cm overeenkomt met 1 km?", ["1:100000", "1 op 100000"], "Ruimte", "Ik interpreteer een eenvoudige kaartschaal.", "Zet 1 kilometer eerst om naar centimeter."],
+      ["Waarom ontstaan dag en nacht?", ["door de draaiing van de aarde om haar as", "de aarde draait om haar as", "aardrotatie"], "Ruimte", "Ik verklaar dag en nacht vanuit de aardrotatie.", "Denk aan de beweging van de aarde zelf, niet aan haar baan rond de zon."],
+      ["Wat is het gevolg van een tekort aan biodiversiteit?", ["ecosystemen worden kwetsbaarder", "minder stabiele ecosystemen", "soorten verdwijnen"], "Natuur", "Ik leg het belang van biodiversiteit uit.", "Denk aan wat er gebeurt wanneer weinig soorten dezelfde taak kunnen overnemen."],
+      ["Welke bloedvaten voeren bloed van het hart weg?", ["slagaders", "de slagaders"], "Mens", "Ik herken de functie van slagaders en aders.", "Het woord verwijst naar de slag van het hart."],
+      ["Waarom gebruikt men isolatiemateriaal in een woning?", ["om warmteverlies te beperken", "om warmte binnen te houden", "minder energieverlies"], "Techniek", "Ik verklaar hoe isolatie energieverlies beperkt.", "Denk aan de overdracht van warmte door muren en dak."],
+      ["Wat is een primaire bron in historisch onderzoek?", ["een bron uit de onderzochte tijd", "een oorspronkelijke bron uit die periode", "bron gemaakt in de tijd zelf"], "Tijd", "Ik onderscheid primaire en secundaire historische bronnen.", "Vraag je af of de bron tijdens de gebeurtenis is gemaakt."],
+      ["Welke factor heeft rechtstreeks invloed op bevolkingsgroei?", ["geboorten sterfte en migratie", "geboortecijfer sterftecijfer migratie", "geboorte sterfte migratie"], "Maatschappij", "Ik herken factoren die bevolkingsgroei beïnvloeden.", "Denk aan wie erbij komt en wie wegvalt."],
+      ["Waarom wordt afvalwater gezuiverd voordat het terug in een rivier komt?", ["om vervuilende stoffen te verwijderen", "om watervervuiling te voorkomen", "om het water schoner te maken"], "Natuur", "Ik leg het nut van waterzuivering uit.", "Denk aan de gevolgen voor planten, dieren en drinkwater."],
     ],
   };
-  const woPool = woByGrade[grade];
-  for (let i = 0; i < 8; i += 1) {
-    const [question, answer, skill, goalText, hint] = woPool[i % woPool.length];
-    add("Wereldoriëntatie", skill, `WO-${grade}-${String(i + 1).padStart(2, "0")}`, goalText, question, answer, hint);
-  }
+  const woPool = shuffle(random, [...woByGrade[grade]]).slice(0, 8);
+  woPool.forEach(([question, answer, skill, goalText, hint], index) => {
+    add("Wereldoriëntatie", skill, `WO-${grade}-${String(index + 1).padStart(2, "0")}`, goalText, question, answer, hint);
+  });
 
   // FRANS — 6 oefeningen vanaf het vijfde leerjaar
   if (grade >= 5) {
     const frenchPairs = [
       ["de school", "l'école"], ["een boek", "un livre"], ["de tafel", "la table"],
       ["goedendag", "bonjour"], ["tot ziens", "au revoir"], ["dank je", "merci"],
+      ["alsjeblieft", "s'il vous plaît"], ["hoe gaat het?", "comment ça va ?"],
+      ["ik heet", "je m'appelle"], ["maandag", "lundi"], ["een vriend", "un ami"],
+      ["ik begrijp het niet", "je ne comprends pas"], ["waar is...?", "où est...?"],
+      ["ik ben twaalf jaar", "j'ai douze ans"], ["de leerkracht", "le professeur"],
     ] as const;
-    frenchPairs.forEach(([dutch, french], i) => {
+    shuffle(random, [...frenchPairs]).slice(0, 6).forEach(([dutch, french], i) => {
       add(
         "Frans",
         i < 3 ? "Basiswoordenschat" : "Functionele taal",

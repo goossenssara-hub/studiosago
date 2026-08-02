@@ -5,16 +5,18 @@ import ExerciseCard from "@/components/oefenen/ExerciseCard";
 import MountainProgress from "@/components/oefenen/MountainProgress";
 import SubjectIcon from "@/components/oefenen/SubjectIcon";
 import { generateExercisesLager } from "@/lib/oefeningen/generateExercisesLager";
+import { chooseLeastRepeatedSet, extendQuestionHistory } from "@/lib/oefeningen/antiRepeat";
 import type { Exercise, LearningSubject, LevelProgress } from "@/lib/oefeningen/types";
 import { normalize } from "@/lib/oefeningen/utils";
 
-export type Grade = 1 | 2 | 3 | 4 | 5 | 6;
+type Grade = 1 | 2 | 3 | 4 | 5 | 6;
 type StoredData = {
   level: number;
   reached: number[];
   seeds: Record<number, number>;
   exercises: Record<number, Exercise[]>;
   progress: Record<number, LevelProgress>;
+  recentQuestions: string[];
 };
 
 const SUBJECT_META: Record<LearningSubject, { intro: string; accent: string }> = {
@@ -25,18 +27,18 @@ const SUBJECT_META: Record<LearningSubject, { intro: string; accent: string }> =
 };
 
 export default function OefenpaginaLagerClient({ grade }: { grade: Grade }) {
-  const storageKey = `sago-lager-${grade}-v4-een-oefening`;
+  const storageKey = `sago-lager-${grade}-v5-afwisselende-oefeningen`;
   const [loaded, setLoaded] = useState(false);
   const [level, setLevel] = useState(1);
   const [reached, setReached] = useState<number[]>([1]);
   const [seeds, setSeeds] = useState<Record<number, number>>({});
   const [savedExercises, setSavedExercises] = useState<Record<number, Exercise[]>>({});
   const [progress, setProgress] = useState<Record<number, LevelProgress>>({});
+  const [recentQuestions, setRecentQuestions] = useState<string[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [checkedIds, setCheckedIds] = useState<Record<string, boolean>>({});
   const [activeSubject, setActiveSubject] = useState<LearningSubject>("Wiskunde");
   const [activeIndex, setActiveIndex] = useState(0);
-  const [attempts, setAttempts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     try {
@@ -49,6 +51,7 @@ export default function OefenpaginaLagerClient({ grade }: { grade: Grade }) {
         setSeeds(data.seeds || {});
         setSavedExercises(data.exercises || {});
         setProgress(data.progress || {});
+        setRecentQuestions(data.recentQuestions || []);
         setAnswers(data.progress?.[savedLevel]?.answers || {});
       }
     } catch {
@@ -62,20 +65,25 @@ export default function OefenpaginaLagerClient({ grade }: { grade: Grade }) {
     if (!loaded) return;
     const seed = seeds[level] || Date.now() + grade * 100 + level;
     setSeeds((current) => ({ ...current, [level]: current[level] || seed }));
-    setSavedExercises((current) =>
-      current[level]
-        ? current
-        : { ...current, [level]: generateExercisesLager(grade, level, seed) }
-    );
+    setSavedExercises((current) => {
+      if (current[level]) return current;
+      const generated = chooseLeastRepeatedSet(
+        (candidateSeed) => generateExercisesLager(grade, level, candidateSeed),
+        seed,
+        recentQuestions
+      );
+      setRecentQuestions((history) => extendQuestionHistory(history, generated));
+      return { ...current, [level]: generated };
+    });
   }, [grade, level, loaded]);
 
   useEffect(() => {
     if (!loaded) return;
     localStorage.setItem(
       storageKey,
-      JSON.stringify({ level, reached, seeds, exercises: savedExercises, progress } satisfies StoredData)
+      JSON.stringify({ level, reached, seeds, exercises: savedExercises, progress, recentQuestions } satisfies StoredData)
     );
-  }, [level, loaded, progress, reached, savedExercises, seeds, storageKey]);
+  }, [level, loaded, progress, reached, recentQuestions, savedExercises, seeds, storageKey]);
 
   const exercises = useMemo(() => savedExercises[level] || [], [level, savedExercises]);
   const subjects = useMemo(
@@ -118,10 +126,6 @@ export default function OefenpaginaLagerClient({ grade }: { grade: Grade }) {
   function checkCurrentAnswer() {
     if (!currentExercise) return;
     setCheckedIds((current) => ({ ...current, [currentExercise.id]: true }));
-    setAttempts((current) => ({
-      ...current,
-      [currentExercise.id]: (current[currentExercise.id] || 0) + 1,
-    }));
     const correct = exercises.filter(isCorrect).length;
     const answered = exercises.filter((item) => (answers[item.id] || "").trim()).length;
     const mastery = exercises.length ? Math.round((correct / exercises.length) * 100) : 0;
@@ -139,20 +143,21 @@ export default function OefenpaginaLagerClient({ grade }: { grade: Grade }) {
     setLevel(target);
     setAnswers(progress[target]?.answers || {});
     setCheckedIds({});
-    setAttempts({});
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function newExercises() {
     const seed = Date.now();
     setSeeds((current) => ({ ...current, [level]: seed }));
-    setSavedExercises((current) => ({
-      ...current,
-      [level]: generateExercisesLager(grade, level, seed),
-    }));
+    const generated = chooseLeastRepeatedSet(
+      (candidateSeed) => generateExercisesLager(grade, level, candidateSeed),
+      seed,
+      recentQuestions
+    );
+    setSavedExercises((current) => ({ ...current, [level]: generated }));
+    setRecentQuestions((history) => extendQuestionHistory(history, generated));
     setAnswers({});
     setCheckedIds({});
-    setAttempts({});
     setActiveIndex(0);
   }
 
@@ -244,7 +249,6 @@ export default function OefenpaginaLagerClient({ grade }: { grade: Grade }) {
           value={answers[currentExercise.id] || ""}
           checked={Boolean(checkedIds[currentExercise.id])}
           correct={isCorrect(currentExercise)}
-          attempts={attempts[currentExercise.id] || 0}
           onChange={updateAnswer}
           onCheck={checkCurrentAnswer}
           onPrevious={() => setActiveIndex((index) => Math.max(0, index - 1))}

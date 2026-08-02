@@ -4,16 +4,18 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import MountainProgress from "@/components/oefenen/MountainProgress";
 import { generateExercisesEerste } from "@/lib/oefeningen/middelbaar/generateExercisesEerste";
+import { chooseLeastRepeatedSet, extendQuestionHistory } from "@/lib/oefeningen/antiRepeat";
 import { getSkillConfig } from "@/lib/oefeningen/middelbaar/skills";
 import type { SecondaryExercise, SecondaryLevelProgress, SecondarySavedData } from "@/lib/oefeningen/middelbaar/types";
 import { isAcceptedSecondaryAnswer } from "@/lib/oefeningen/middelbaar/utils";
 import SecondaryExerciseCard from "./SecondaryExerciseCard";
 
 type Props = { skill: string };
+type StoredSecondaryData = SecondarySavedData & { recentQuestions?: string[] };
 
 export default function OefenpaginaEersteMiddelbaarClient({ skill }: Props) {
   const config = getSkillConfig(skill);
-  const storageKey = `sago-eerste-middelbaar-${skill}-premium-v9`;
+  const storageKey = `sago-eerste-middelbaar-${skill}-premium-v10-afwisselend`;
   const [level, setLevel] = useState(1);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [checkedIds, setCheckedIds] = useState<Record<string, boolean>>({});
@@ -24,12 +26,13 @@ export default function OefenpaginaEersteMiddelbaarClient({ skill }: Props) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [attempts, setAttempts] = useState<Record<string, number>>({});
   const [loaded, setLoaded] = useState(false);
+  const [recentQuestions, setRecentQuestions] = useState<string[]>([]);
 
   useEffect(() => {
     const stored = localStorage.getItem(storageKey);
     if (stored) {
       try {
-        const data = JSON.parse(stored) as SecondarySavedData;
+        const data = JSON.parse(stored) as StoredSecondaryData;
         const savedLevel = Math.max(1, Math.min(10, data.level || 1));
         setLevel(savedLevel);
         setReachedLevels(data.reachedLevels || [1]);
@@ -37,6 +40,7 @@ export default function OefenpaginaEersteMiddelbaarClient({ skill }: Props) {
         setProgress(data.progress || {});
         setExerciseSeeds(data.exerciseSeeds || {});
         setAnswers(data.progress?.[savedLevel]?.answers || {});
+        setRecentQuestions(data.recentQuestions || []);
       } catch {
         localStorage.removeItem(storageKey);
       }
@@ -48,15 +52,22 @@ export default function OefenpaginaEersteMiddelbaarClient({ skill }: Props) {
     if (!loaded || !config) return;
     const seed = exerciseSeeds[level] || Date.now() + level;
     setExerciseSeeds((current) => ({ ...current, [level]: current[level] || seed }));
-    setSavedExercises((current) =>
-      current[level] ? current : { ...current, [level]: generateExercisesEerste(skill, level, seed) }
-    );
+    setSavedExercises((current) => {
+      if (current[level]) return current;
+      const generated = chooseLeastRepeatedSet(
+        (candidateSeed) => generateExercisesEerste(skill, level, candidateSeed),
+        seed,
+        recentQuestions
+      );
+      setRecentQuestions((history) => extendQuestionHistory(history, generated));
+      return { ...current, [level]: generated };
+    });
   }, [config, level, loaded, skill]);
 
   useEffect(() => {
     if (!loaded) return;
-    localStorage.setItem(storageKey, JSON.stringify({ level, reachedLevels, savedExercises, progress, exerciseSeeds }));
-  }, [exerciseSeeds, level, loaded, progress, reachedLevels, savedExercises, storageKey]);
+    localStorage.setItem(storageKey, JSON.stringify({ level, reachedLevels, savedExercises, progress, exerciseSeeds, recentQuestions }));
+  }, [exerciseSeeds, level, loaded, progress, reachedLevels, recentQuestions, savedExercises, storageKey]);
 
   useEffect(() => setActiveIndex(0), [level, skill]);
 
@@ -111,7 +122,13 @@ export default function OefenpaginaEersteMiddelbaarClient({ skill }: Props) {
     if (!config) return;
     const seed = Date.now();
     setExerciseSeeds((current) => ({ ...current, [level]: seed }));
-    setSavedExercises((current) => ({ ...current, [level]: generateExercisesEerste(skill, level, seed) }));
+    const generated = chooseLeastRepeatedSet(
+      (candidateSeed) => generateExercisesEerste(skill, level, candidateSeed),
+      seed,
+      recentQuestions
+    );
+    setSavedExercises((current) => ({ ...current, [level]: generated }));
+    setRecentQuestions((history) => extendQuestionHistory(history, generated));
     setAnswers({});
     setCheckedIds({});
     setAttempts({});

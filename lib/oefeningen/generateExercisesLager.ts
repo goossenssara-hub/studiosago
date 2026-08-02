@@ -1,6 +1,6 @@
 import type { Exercise, LearningSubject } from "./types";
 
-type Grade = 1 | 2 | 3 | 4 | 5;
+export type Grade = 1 | 2 | 3 | 4 | 5 | 6;
 
 function rng(seed: number) {
   let value = seed || 1;
@@ -55,7 +55,7 @@ export function generateExercisesLager(grade: Grade, level: number, seed = Date.
   };
 
   const difficulty = Math.max(1, Math.min(10, level));
-  const limits: Record<Grade, number> = { 1: 20, 2: 100, 3: 1000, 4: 10000, 5: 100000 };
+  const limits: Record<Grade, number> = { 1: 20, 2: 100, 3: 1000, 4: 10000, 5: 100000, 6: 1000000 };
   const limit = Math.min(limits[grade], Math.max(20, Math.round(limits[grade] * (0.28 + difficulty * 0.072))));
 
   // WISKUNDE — 16 oefeningen per niveau
@@ -173,6 +173,7 @@ export function generateExercisesLager(grade: Grade, level: number, seed = Date.
     3: [["bom", "bommen"], ["boot", "boten"], ["stad", "steden"], ["brief", "brieven"]],
     4: [["gebeuren", "gebeurt"], ["worden", "wordt"], ["antwoorden", "antwoordt"], ["vinden", "vindt"]],
     5: [["verhuizen", "verhuist"], ["beloven", "belooft"], ["gebeuren", "gebeurt"], ["bedoelen", "bedoelt"]],
+    6: [["beantwoorden", "beantwoordt"], ["veranderen", "verandert"], ["gebeuren", "gebeurt"], ["worden", "wordt"]],
   };
 
   for (let i = 0; i < 4; i += 1) {
@@ -280,6 +281,12 @@ export function generateExercisesLager(grade: Grade, level: number, seed = Date.
       ["Welke schaal geeft aan hoeveel kleiner een kaart is dan de werkelijkheid?", ["kaartschaal", "schaal"], "Ruimte", "Ik begrijp het doel van een kaartschaal.", "Je vindt dit vaak onderaan een kaart als verhouding."],
       ["Waarom is recycleren belangrijk?", ["minder afval", "grondstoffen besparen", "hergebruik van grondstoffen"], "Maatschappij", "Ik leg het belang van duurzaam omgaan met grondstoffen uit.", "Denk aan afval én het opnieuw gebruiken van materialen."],
     ],
+    6: [
+      ["Welke kracht zorgt ervoor dat voorwerpen naar de aarde vallen?", ["zwaartekracht", "de zwaartekracht"], "Natuur", "Ik verklaar eenvoudige natuurkundige verschijnselen.", "Denk aan de kracht die je ook voelt wanneer je springt."],
+      ["In welke eeuw begon het jaar 1901?", ["20e eeuw", "twintigste eeuw", "20"], "Tijd", "Ik plaats jaartallen correct in een eeuw.", "De jaren 1901 tot en met 2000 horen bij dezelfde eeuw."],
+      ["Welke windrichting ligt tussen noord en oost?", ["noordoost", "noord-oost", "NO"], "Ruimte", "Ik gebruik hoofd- en tussenwindrichtingen.", "Combineer de twee genoemde hoofdwindrichtingen."],
+      ["Waarom is biodiversiteit belangrijk?", ["voor een gezond ecosysteem", "voor het evenwicht in de natuur", "soorten zijn van elkaar afhankelijk"], "Natuur", "Ik leg uit waarom soortenrijkdom belangrijk is.", "Denk aan voedselketens en afhankelijkheid tussen organismen."],
+    ],
   };
   const woPool = woByGrade[grade];
   for (let i = 0; i < 8; i += 1) {
@@ -288,7 +295,7 @@ export function generateExercisesLager(grade: Grade, level: number, seed = Date.
   }
 
   // FRANS — 6 oefeningen vanaf het vijfde leerjaar
-  if (grade === 5) {
+  if (grade >= 5) {
     const frenchPairs = [
       ["de school", "l'école"], ["een boek", "un livre"], ["de tafel", "la table"],
       ["goedendag", "bonjour"], ["tot ziens", "au revoir"], ["dank je", "merci"],
@@ -297,7 +304,7 @@ export function generateExercisesLager(grade: Grade, level: number, seed = Date.
       add(
         "Frans",
         i < 3 ? "Basiswoordenschat" : "Functionele taal",
-        `FR-5-${String(i + 1).padStart(2, "0")}`,
+        `FR-${grade}-${String(i + 1).padStart(2, "0")}`,
         "Ik begrijp en gebruik eenvoudige Franse woorden uit mijn leefwereld.",
         `Vertaal naar het Frans: ${dutch}`,
         french,

@@ -1,10 +1,10 @@
 import PageShell from "@/components/PageShell";
-import OefenpaginaClient from "@/components/oefenen/OefenpaginaClient";
+import OefenpaginaLagerClient from "@/components/oefenen/OefenpaginaLagerClient";
 
 export default function ZesdeLeerjaarPage() {
   return (
     <PageShell>
-      <OefenpaginaClient leerjaar="zesde" />
+      <OefenpaginaLagerClient grade={6} />
     </PageShell>
   );
 }

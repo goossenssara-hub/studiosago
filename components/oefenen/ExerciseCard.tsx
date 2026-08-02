@@ -8,6 +8,7 @@ type Props = {
   value: string;
   checked: boolean;
   correct: boolean;
+  attempts?: number;
   onChange: (id: string, value: string) => void;
   onCheck?: () => void;
   onPrevious?: () => void;
@@ -22,6 +23,7 @@ export default function ExerciseCard({
   value,
   checked,
   correct,
+  attempts = 0,
   onChange,
   onCheck,
   onPrevious,
@@ -74,7 +76,11 @@ export default function ExerciseCard({
           <p>
             {correct
               ? "Je antwoord past bij deze oefening."
-              : `Een passend antwoord is: ${Array.isArray(exercise.answer) ? exercise.answer[0] : exercise.answer}`}
+              : attempts < 2
+                ? (exercise.hint || "Lees de vraag opnieuw en probeer eerst één concrete stap uit te voeren.")
+                : `Mogelijke antwoorden: ${
+                    (Array.isArray(exercise.answer) ? exercise.answer : [exercise.answer]).join(" · ")
+                  }`}
           </p>
         </div>
       ) : null}

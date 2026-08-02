@@ -9,7 +9,8 @@
     "lint": "next lint",
     "goals:3b1:dry-run": "tsx scripts/import-education-goals-3b1.ts --input ./data",
     "goals:3b1:import": "tsx scripts/import-education-goals-3b1.ts --input ./data --commit",
-    "goals:3b1:full-snapshot": "tsx scripts/import-education-goals-3b1.ts --input ./data --commit --mark-missing-withdrawn"
+    "goals:3b1:full-snapshot": "tsx scripts/import-education-goals-3b1.ts --input ./data --commit --mark-missing-withdrawn",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@mollie/api-client": "^4.6.0",
@@ -35,5 +36,8 @@
     "eslint-config-next": "latest",
     "tsx": "^4.20.5",
     "typescript": "latest"
+  },
+  "engines": {
+    "node": ">=20.9.0 <23"
   }
 }

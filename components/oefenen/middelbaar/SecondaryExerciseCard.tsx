@@ -11,6 +11,7 @@ type Props = {
   value: string;
   checked: boolean;
   correct: boolean;
+  attempts?: number;
   onChange: (id: string, value: string) => void;
   onCheck?: () => void;
   onPrevious?: () => void;
@@ -45,6 +46,7 @@ export default function SecondaryExerciseCard({
   value,
   checked,
   correct,
+  attempts = 0,
   onChange,
   onCheck,
   onPrevious,
@@ -54,7 +56,6 @@ export default function SecondaryExerciseCard({
   const resolvedTotal = total ?? 1;
   const showNavigation = Boolean(onCheck || onPrevious || onNext);
   const acceptedAnswers = Array.isArray(exercise.answer) ? exercise.answer : [exercise.answer];
-  const correctAnswer = acceptedAnswers[0];
   const hasOptions = Boolean(exercise.options?.length);
   const shuffledOptions = useMemo(
     () => (exercise.options?.length ? shuffleStable(exercise.options, `${exercise.id}-${exercise.question}`) : []),
@@ -109,7 +110,13 @@ export default function SecondaryExerciseCard({
       {checked ? (
         <div className={`formative-feedback ${correct ? "is-correct" : "needs-growth"}`} role="status">
           <strong>{correct ? "Mooi gevonden!" : "Kijk nog eens rustig."}</strong>
-          <p>{correct ? "Je antwoord past bij deze oefening." : `Een passend antwoord is: ${correctAnswer}`}</p>
+          <p>
+            {correct
+              ? "Je antwoord past bij deze oefening."
+              : attempts < 2
+                ? (exercise.hint || "Lees de opdracht opnieuw en probeer eerst één concrete stap uit te voeren.")
+                : `Mogelijke antwoorden: ${acceptedAnswers.join(" · ")}`}
+          </p>
         </div>
       ) : null}
 

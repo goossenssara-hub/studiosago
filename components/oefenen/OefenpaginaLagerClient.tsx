@@ -8,7 +8,7 @@ import { generateExercisesLager } from "@/lib/oefeningen/generateExercisesLager"
 import type { Exercise, LearningSubject, LevelProgress } from "@/lib/oefeningen/types";
 import { normalize } from "@/lib/oefeningen/utils";
 
-type Grade = 1 | 2 | 3 | 4 | 5;
+export type Grade = 1 | 2 | 3 | 4 | 5 | 6;
 type StoredData = {
   level: number;
   reached: number[];
@@ -36,6 +36,7 @@ export default function OefenpaginaLagerClient({ grade }: { grade: Grade }) {
   const [checkedIds, setCheckedIds] = useState<Record<string, boolean>>({});
   const [activeSubject, setActiveSubject] = useState<LearningSubject>("Wiskunde");
   const [activeIndex, setActiveIndex] = useState(0);
+  const [attempts, setAttempts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     try {
@@ -117,6 +118,10 @@ export default function OefenpaginaLagerClient({ grade }: { grade: Grade }) {
   function checkCurrentAnswer() {
     if (!currentExercise) return;
     setCheckedIds((current) => ({ ...current, [currentExercise.id]: true }));
+    setAttempts((current) => ({
+      ...current,
+      [currentExercise.id]: (current[currentExercise.id] || 0) + 1,
+    }));
     const correct = exercises.filter(isCorrect).length;
     const answered = exercises.filter((item) => (answers[item.id] || "").trim()).length;
     const mastery = exercises.length ? Math.round((correct / exercises.length) * 100) : 0;
@@ -134,6 +139,7 @@ export default function OefenpaginaLagerClient({ grade }: { grade: Grade }) {
     setLevel(target);
     setAnswers(progress[target]?.answers || {});
     setCheckedIds({});
+    setAttempts({});
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -146,6 +152,7 @@ export default function OefenpaginaLagerClient({ grade }: { grade: Grade }) {
     }));
     setAnswers({});
     setCheckedIds({});
+    setAttempts({});
     setActiveIndex(0);
   }
 
@@ -237,6 +244,7 @@ export default function OefenpaginaLagerClient({ grade }: { grade: Grade }) {
           value={answers[currentExercise.id] || ""}
           checked={Boolean(checkedIds[currentExercise.id])}
           correct={isCorrect(currentExercise)}
+          attempts={attempts[currentExercise.id] || 0}
           onChange={updateAnswer}
           onCheck={checkCurrentAnswer}
           onPrevious={() => setActiveIndex((index) => Math.max(0, index - 1))}

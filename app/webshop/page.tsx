@@ -100,6 +100,32 @@ export default async function WebshopPage() {
     download_count: 0,
   });
 
+  // Gratis digitaal product: Memoryspel bij het Studio SaGo Ontdekkingsbord.
+  // Plaats de PDF in: public/downloads/studio-sago-memoryspel-ontdekkingsbord.pdf
+  // Plaats de cover in: public/images/studio-sago-memoryspel-cover.png
+  const memoryspelHref =
+    "/downloads/studio-sago-memoryspel-ontdekkingsbord.pdf";
+
+  services.push({
+    id: "studio-sago-memoryspel-ontdekkingsbord-gratis",
+    title: "Memoryspel bij het Ontdekkingsbord",
+    subtitle:
+      "Een gratis memoryspel dat aansluit bij het Studio SaGo Ontdekkingsbord.",
+    category: "Digitale producten",
+    description:
+      "Download en print het memoryspel dat bij het Ontdekkingsbord hoort. Kinderen oefenen spelenderwijs hun waarneming, geheugen, woordenschat en concentratie.",
+    price: 0,
+    button_text: "Gratis downloaden",
+    href: memoryspelHref,
+    slug: "studio-sago-memoryspel-ontdekkingsbord",
+    external_url: null,
+    event_dates: "Gratis PDF-download",
+    image_url: "/images/studio-sago-memoryspel-cover.png",
+    is_visible: true,
+    sort_order: 2,
+    download_count: 0,
+  });
+
   const textCorrection = getBuiltInService("tekstcorrectie");
 
   if (textCorrection) {

@@ -664,9 +664,9 @@ function AccessStep({ form, updateField }: StepProps) {
 function DownloadsStep({ form, updateField }: StepProps) {
   const options: Array<[FormState['downloads'], string, string]> = [
     ['none', 'Geen downloads', 'De klant kan de foto’s alleen bekijken.'],
-    ['single', 'Afzonderlijke foto’s als ZIP', 'Elke gekozen foto wordt in een ZIP-map met de galerijtitel gedownload.'],
-    ['favorites', 'Alleen favorieten als ZIP', 'De gekozen selectie wordt als één ZIP-map met de galerijtitel gedownload.'],
-    ['all', 'Individueel + volledige galerij als ZIP', 'Elke download wordt automatisch als ZIP met de galerijtitel geleverd.'],
+    ['single', 'Afzonderlijke foto’s', 'Elke foto kan apart worden gedownload.'],
+    ['favorites', 'Alleen favorieten', 'Alleen de gekozen selectie kan worden gedownload.'],
+    ['all', 'Individueel + volledige galerij', 'De meest complete downloadoptie.'],
   ];
   return <OptionStep number="06" title="Downloadmogelijkheden" description="Bepaal wat deze klant mag downloaden." value={form.downloads} options={options} onChange={(value) => updateField('downloads', value as FormState['downloads'])} />;
 }

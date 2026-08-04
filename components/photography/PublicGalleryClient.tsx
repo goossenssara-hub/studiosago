@@ -39,7 +39,11 @@ function formatDate(value: string) {
 }
 
 
-function getPhotoLayoutClass() {
+function getPhotoLayoutClass(
+  _index: number,
+  _galleryStyle: string,
+  _ratio: number,
+) {
   return styles.standardTile;
 }
 

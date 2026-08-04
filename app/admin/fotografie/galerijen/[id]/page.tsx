@@ -1,4 +1,31 @@
-import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
-import { notFound } from 'next/navigation';
-export const dynamic='force-dynamic';
-export default async function EditGallery({params}:{params:Promise<{id:string}>}){const {id}=await params;const s=getSupabaseAdmin();const {data:g}=await s.from('photo_galleries').select('*').eq('id',id).maybeSingle();if(!g)notFound();return <main style={{padding:32,maxWidth:1000,margin:'0 auto'}}><h1>{g.title}</h1><p>Hier komen de bewerkbare tabbladen: gegevens, foto's, volgorde, verhaal, toegang, downloads, favorieten, huisstijl en publiceren.</p><pre style={{whiteSpace:'pre-wrap'}}>{JSON.stringify(g,null,2)}</pre></main>}
+import { notFound } from "next/navigation";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import EditGalleryClient from "@/components/photography/EditGalleryClient";
+
+export const dynamic = "force-dynamic";
+const TTL = 60 * 60 * 6;
+
+export default async function EditGalleryPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const supabase = getSupabaseAdmin();
+  const [{ data: gallery }, { data: images }] = await Promise.all([
+    supabase.from("photo_galleries").select("*").eq("id", id).maybeSingle(),
+    supabase.from("photo_gallery_images").select("id,file_name,storage_path,sort_order,is_cover").eq("gallery_id", id).order("sort_order"),
+  ]);
+  if (!gallery) notFound();
+
+  const paths = (images ?? []).map((image) => image.storage_path);
+  const { data: signed } = paths.length
+    ? await supabase.storage.from("photo-galleries").createSignedUrls(paths, TTL)
+    : { data: [] };
+  const urlMap = new Map((signed ?? []).map((item) => [item.path, item.signedUrl ?? ""]));
+
+  return <EditGalleryClient gallery={gallery} initialImages={(images ?? []).map((image) => ({
+    id: image.id,
+    file_name: image.file_name,
+    sort_order: image.sort_order,
+    is_cover: image.is_cover,
+    url: urlMap.get(image.storage_path) ?? "",
+    storage_path: image.storage_path,
+  }))} />;
+}

@@ -39,18 +39,7 @@ function formatDate(value: string) {
 }
 
 
-function getPhotoLayoutClass(index: number, galleryStyle: string, ratio: number) {
-  // De werkelijke beeldverhouding bepaalt de basisgrootte. Daardoor wordt een
-  // portret nooit in een liggend vak geduwd en blijft een panorama breed.
-  if (ratio >= 2.05) return styles.panoramaTile;
-  if (ratio >= 1.38) {
-    if (galleryStyle === "editorial" && index % 5 === 0) return styles.featureWide;
-    return styles.landscapeWide;
-  }
-  if (ratio <= 0.72) return styles.portraitTall;
-  if (ratio <= 0.92) return styles.portraitTile;
-
-  if (galleryStyle === "editorial" && index % 8 === 0) return styles.gridWide;
+function getPhotoLayoutClass() {
   return styles.standardTile;
 }
 

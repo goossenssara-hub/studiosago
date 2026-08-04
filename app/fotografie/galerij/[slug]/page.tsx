@@ -3,6 +3,8 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import PublicGalleryClient from "@/components/photography/PublicGalleryClient";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
 
 const SIGNED_URL_TTL_SECONDS = 60 * 60 * 6;
 
@@ -36,41 +38,29 @@ export default async function GalleryPage({ params, searchParams }: GalleryPageP
   if (imageError) throw imageError;
 
   const paths = (images ?? []).map((image) => image.storage_path);
-  const { data: originalSignedUrls } = paths.length
+  const { data: signedUrls } = paths.length
     ? await supabase.storage
         .from("photo-galleries")
         .createSignedUrls(paths, SIGNED_URL_TTL_SECONDS)
     : { data: [] };
 
-  const originalUrlByPath = new Map(
-    (originalSignedUrls ?? []).map((item) => [item.path, item.signedUrl ?? ""]),
+  const urlByPath = new Map(
+    (signedUrls ?? []).map((item) => [item.path, item.signedUrl ?? ""]),
   );
 
-  // De galerij gebruikt geoptimaliseerde webversies. Daardoor hoeft de browser
-  // niet voor elke tegel het volledige JPG-origineel te downloaden.
-  const signedImages = await Promise.all(
-    (images ?? []).map(async (image, index) => {
-      const fallbackUrl = originalUrlByPath.get(image.storage_path) ?? "";
-      const { data: webData } = await supabase.storage
-        .from("photo-galleries")
-        .createSignedUrl(image.storage_path, SIGNED_URL_TTL_SECONDS, {
-          transform: {
-            width: index === 0 || image.is_cover ? 2000 : 1400,
-            quality: 78,
-            resize: "contain",
-          },
-        });
-
-      return {
-        id: image.id,
-        fileName: image.file_name,
-        sortOrder: image.sort_order,
-        isCover: image.is_cover,
-        url: webData?.signedUrl || fallbackUrl,
-        originalUrl: fallbackUrl || webData?.signedUrl || "",
-      };
-    }),
-  );
+  // Het Free-plan ondersteunt geen Image Transformations. Daarom gebruiken we
+  // één gebundelde signed-URL-aanvraag en laden we de foto’s progressief in de browser.
+  const signedImages = (images ?? []).map((image) => {
+    const url = urlByPath.get(image.storage_path) ?? "";
+    return {
+      id: image.id,
+      fileName: image.file_name,
+      sortOrder: image.sort_order,
+      isCover: image.is_cover,
+      url,
+      originalUrl: url,
+    };
+  });
 
   return (
     <PublicGalleryClient

@@ -11,7 +11,8 @@ export default async function GalleryPage({ params }: { params: Promise<{ slug: 
   const { data: gallery } = await supabase.from('photo_galleries').select('*').eq('slug', slug).eq('status', 'active').maybeSingle();
   if (!gallery) notFound();
 
-  const { data: photos = [] } = await supabase.from('gallery_photos').select('*').eq('gallery_id', gallery.id).order('position');
+  const { data: photoRows } = await supabase.from('gallery_photos').select('*').eq('gallery_id', gallery.id).order('position');
+  const photos = photoRows ?? [];
   const signed = await Promise.all(photos.map(async (photo) => {
     const { data } = await supabase.storage.from('photography-web').createSignedUrl(photo.storage_path, 3600);
     return { ...photo, signedUrl: data?.signedUrl };

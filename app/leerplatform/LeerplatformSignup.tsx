@@ -72,7 +72,7 @@ export default function LeerplatformSignup() {
           <h1>Groei vanaf het allereerste begin met ons mee.</h1>
           <p className="lp-intro">
             Studio SaGo bouwt aan een warm en doordacht leerplatform waar kinderen
-            op hun eigen tempo kunnen oefenen, ontdekken en groeien. Zonder
+            op hun eigen tempo kunnen oefenen, ontdekken en groeien — zonder
             prestatiedruk.
           </p>
 

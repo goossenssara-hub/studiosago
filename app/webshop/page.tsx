@@ -5,8 +5,9 @@ import WebshopCategories, {
 import { createClient } from "@/lib/supabase/server";
 import { getBuiltInService } from "@/lib/webshopService";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+// De webshop mag kort gecachet worden. Zo wordt de services-tabel niet bij elke
+// paginabezoeker opnieuw uit Supabase opgehaald.
+export const revalidate = 300;
 
 export default async function WebshopPage() {
   const supabase = await createClient();

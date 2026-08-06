@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
+const DOWNLOADS: Record<string, string> = {
+  "studio-sago-ontdekkingsbord-gratis":
+    "/downloads/studio-sago-ontdekkingsbord.pdf",
+  "studio-sago-memoryspel-ontdekkingsbord-gratis":
+    "/downloads/studio-sago-memoryspel-ontdekkingsbord.pdf",
+};
+
 function getSupabaseConfig() {
   const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -15,12 +22,11 @@ function getSupabaseConfig() {
   return { url: url.replace(/\/$/, ""), serviceKey };
 }
 
-function headers(serviceKey: string) {
+function supabaseHeaders(serviceKey: string) {
   return {
     apikey: serviceKey,
     Authorization: `Bearer ${serviceKey}`,
     "Content-Type": "application/json",
-    "Cache-Control": "no-store",
   };
 }
 
@@ -28,19 +34,21 @@ function isValidEmail(value: string): boolean {
   return value.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
-function isAllowedDownloadFile(value: string): boolean {
-  return (
-    value.startsWith("/downloads/") &&
-    value.toLowerCase().endsWith(".pdf") &&
-    !value.includes("..")
-  );
+function getDownloadUrl(productId: string): string | null {
+  return DOWNLOADS[productId] ?? null;
 }
 
 async function readCount(productId: string): Promise<number> {
   const { url, serviceKey } = getSupabaseConfig();
   const response = await fetch(
-    `${url}/rest/v1/digital_product_downloads?product_id=eq.${encodeURIComponent(productId)}&select=download_count&limit=1`,
-    { headers: headers(serviceKey), cache: "no-store" }
+    `${url}/rest/v1/digital_product_downloads?product_id=eq.${encodeURIComponent(
+      productId
+    )}&select=download_count&limit=1`,
+    {
+      headers: supabaseHeaders(serviceKey),
+      // De teller hoeft niet bij elke paginabezoeker opnieuw uit Supabase te komen.
+      next: { revalidate: 300 },
+    }
   );
 
   if (!response.ok) {
@@ -61,7 +69,7 @@ async function registerDownload(input: {
     `${url}/rest/v1/rpc/register_digital_product_download`,
     {
       method: "POST",
-      headers: headers(serviceKey),
+      headers: supabaseHeaders(serviceKey),
       body: JSON.stringify({
         p_product_id: input.productId,
         p_email: input.email,
@@ -87,8 +95,11 @@ export async function GET(
   try {
     const { productId } = await context.params;
 
-    if (!productId) {
-      return NextResponse.json({ error: "Product-ID ontbreekt." }, { status: 400 });
+    if (!productId || !getDownloadUrl(productId)) {
+      return NextResponse.json(
+        { error: "Onbekend digitaal product." },
+        { status: 404 }
+      );
     }
 
     if (request.nextUrl.searchParams.get("count") !== "1") {
@@ -101,7 +112,12 @@ export async function GET(
     const count = await readCount(productId);
     return NextResponse.json(
       { count },
-      { headers: { "Cache-Control": "no-store, max-age=0" } }
+      {
+        headers: {
+          // Browser/CDN mag de niet-persoonlijke teller vijf minuten bewaren.
+          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+        },
+      }
     );
   } catch (error) {
     console.error("Downloadtellerfout:", error);
@@ -118,30 +134,26 @@ export async function POST(
 ) {
   try {
     const { productId } = await context.params;
+    const downloadUrl = getDownloadUrl(productId);
+
+    if (!downloadUrl) {
+      return NextResponse.json(
+        { error: "Onbekend digitaal product." },
+        { status: 404 }
+      );
+    }
+
     const body = (await request.json()) as {
       email?: unknown;
-      file?: unknown;
       marketingConsent?: unknown;
     };
 
     const email = String(body.email ?? "").trim().toLowerCase();
-    const file = String(body.file ?? "").trim();
     const marketingConsent = body.marketingConsent === true;
-
-    if (!productId) {
-      return NextResponse.json({ error: "Product-ID ontbreekt." }, { status: 400 });
-    }
 
     if (!isValidEmail(email)) {
       return NextResponse.json(
         { error: "Vul een geldig e-mailadres in." },
-        { status: 400 }
-      );
-    }
-
-    if (!isAllowedDownloadFile(file)) {
-      return NextResponse.json(
-        { error: "Ongeldig downloadbestand." },
         { status: 400 }
       );
     }
@@ -153,7 +165,7 @@ export async function POST(
     });
 
     return NextResponse.json(
-      { count, downloadUrl: file },
+      { count, downloadUrl },
       { headers: { "Cache-Control": "no-store, max-age=0" } }
     );
   } catch (error) {

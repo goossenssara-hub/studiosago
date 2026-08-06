@@ -1,0 +1,463 @@
+/* =========================================================
+   Studio SaGo — global mobile hardening layer
+   Loaded last on purpose: repairs legacy fixed-width layouts.
+   ========================================================= */
+
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+body {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+main,
+section,
+article,
+header,
+footer,
+nav,
+form,
+fieldset,
+div {
+  min-width: 0;
+}
+
+img,
+picture,
+video,
+canvas,
+iframe,
+svg {
+  max-width: 100%;
+}
+
+pre,
+code {
+  max-width: 100%;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+table {
+  max-width: 100%;
+}
+
+input,
+select,
+textarea,
+button {
+  max-width: 100%;
+}
+
+input,
+select,
+textarea {
+  min-width: 0;
+}
+
+/* Long URLs, e-mail addresses and generated labels may never escape cards. */
+p,
+li,
+a,
+span,
+strong,
+small,
+label,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+  :root {
+    --mobile-gutter: clamp(14px, 4vw, 24px);
+  }
+
+  body {
+    background-attachment: scroll;
+  }
+
+  /* Global containers */
+  .page-shell,
+  .page-container,
+  .content-shell,
+  .content-container,
+  .container,
+  .site-container,
+  .dashboard-container,
+  .admin-container,
+  .portal-container,
+  .webshop-container,
+  .booking-container,
+  .legal-container,
+  .contact-container,
+  .auth-container,
+  .learning-container,
+  .middle-school-container {
+    width: min(100%, 100vw) !important;
+    max-width: 100% !important;
+    margin-inline: auto !important;
+    padding-inline: var(--mobile-gutter) !important;
+  }
+
+  /* Typography that scales instead of clipping. */
+  h1,
+  .hero h1,
+  .subpage-hero h1,
+  .webshop-hero h1,
+  .about-copy h1,
+  .login-card h1,
+  .refined-hero h1,
+  .appointment-hero h1 {
+    font-size: clamp(2rem, 10vw, 3.65rem) !important;
+    line-height: 1.08 !important;
+    letter-spacing: -0.035em !important;
+  }
+
+  h2,
+  .section-heading h2 {
+    font-size: clamp(1.55rem, 7vw, 2.5rem) !important;
+    line-height: 1.15 !important;
+  }
+
+  h3 {
+    font-size: clamp(1.15rem, 5.5vw, 1.75rem) !important;
+    line-height: 1.2 !important;
+  }
+
+  p,
+  li,
+  label,
+  input,
+  textarea,
+  select,
+  button {
+    line-height: 1.55;
+  }
+
+  /* Header: logo and account row, horizontally scrollable nav below. */
+  .site-header {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    gap: 10px 12px !important;
+    width: 100% !important;
+    padding: 14px var(--mobile-gutter) 10px !important;
+  }
+
+  .site-header .logo,
+  .site-header > a:first-child,
+  .site-header .brand {
+    width: min(150px, 42vw) !important;
+    max-width: 100% !important;
+  }
+
+  .site-header .nav,
+  .site-header nav,
+  .nav {
+    grid-column: 1 / -1 !important;
+    order: 3 !important;
+    width: calc(100% + (2 * var(--mobile-gutter))) !important;
+    max-width: none !important;
+    margin-inline: calc(var(--mobile-gutter) * -1) !important;
+    padding: 8px var(--mobile-gutter) 5px !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+    gap: 9px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .site-header .nav::-webkit-scrollbar,
+  .site-header nav::-webkit-scrollbar,
+  .nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .site-header .nav a,
+  .site-header nav a,
+  .nav a {
+    flex: 0 0 auto !important;
+    max-width: none !important;
+    white-space: nowrap !important;
+    scroll-snap-align: start;
+  }
+
+  .site-header .login-button,
+  .site-header .account-button,
+  .site-header .account-menu {
+    min-width: 0 !important;
+    max-width: 44vw !important;
+    padding: 10px 14px !important;
+    white-space: nowrap;
+  }
+
+  /* Common desktop grids collapse safely. */
+  .hero,
+  .about-hero,
+  .speelweelde-section,
+  .services-grid,
+  .cards,
+  .info-grid,
+  .shop-grid,
+  .testimonial-grid,
+  .about-grid,
+  .portal-grid,
+  .form-grid,
+  .admin-layout,
+  .admin-dashboard-grid,
+  .admin-stat-grid,
+  .dashboard-grid,
+  .aanbod-detail-grid,
+  .subject-grid,
+  .secondary-option-grid,
+  .learning-grid,
+  .appointment-grid,
+  .booking-grid,
+  .footer-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  /* Cards and sections may not retain desktop side margins or padding. */
+  .hero,
+  .subpage-hero,
+  .cards-section,
+  .services-section,
+  .info-grid,
+  .shop-grid,
+  .about-grid,
+  .testimonial-grid,
+  .portal-grid,
+  .about-hero,
+  .speelweelde-section,
+  .basisschool-hero,
+  .form-card,
+  .table-card,
+  .login-card,
+  .auth-card,
+  .contact-card,
+  .booking-card,
+  .legal-card,
+  .admin-card,
+  .dashboard-card,
+  .shop-card,
+  .service-card,
+  .info-card {
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .login-card,
+  .auth-card,
+  .form-card,
+  .contact-card,
+  .booking-card,
+  .legal-card,
+  .admin-card,
+  .dashboard-card,
+  .shop-content,
+  .service-content,
+  .info-card {
+    padding: clamp(18px, 5vw, 30px) !important;
+    border-radius: clamp(20px, 6vw, 30px) !important;
+  }
+
+  /* Forms */
+  form,
+  fieldset,
+  .form-row,
+  .form-grid,
+  .field-row,
+  .input-row {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .form-row,
+  .field-row,
+  .input-row {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100% !important;
+    min-width: 0 !important;
+    font-size: 16px !important; /* prevents iOS zoom */
+  }
+
+  textarea {
+    resize: vertical;
+  }
+
+  /* Actions stack instead of pushing outside the screen. */
+  .hero-actions,
+  .dashboard-buttons,
+  .form-actions,
+  .card-actions,
+  .modal-actions,
+  .mail-actions,
+  .shop-bottom,
+  .booking-actions,
+  .appointment-actions,
+  .admin-actions {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    width: 100% !important;
+    gap: 10px !important;
+  }
+
+  .hero-actions > *,
+  .dashboard-buttons > *,
+  .form-actions > *,
+  .card-actions > *,
+  .modal-actions > *,
+  .mail-actions > *,
+  .booking-actions > *,
+  .appointment-actions > * {
+    flex: 1 1 220px !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .primary-action,
+  .secondary-action,
+  .shop-button,
+  .login-button,
+  .submit-button,
+  button[type="submit"] {
+    white-space: normal !important;
+    text-align: center;
+  }
+
+  /* Tables and intentionally wide planners stay usable through local scrolling. */
+  .table-card,
+  .table-wrapper,
+  .admin-table-wrap,
+  .data-table-wrapper,
+  .planner-scroll,
+  .mailbox-content,
+  .smartschool-main,
+  .portal-main {
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table-card table,
+  .table-wrapper table,
+  .admin-table-wrap table,
+  .data-table-wrapper table {
+    width: max-content;
+    min-width: 100%;
+  }
+
+  /* Legacy app shells with desktop min-width must not stretch the body. */
+  .smartschool-layout,
+  .mailbox-layout,
+  .leerlingportaal-layout,
+  .student-portal-layout,
+  .admin-shell,
+  .dashboard-shell {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  /* Modals */
+  .modal-backdrop,
+  .mail-modal-backdrop,
+  .lightbox,
+  [class*="modal-backdrop"] {
+    padding: 12px !important;
+  }
+
+  .modal,
+  .mail-modal,
+  .dialog,
+  [role="dialog"],
+  [class*="Modal"] {
+    width: min(100%, 680px) !important;
+    max-width: calc(100vw - 24px) !important;
+    max-height: calc(100dvh - 24px) !important;
+    overflow: auto !important;
+    padding: clamp(18px, 5vw, 30px) !important;
+  }
+
+  /* Decorative absolute art must not create viewport overflow. */
+  .hero-art,
+  .hero-illustration,
+  .season-decoration,
+  .floating-decoration,
+  .decorative-shape {
+    max-width: 100% !important;
+  }
+}
+
+@media (max-width: 560px) {
+  :root {
+    --mobile-gutter: 14px;
+  }
+
+  .site-header .logo,
+  .site-header > a:first-child,
+  .site-header .brand {
+    width: min(132px, 40vw) !important;
+  }
+
+  .site-header .login-button,
+  .site-header .account-button {
+    max-width: 48vw !important;
+    min-height: 42px !important;
+    padding: 8px 11px !important;
+    font-size: 0.82rem !important;
+  }
+
+  .hero,
+  .subpage-hero,
+  .about-hero,
+  .speelweelde-section,
+  .cards-section,
+  .services-section,
+  .site-footer {
+    padding-left: var(--mobile-gutter) !important;
+    padding-right: var(--mobile-gutter) !important;
+  }
+
+  .hero-actions > *,
+  .dashboard-buttons > *,
+  .form-actions > *,
+  .card-actions > *,
+  .modal-actions > *,
+  .mail-actions > *,
+  .booking-actions > *,
+  .appointment-actions > * {
+    flex-basis: 100% !important;
+    width: 100% !important;
+  }
+
+  .shop-header {
+    grid-template-columns: minmax(0, 1fr) 64px !important;
+  }
+
+  .shop-thumbnail {
+    width: 64px !important;
+    height: 64px !important;
+  }
+}

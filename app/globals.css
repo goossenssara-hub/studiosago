@@ -51,6 +51,7 @@
 @import "@/app/styles/admin-student-edit.css";
 @import "@/app/styles/admin-upgrade.css";
 @import "@/app/styles/webshop-upload.css";
+@import "./styles/mobile-hardening.css";
 
 @font-face {
   font-family: "StudioFont";

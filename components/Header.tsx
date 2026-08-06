@@ -207,6 +207,13 @@ export default function Header() {
         >
           Webshop
         </Link>
+
+        <Link
+          href="/leerplatform"
+          onClick={closeMenu}
+        >
+          Leerplatform
+        </Link>
       </nav>
 
       {checkedAuth && !loggedIn && (

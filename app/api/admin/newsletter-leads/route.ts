@@ -10,7 +10,7 @@ type LeadRow = {
   first_at: string;
   last_at: string;
   interaction_count: number;
-  source: "preview" | "download";
+  source: "preview" | "download" | "leerplatform";
 };
 
 function getSupabaseConfig() {
@@ -35,7 +35,7 @@ async function loadRows(table: string, select: string, orderColumn: string) {
 
 export async function GET() {
   try {
-    const [previews, downloads] = await Promise.all([
+    const [previews, downloads, pioneers] = await Promise.all([
       loadRows(
         "digital_product_preview_leads",
         "product_id,email,marketing_consent,first_previewed_at,last_previewed_at,preview_count",
@@ -45,6 +45,11 @@ export async function GET() {
         "digital_product_leads",
         "product_id,email,marketing_consent,first_downloaded_at,last_downloaded_at,download_count",
         "last_downloaded_at"
+      ),
+      loadRows(
+        "learning_platform_pioneers",
+        "email,updates_consent,created_at,updated_at",
+        "updated_at"
       ),
     ]);
 
@@ -66,6 +71,15 @@ export async function GET() {
         last_at: String(row.last_downloaded_at ?? ""),
         interaction_count: Number(row.download_count ?? 0),
         source: "download" as const,
+      })),
+      ...pioneers.map((row) => ({
+        product_id: "leerplatform-pionier",
+        email: String(row.email ?? ""),
+        marketing_consent: row.updates_consent === true,
+        first_at: String(row.created_at ?? ""),
+        last_at: String(row.updated_at ?? row.created_at ?? ""),
+        interaction_count: 1,
+        source: "leerplatform" as const,
       })),
     ];
 

@@ -71,6 +71,12 @@ const PRODUCT_CONFIG: Record<
     requiresStudentData: true,
   },
 
+  "klaar-voor-de-sprong-eerste-leerjaar": {
+    name: "Klaar voor de Sprong – Naar het eerste leerjaar",
+    amount: 180,
+    category: "workshop",
+    requiresStudentData: true,
+  },
 
   tekstcorrectie: {
     name: "Tekstcorrectie",
@@ -248,12 +254,6 @@ export default function WebshopOrderForm({
     productConfig.amount,
     wordCount,
   ]);
-
-  const textCorrectionExtraBlocks = useMemo(() => {
-    const words = Number(wordCount);
-    if (!Number.isFinite(words) || words <= 2000) return 0;
-    return Math.ceil((words - 2000) / 1000);
-  }, [wordCount]);
 
   const finalAmount = useMemo(() => {
     if (!discount?.valid) {
@@ -1017,20 +1017,6 @@ const checkoutEndpoint =
                     }}
                     required
                   />
-
-                  <small>
-                    Tot en met 2.000 woorden betaal je €20. Daarna komt er
-                    €8 bij per begonnen 1.000 extra woorden.
-                  </small>
-
-                  {Number(wordCount) > 0 && (
-                    <small>
-                      Berekende prijs: <strong>{formatCurrency(originalAmount)}</strong>
-                      {textCorrectionExtraBlocks > 0
-                        ? ` (€20 + ${textCorrectionExtraBlocks} × €8)`
-                        : " (€20 basistarief)"}
-                    </small>
-                  )}
                 </label>
 
                 <label className="webshop-field">
@@ -1044,7 +1030,7 @@ const checkoutEndpoint =
                         event.target.value
                       )
                     }
-                    placeholder="Bijvoorbeeld eindwerk, cursus, website of manuscript"
+                    placeholder="Bijvoorbeeld eindwerk of cursus"
                   />
                 </label>
               </>

@@ -83,7 +83,7 @@ export default function AdminNewsletterLeads() {
     </div>
     {loading && <p>Contacten laden…</p>}
     {error && <p className={styles.error}>{error}</p>}
-    {!loading && !error && <div className={styles.tableWrap}><table><thead><tr><th>E-mailadres</th><th>Toestemming</th><th>Bron</th><th>Laatste activiteit</th><th>Interacties</th></tr></thead><tbody>{visible.map((lead) => <tr key={lead.email}><td>{lead.email}</td><td><span className={lead.marketingConsent ? styles.yes : styles.no}>{lead.marketingConsent ? "Ja" : "Nee"}</span></td><td>{lead.sources.includes("download") ? "Download" : "Voorbeeld"}</td><td>{formatDate(lead.lastAt)}</td><td>{lead.interactionCount}</td></tr>)}</tbody></table>{visible.length === 0 && <p className={styles.empty}>Geen contacten gevonden.</p>}</div>}
+    {!loading && !error && <div className={styles.tableWrap}><table><thead><tr><th>E-mailadres</th><th>Toestemming</th><th>Bron</th><th>Laatste activiteit</th><th>Interacties</th></tr></thead><tbody>{visible.map((lead) => <tr key={lead.email}><td>{lead.email}</td><td><span className={lead.marketingConsent ? styles.yes : styles.no}>{lead.marketingConsent ? "Ja" : "Nee"}</span></td><td>{lead.sources.includes("leerplatform") ? "Leerplatform" : lead.sources.includes("download") ? "Download" : "Voorbeeld"}</td><td>{formatDate(lead.lastAt)}</td><td>{lead.interactionCount}</td></tr>)}</tbody></table>{visible.length === 0 && <p className={styles.empty}>Geen contacten gevonden.</p>}</div>}
     <p className={styles.note}>Privacy: een verplicht e-mailadres om het voorbeeld te bekijken is niet automatisch toestemming voor commerciële e-mails. Daarom exporteert de knop uitsluitend contacten die de nieuwsbriefkeuze aanvinkten.</p>
   </section>;
 }

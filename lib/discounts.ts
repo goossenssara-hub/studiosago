@@ -14,3 +14,5 @@ const DISCOUNT_CODES = [
   "SAGO-VICKY-20",
   "SAGO-JORIS-20",
 ];
+
+export {};

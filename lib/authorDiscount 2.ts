@@ -1,0 +1,4 @@
+export function normalizeAuthorCode(value: unknown): string {return String(value ?? "").trim().toUpperCase();}
+export function getAuthorDiscountPercent(): number {const parsed=Number(process.env.AUTHOR_INSTAGRAM_DISCOUNT_PERCENT ?? 10);return Number.isFinite(parsed)?Math.min(50,Math.max(0,parsed)):10;}
+export function isValidAuthorInstagramCode(value: unknown): boolean {const configured=normalizeAuthorCode(process.env.AUTHOR_INSTAGRAM_CODE || "AUTEUR10");return Boolean(configured)&&normalizeAuthorCode(value)===configured;}
+export function applyAuthorDiscount(amount:number,wordCount:number,code:unknown){const eligible=wordCount>=10000&&isValidAuthorInstagramCode(code);const percent=eligible?getAuthorDiscountPercent():0;return {eligible,percent,amount:Math.round(amount*(1-percent/100)*100)/100};}

@@ -17,7 +17,7 @@ type AuthStatusResponse = {
   role: string | null;
 };
 
-export default function Header() {
+export default function Header({ locale = "nl" }: { locale?: "nl" | "en" }) {
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   const [loggedIn, setLoggedIn] = useState(false);
@@ -146,6 +146,21 @@ export default function Header() {
 
   function closeMenu() {
     setMenuOpen(false);
+  }
+
+
+  if (locale === "en") {
+    return (
+      <header className="site-header">
+        <Link href="/webshop-EN" aria-label="Studio SaGo English shop">
+          <Image className="logo" src="/assets/logo-studio-sago.svg" alt="Studio SaGo" width={245} height={115} priority />
+        </Link>
+        <nav className="nav" aria-label="Main navigation">
+          <Link href="/webshop-EN">English shop</Link>
+          <Link href="/webshop">Nederlands</Link>
+        </nav>
+      </header>
+    );
   }
 
   return (

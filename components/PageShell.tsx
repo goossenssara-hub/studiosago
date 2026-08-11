@@ -1,15 +1,15 @@
 import Header from "./Header";
 import Footer from "./Footer";
 
-export default function PageShell({ children }: { children: React.ReactNode }) {
+type Locale = "nl" | "en";
+
+export default function PageShell({ children, locale = "nl" }: { children: React.ReactNode; locale?: Locale }) {
   return (
     <div className="page-shell">
       <div className="site-card">
-        <Header />
-
+        <Header locale={locale} />
         <main>{children}</main>
-
-        <Footer />
+        <Footer locale={locale} />
       </div>
     </div>
   );

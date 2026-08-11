@@ -7,6 +7,10 @@ const DOWNLOADS: Record<string, string> = {
     "/downloads/studio-sago-ontdekkingsbord.pdf",
   "studio-sago-memoryspel-ontdekkingsbord-gratis":
     "/downloads/studio-sago-memoryspel-ontdekkingsbord.pdf",
+  "studio-sago-discovery-board-en-free":
+    "/downloads/studio-sago-discovery-board-en.pdf",
+  "studio-sago-memory-game-en-free":
+    "/downloads/studio-sago-memory-game-en.pdf",
 };
 
 function getSupabaseConfig() {

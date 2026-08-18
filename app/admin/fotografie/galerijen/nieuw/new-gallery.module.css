@@ -451,3 +451,128 @@
 }
 .dragHandle:active,
 .publishDragHandle:active { cursor: grabbing; }
+
+
+.processingPanel {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 1px solid rgba(217,112,69,.20);
+  border-radius: 14px;
+  background: rgba(255,248,244,.92);
+}
+.processingTop { display:flex; justify-content:space-between; gap:12px; align-items:center; color:var(--ink); }
+.processingTop strong { font-size:10px; }
+.processingTop span { font-size:9px; font-weight:800; color:var(--accent); }
+.processingTrack { height:7px; margin:9px 0 8px; overflow:hidden; border-radius:999px; background:rgba(7,46,77,.08); }
+.processingTrack > span { display:block; height:100%; min-width:2px; border-radius:inherit; background:var(--accent); transition:width .2s ease; }
+.processingPanel small { display:block; color:var(--muted); font-size:8px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.processingPanel p { margin:5px 0 0; color:var(--muted); font-size:8px; line-height:1.5; }
+
+
+/* Downloadstap: eigen kaartstijl zodat browser-default buttons nooit doorbreken. */
+.downloadChoiceGrid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+  margin-top:18px;
+}
+.downloadChoice {
+  appearance:none;
+  width:100%;
+  min-height:116px;
+  display:grid;
+  grid-template-columns:46px minmax(0,1fr) 28px;
+  align-items:center;
+  gap:14px;
+  padding:18px;
+  border:1px solid rgba(7,46,77,.13);
+  border-radius:18px;
+  background:#fff;
+  color:var(--ink);
+  text-align:left;
+  font:inherit;
+  cursor:pointer;
+  box-shadow:0 10px 28px rgba(7,46,77,.04);
+  transition:border-color .18s ease, box-shadow .18s ease, transform .18s ease, background .18s ease;
+}
+.downloadChoice:hover {
+  transform:translateY(-1px);
+  border-color:rgba(217,112,69,.38);
+  box-shadow:0 13px 32px rgba(7,46,77,.07);
+}
+.downloadChoiceActive {
+  border-color:rgba(217,112,69,.62);
+  background:linear-gradient(145deg,#fffaf7,#fff);
+  box-shadow:0 14px 34px rgba(217,112,69,.10);
+}
+.downloadChoiceIcon {
+  width:46px;
+  height:46px;
+  display:grid;
+  place-items:center;
+  border-radius:14px;
+  background:#f7ebe4;
+  color:var(--accent);
+}
+.downloadChoiceCopy {
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+}
+.downloadChoiceCopy strong {
+  font-size:14px;
+  line-height:1.2;
+  color:var(--ink);
+}
+.downloadChoiceCopy small {
+  display:block;
+  font-size:9px;
+  line-height:1.55;
+  color:var(--muted);
+  font-weight:650;
+}
+.downloadChoiceCheck {
+  width:27px;
+  height:27px;
+  display:grid;
+  place-items:center;
+  border-radius:999px;
+  border:1px solid rgba(7,46,77,.12);
+  color:#fff;
+}
+.downloadChoiceActive .downloadChoiceCheck {
+  border-color:var(--accent);
+  background:var(--accent);
+}
+.downloadInfo {
+  margin-top:14px;
+  display:flex;
+  gap:11px;
+  align-items:flex-start;
+  padding:13px 15px;
+  border-radius:14px;
+  background:#f7fafb;
+  border:1px solid rgba(7,46,77,.08);
+  color:var(--ink);
+}
+.downloadInfo > svg {
+  flex:0 0 auto;
+  color:var(--accent);
+  margin-top:1px;
+}
+.downloadInfo div {
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+}
+.downloadInfo strong { font-size:9px; }
+.downloadInfo span {
+  font-size:8px;
+  line-height:1.5;
+  color:var(--muted);
+}
+@media (max-width:760px) {
+  .downloadChoiceGrid { grid-template-columns:1fr; }
+  .downloadChoice { min-height:104px; }
+}

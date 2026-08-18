@@ -23,6 +23,7 @@ type GalleryImage = {
   isCover: boolean;
   url: string;
   originalUrl: string;
+  highResAvailable: boolean;
 };
 
 type Props = {
@@ -115,115 +116,44 @@ export default function PublicGalleryClient({ slug, token, gallery, images }: Pr
     }
   };
 
-  const downloadZip = async (imageIds: string[]) => {
-    if (!imageIds.length) {
-      setMessage("Selecteer minstens één foto.");
-      return;
-    }
+  const downloadOriginal = (imageId: string) => {
+    const query = new URLSearchParams({ slug, token, imageId });
+    window.location.href = `/api/photography/original-download?${query.toString()}`;
+  };
 
-    setBusyId(imageIds.length === 1 ? imageIds[0] : "selection");
-    setMessage(
-      imageIds.length === 1
-        ? "De ZIP met jullie foto wordt voorbereid…"
-        : `De ZIP met ${imageIds.length} foto’s wordt voorbereid…`,
-    );
-
+  const startZipDownload = async (mode: "selection" | "all", imageIds: string[] = []) => {
     try {
-      const response = await fetch("/api/photography/gallery-actions", {
+      setMessage(mode === "selection" ? "Jullie selectie wordt als ZIP voorbereid…" : "De volledige galerij wordt als ZIP voorbereid…");
+      const response = await fetch("/api/photography/zip-ticket", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "downloadZip", slug, token, imageIds }),
+        body: JSON.stringify({ slug, token, mode, imageIds }),
       });
-
-      if (!response.ok) {
-        const text = await response.text();
-        let errorMessage = "De ZIP kon niet worden gemaakt.";
-        if (text) {
-          try {
-            const result = JSON.parse(text) as { error?: string };
-            errorMessage = result.error || errorMessage;
-          } catch {
-            errorMessage = text;
-          }
-        }
-        throw new Error(errorMessage);
+      const result = (await response.json()) as { url?: string; error?: string; count?: number };
+      if (!response.ok || !result.url) {
+        throw new Error(result.error || "De ZIP kon niet worden voorbereid.");
       }
-
-      const blob = await response.blob();
-      const disposition = response.headers.get("content-disposition") || "";
-      const encodedName = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
-      const fileName = encodedName ? decodeURIComponent(encodedName) : `${gallery.title}.zip`;
-      const objectUrl = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = objectUrl;
-      anchor.download = fileName;
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-      setMessage(
-        imageIds.length === 1
-          ? "De foto werd als ZIP gedownload."
-          : `${imageIds.length} foto’s werden samen in één ZIP gedownload.`,
-      );
+      setMessage(`${result.count ?? imageIds.length} hoge-resolutiefoto${(result.count ?? imageIds.length) === 1 ? "" : "’s"} worden als ZIP gedownload…`);
+      window.location.href = result.url;
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "De ZIP-download is mislukt.");
-    } finally {
-      setBusyId(null);
+      setMessage(error instanceof Error ? error.message : "De ZIP-download kon niet worden gestart.");
     }
   };
 
-  const downloadImage = async (imageId: string) => {
-    setBusyId(imageId);
-    setMessage("De foto wordt voorbereid…");
-
-    try {
-      const response = await fetch("/api/photography/gallery-actions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "downloadImage", slug, token, imageId }),
-      });
-
-      if (!response.ok) {
-        const text = await response.text();
-        throw new Error(text || "De foto kon niet worden gedownload.");
-      }
-
-      const blob = await response.blob();
-      const disposition = response.headers.get("content-disposition") || "";
-      const encodedName = disposition.match(/filename\*=UTF-8\'\'([^;]+)/i)?.[1];
-      const selectedImage = images.find((image) => image.id === imageId);
-      const fileName = encodedName
-        ? decodeURIComponent(encodedName)
-        : selectedImage?.fileName || "SaGo-foto.jpg";
-      const objectUrl = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = objectUrl;
-      anchor.download = fileName;
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-      setMessage("De foto werd gedownload.");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "De download is mislukt.");
-    } finally {
-      setBusyId(null);
-    }
-  };
-
-  const downloadFavorites = async () => {
-    const selectedIds = images.filter((image) => favorites.has(image.id)).map((image) => image.id);
-    if (!selectedIds.length) {
-      setMessage("Duid eerst minstens één favoriete foto aan.");
+  const downloadSelection = () => {
+    const selected = images.filter((image) => favorites.has(image.id) && image.highResAvailable);
+    if (!selected.length) {
+      setMessage("Selecteer eerst minstens één foto met een hoge-resolutiebestand.");
       return;
     }
-    await downloadZip(selectedIds);
+    void startZipDownload("selection", selected.map((image) => image.id));
   };
 
-  const canDownloadIndividual = gallery.downloads === "single" || gallery.downloads === "all";
-  const canDownloadSelection = gallery.downloads === "favorites" || gallery.downloads === "all";
-  const canDownloadAll = gallery.downloads === "all";
+  const downloadFullGallery = () => {
+    void startZipDownload("all");
+  };
+
+  const canDownloadAll = gallery.downloads === "all" && images.some((image) => image.highResAvailable);
 
   return (
     <main className={styles.page} style={{ "--accent": gallery.accentColor } as CSSProperties}>
@@ -252,19 +182,19 @@ export default function PublicGalleryClient({ slug, token, gallery, images }: Pr
                 ♥ {favorites.size} geselecteerd
               </button>
             )}
-            {canDownloadSelection && gallery.favoritesEnabled && (
-              <button type="button" className={styles.primaryButton} onClick={downloadFavorites} disabled={!favorites.size || busyId !== null}>
-                {busyId === "selection" ? "ZIP voorbereiden…" : "Download selectie als ZIP"}
+            {favorites.size > 0 && (
+              <button type="button" className={styles.primaryButton} onClick={downloadSelection}>
+                Download selectie als ZIP ({favorites.size})
               </button>
             )}
             {canDownloadAll && (
               <button
                 type="button"
                 className={styles.primaryButton}
-                onClick={() => downloadZip(images.map((image) => image.id))}
-                disabled={!images.length || busyId !== null}
+                onClick={downloadFullGallery}
+                disabled={!images.length}
               >
-                {busyId === "selection" ? "ZIP voorbereiden…" : "Download volledige galerij als ZIP"}
+                Download volledige galerij
               </button>
             )}
           </div>
@@ -323,10 +253,8 @@ export default function PublicGalleryClient({ slug, token, gallery, images }: Pr
                         {selected ? "♥" : "♡"}
                       </button>
                     )}
-                    {canDownloadIndividual && (
-                      <button type="button" className={styles.iconButton} onClick={() => downloadImage(image.id)} disabled={busyId !== null} aria-label="Download foto">
-                        {busyId === image.id ? "…" : "↓"}
-                      </button>
+                    {image.highResAvailable && (
+                      <button type="button" className={styles.iconButton} onClick={() => downloadOriginal(image.id)} aria-label="Download hoge resolutie">↓</button>
                     )}
                   </div>
                   {selected && <span className={styles.selectedBadge}>Geselecteerd</span>}
@@ -363,7 +291,9 @@ export default function PublicGalleryClient({ slug, token, gallery, images }: Pr
                     {favorites.has(images[activeImage].id) ? "♥ Geselecteerd" : "♡ Selecteer"}
                   </button>
                 )}
-                {canDownloadIndividual && <button type="button" onClick={() => downloadImage(images[activeImage].id)} disabled={busyId !== null}>{busyId === images[activeImage].id ? "Voorbereiden…" : "Download foto"}</button>}
+                {images[activeImage].highResAvailable && (
+                  <button type="button" onClick={() => downloadOriginal(images[activeImage].id)}>↓ Hoge resolutie</button>
+                )}
               </div>
             </div>
           </div>

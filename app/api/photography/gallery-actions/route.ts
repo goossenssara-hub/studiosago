@@ -225,6 +225,8 @@ export async function POST(request: Request) {
     }
 
     if (body.action === "downloadImage") {
+      return NextResponse.json({ error: "Losse webfoto-downloads zijn uitgeschakeld. Gebruik de hoge-resolutie ZIP vanuit Cloudflare R2." }, { status: 410 });
+      /* legacy web-download intentionally disabled
       const mode = String(gallery.downloads || "individual");
       if (mode === "none" || mode === "disabled") {
         return NextResponse.json({ error: "Downloads zijn uitgeschakeld." }, { status: 403 });
@@ -262,8 +264,12 @@ export async function POST(request: Request) {
         },
       });
     }
+      */
+    }
 
     if (body.action === "downloadZip") {
+      return NextResponse.json({ error: "Webfoto-ZIP is uitgeschakeld. Gebruik de hoge-resolutie ZIP vanuit Cloudflare R2." }, { status: 410 });
+      /* legacy web-zip intentionally disabled
       const mode = String(gallery.downloads || "individual");
       if (mode === "none" || mode === "disabled") {
         return NextResponse.json({ error: "Downloads zijn uitgeschakeld." }, { status: 403 });
@@ -321,6 +327,8 @@ export async function POST(request: Request) {
           "Cache-Control": "private, no-store",
         },
       });
+    }
+      */
     }
 
     return NextResponse.json({ error: "Onbekende actie." }, { status: 400 });

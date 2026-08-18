@@ -4,3 +4,6 @@ node_modules
 .DS_Store
 Archief.zip
 Archief.zip
+
+.git-backup/
+.git-reinit-backup/

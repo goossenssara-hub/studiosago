@@ -10,7 +10,7 @@ export default async function EditGalleryPage({ params }: { params: Promise<{ id
   const supabase = getSupabaseAdmin();
   const [{ data: gallery }, { data: images }] = await Promise.all([
     supabase.from("photo_galleries").select("*").eq("id", id).maybeSingle(),
-    supabase.from("photo_gallery_images").select("id,file_name,storage_path,sort_order,is_cover").eq("gallery_id", id).order("sort_order"),
+    supabase.from("photo_gallery_images").select("id,file_name,storage_path,sort_order,is_cover,r2_original_key,r2_original_name,r2_original_size_bytes").eq("gallery_id", id).order("sort_order"),
   ]);
   if (!gallery) notFound();
 
@@ -27,5 +27,8 @@ export default async function EditGalleryPage({ params }: { params: Promise<{ id
     is_cover: image.is_cover,
     url: urlMap.get(image.storage_path) ?? "",
     storage_path: image.storage_path,
+    r2_original_key: image.r2_original_key ?? null,
+    r2_original_name: image.r2_original_name ?? null,
+    r2_original_size_bytes: Number(image.r2_original_size_bytes || 0),
   }))} />;
 }

@@ -1,0 +1,16 @@
+{
+  "name": "sago-photography-zip-worker",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@zip.js/zip.js": "^2.8.8"
+  },
+  "devDependencies": {
+    "wrangler": "^4.33.1"
+  }
+}

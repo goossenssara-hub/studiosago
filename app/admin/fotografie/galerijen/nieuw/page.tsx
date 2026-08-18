@@ -31,10 +31,12 @@ import {
 import Image from 'next/image';
 import { ChangeEvent, DragEvent, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import styles from './new-gallery.module.css';
+import { optimizePhotoForGallery } from '@/lib/fotografie/optimizeImage';
 
 type UploadItem = {
   id: string;
-  file: File;
+  file: File; // geoptimaliseerde webversie voor Supabase
+  originalFile: File; // hoge resolutie voor Cloudflare R2
   preview: string;
 };
 
@@ -51,7 +53,7 @@ type FormState = {
   introTitle: string;
   introText: string;
   password: string;
-  downloads: 'none' | 'single' | 'favorites' | 'all';
+  downloads: 'none' | 'all';
   favorites: boolean;
 };
 
@@ -93,6 +95,7 @@ export default function NewGalleryPage() {
   const [error, setError] = useState('');
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishProgress, setPublishProgress] = useState('');
+  const [processingProgress, setProcessingProgress] = useState<{ done: number; total: number; current: string } | null>(null);
   const [publishedLink, setPublishedLink] = useState('');
   const [copied, setCopied] = useState(false);
   const [draggedPhotoId, setDraggedPhotoId] = useState<string | null>(null);
@@ -122,39 +125,72 @@ export default function NewGalleryPage() {
     setForm((current) => ({ ...current, [field]: value }));
   };
 
-  const addFiles = (files: FileList | File[]) => {
-    const valid = Array.from(files).filter((file) => file.type === 'image/jpeg' || /\.jpe?g$/i.test(file.name));
-    const rejected = Array.from(files).length - valid.length;
+  const addFiles = async (files: FileList | File[]) => {
+    const selected = Array.from(files);
+    const valid = selected.filter((file) => file.type === 'image/jpeg' || /\.jpe?g$/i.test(file.name));
+    const rejected = selected.length - valid.length;
 
     if (!valid.length) {
       setError('Kies JPG- of JPEG-bestanden. Andere bestandstypes worden niet toegevoegd.');
       return;
     }
 
-    setUploads((current) => {
-      const known = new Set(current.map((item) => `${item.file.name}-${item.file.size}-${item.file.lastModified}`));
-      const fresh = valid
-        .filter((file) => !known.has(`${file.name}-${file.size}-${file.lastModified}`))
-        .map((file) => ({
-          id: `${file.name}-${file.size}-${file.lastModified}-${crypto.randomUUID()}`,
-          file,
-          preview: URL.createObjectURL(file),
-        }));
-      return [...current, ...fresh];
-    });
+    setError('');
+    setProcessingProgress({ done: 0, total: valid.length, current: valid[0]?.name || '' });
 
-    setError(rejected ? `${rejected} bestand(en) overgeslagen. Alleen JPG/JPEG is toegestaan.` : '');
+    const failures: string[] = [];
+    let added = 0;
+
+    for (let index = 0; index < valid.length; index += 1) {
+      const originalFile = valid[index];
+      setProcessingProgress({ done: index, total: valid.length, current: originalFile.name });
+
+      try {
+        const result = await optimizePhotoForGallery(originalFile);
+        const optimizedFile = result.file;
+
+        setUploads((current) => {
+          const originalKey = `${originalFile.name}-${originalFile.size}-${originalFile.lastModified}`;
+          const known = new Set(
+            current.map((item) => `${item.originalFile.name}-${item.originalFile.size}-${item.originalFile.lastModified}`),
+          );
+          if (known.has(originalKey)) return current;
+
+          const item: UploadItem = {
+            id: `${originalFile.name}-${originalFile.size}-${originalFile.lastModified}-${crypto.randomUUID()}`,
+            file: optimizedFile,
+            originalFile,
+            preview: URL.createObjectURL(optimizedFile),
+          };
+          return [...current, item];
+        });
+        added += 1;
+      } catch (error) {
+        failures.push(error instanceof Error ? error.message : `${originalFile.name} kon niet worden verwerkt.`);
+      }
+
+      setProcessingProgress({ done: index + 1, total: valid.length, current: originalFile.name });
+      await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
+    }
+
+    setProcessingProgress(null);
+    const notes = [
+      rejected ? `${rejected} bestand(en) overgeslagen: alleen JPG/JPEG is toegestaan.` : '',
+      failures.length ? failures.join(' ') : '',
+      added ? `${added} foto${added === 1 ? '' : "'s"} klaar. De lichte versie gaat naar Supabase; het grote JPG-bestand gaat bij publicatie rechtstreeks naar Cloudflare R2.` : '',
+    ].filter(Boolean);
+    setError(notes.join(' '));
   };
 
   const handleDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
     setIsDragging(false);
-    addFiles(event.dataTransfer.files);
+    void addFiles(event.dataTransfer.files);
   };
 
   const handleFileInput = (event: ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) addFiles(event.target.files);
+    if (event.target.files) void addFiles(event.target.files);
     event.target.value = '';
   };
 
@@ -207,10 +243,6 @@ export default function NewGalleryPage() {
   const validateStep = () => {
     if (step === 1 && (!form.title.trim() || !form.client.trim() || !form.shootDate)) {
       setError('Vul minstens de galerijnaam, klant en datum van de shoot in.');
-      return false;
-    }
-    if (step === 2 && uploads.length === 0) {
-      setError('Voeg minstens één JPG-foto toe om verder te gaan.');
       return false;
     }
     if (step === 5 && form.password.trim().length < 6) {
@@ -268,9 +300,17 @@ export default function NewGalleryPage() {
       if (!createResponse.ok) throw new Error(createResult.error || 'De galerij kon niet voorbereid worden.');
       if (!createResult.galleryId) throw new Error('De server gaf geen galerij-id terug. Publiceren is gestopt.');
 
+      if (uploads.length === 0) {
+        setPublishProgress('Conceptgalerij gemaakt. R2-dashboard openen…');
+        window.location.href = `/admin/fotografie/galerijen/${createResult.galleryId}`;
+        return;
+      }
+
       for (let index = 0; index < uploads.length; index += 1) {
         const item = uploads[index];
-        setPublishProgress(`Foto ${index + 1} van ${uploads.length} uploaden…`);
+        const label = `Foto ${index + 1} van ${uploads.length}`;
+
+        setPublishProgress(`${label}: lichte webversie naar Supabase…`);
         const photoPayload = new FormData();
         photoPayload.set('action', 'upload');
         photoPayload.set('galleryId', createResult.galleryId);
@@ -282,8 +322,12 @@ export default function NewGalleryPage() {
           method: 'POST',
           body: photoPayload,
         }, 180000);
-        const uploadResult = await readApiResponse<{ ok?: boolean; error?: string }>(uploadResponse);
-        if (!uploadResponse.ok) throw new Error(uploadResult.error || `Foto ${index + 1} kon niet geüpload worden.`);
+        const uploadResult = await readApiResponse<{ ok?: boolean; imageId?: string; error?: string }>(uploadResponse);
+        if (!uploadResponse.ok || !uploadResult.imageId) {
+          throw new Error(uploadResult.error || `${label}: de webversie kon niet naar Supabase worden geüpload.`);
+        }
+
+
       }
 
       setPublishProgress('Galerij publiceren…');
@@ -389,6 +433,7 @@ export default function NewGalleryPage() {
             {step === 2 && (
               <UploadStep
                 uploads={uploads}
+                processingProgress={processingProgress}
                 isDragging={isDragging}
                 inputRef={inputRef}
                 setIsDragging={setIsDragging}
@@ -480,6 +525,7 @@ function BasicDetails({ form, updateField }: { form: FormState; updateField: <K 
 
 function UploadStep(props: {
   uploads: UploadItem[];
+  processingProgress: { done: number; total: number; current: string } | null;
   isDragging: boolean;
   inputRef: React.RefObject<HTMLInputElement | null>;
   setIsDragging: (value: boolean) => void;
@@ -518,9 +564,23 @@ function UploadStep(props: {
         <small>JPG/JPEG • meerdere bestanden tegelijk • volgorde blijft behouden</small>
       </div>
 
+      {props.processingProgress && (
+        <div className={styles.processingPanel} aria-live="polite">
+          <div className={styles.processingTop}>
+            <strong>Foto’s verwerken</strong>
+            <span>{props.processingProgress.done} / {props.processingProgress.total}</span>
+          </div>
+          <div className={styles.processingTrack}>
+            <span style={{ width: `${Math.round((props.processingProgress.done / Math.max(1, props.processingProgress.total)) * 100)}%` }} />
+          </div>
+          <small>{props.processingProgress.current ? `Bezig met ${props.processingProgress.current}` : 'Voorbereiden…'}</small>
+          <p>Per foto maken we een lichte galerijversie. Het originele JPG-bestand blijft gekoppeld voor Cloudflare R2.</p>
+        </div>
+      )}
+
       {props.uploads.length > 0 && (
         <div className={styles.uploadedArea}>
-          <div className={styles.uploadSummary}><div><strong>{props.uploads.length} foto&apos;s toegevoegd</strong><span>{formatBytes(props.uploads.reduce((sum, item) => sum + item.file.size, 0))} · Pas het volgnummer aan, sleep de kaarten of gebruik de pijlen</span></div><button type="button" onClick={() => props.inputRef.current?.click()}>+ Meer toevoegen</button></div>
+          <div className={styles.uploadSummary}><div><strong>{props.uploads.length} foto&apos;s toegevoegd</strong><span>{formatBytes(props.uploads.reduce((sum, item) => sum + item.file.size, 0))} webversies voor Supabase</span></div><button type="button" onClick={() => props.inputRef.current?.click()}>+ Meer toevoegen</button></div>
           <div className={styles.photoGrid}>
             {props.uploads.map((item, index) => (
               <article
@@ -662,13 +722,52 @@ function AccessStep({ form, updateField }: StepProps) {
 }
 
 function DownloadsStep({ form, updateField }: StepProps) {
-  const options: Array<[FormState['downloads'], string, string]> = [
-    ['none', 'Geen downloads', 'De klant kan de foto’s alleen bekijken.'],
-    ['single', 'Afzonderlijke foto’s als ZIP', 'Elke gekozen foto wordt in een ZIP-map met de galerijtitel gedownload.'],
-    ['favorites', 'Alleen favorieten als ZIP', 'De gekozen selectie wordt als één ZIP-map met de galerijtitel gedownload.'],
-    ['all', 'Individueel + volledige galerij als ZIP', 'Elke download wordt automatisch als ZIP met de galerijtitel geleverd.'],
-  ];
-  return <OptionStep number="06" title="Downloadmogelijkheden" description="Bepaal wat deze klant mag downloaden." value={form.downloads} options={options} onChange={(value) => updateField('downloads', value as FormState['downloads'])} />;
+  return (
+    <div className={styles.sectionCard}>
+      <div className={styles.sectionHeading}>
+        <div><span>06</span><h2>Hoge-resolutiedownload</h2></div>
+        <p>De webfoto’s blijven klein in Supabase. De originele JPG’s staan veilig in Cloudflare R2.</p>
+      </div>
+
+      <div className={styles.downloadChoiceGrid}>
+        <button
+          type="button"
+          className={`${styles.downloadChoice} ${form.downloads === 'none' ? styles.downloadChoiceActive : ''}`.trim()}
+          onClick={() => updateField('downloads', 'none')}
+        >
+          <span className={styles.downloadChoiceIcon}><X size={20} /></span>
+          <span className={styles.downloadChoiceCopy}>
+            <strong>Geen downloads</strong>
+            <small>De klant kan de webgalerij bekijken en foto’s selecteren, maar geen hoge-resolutiebestanden downloaden.</small>
+          </span>
+          <span className={styles.downloadChoiceCheck}>{form.downloads === 'none' ? <Check size={17} /> : null}</span>
+        </button>
+
+        <button
+          type="button"
+          className={`${styles.downloadChoice} ${form.downloads === 'all' ? styles.downloadChoiceActive : ''}`.trim()}
+          onClick={() => updateField('downloads', 'all')}
+        >
+          <span className={styles.downloadChoiceIcon}><Download size={20} /></span>
+          <span className={styles.downloadChoiceCopy}>
+            <strong>Hoge resolutie downloaden</strong>
+            <small>De klant kan één foto downloaden, een selectie automatisch als ZIP laten maken of de volledige galerij als ZIP downloaden.</small>
+          </span>
+          <span className={styles.downloadChoiceCheck}>{form.downloads === 'all' ? <Check size={17} /> : null}</span>
+        </button>
+      </div>
+
+      {form.downloads === 'all' && (
+        <div className={styles.downloadInfo}>
+          <ShieldCheck size={18} />
+          <div>
+            <strong>Je hoeft zelf geen ZIP te maken.</strong>
+            <span>De site vraagt de originelen rechtstreeks uit R2 op en maakt de ZIP pas wanneer de klant ze downloadt.</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function FavoritesStep({ form, updateField }: StepProps) {
@@ -676,7 +775,7 @@ function FavoritesStep({ form, updateField }: StepProps) {
     <div className={styles.sectionCard}>
       <div className={styles.sectionHeading}><div><span>07</span><h2>Favorieten</h2></div><p>Laat klanten foto&apos;s markeren voor een album, afdruk of persoonlijke selectie.</p></div>
       <Toggle title="Favorieten inschakelen" description="Klanten zien een subtiel hartje bij elke foto." checked={form.favorites} onChange={(value) => updateField('favorites', value)} large />
-      {form.favorites && <div className={styles.featureList}><span><Heart size={18} /> Eén persoonlijke favorietenlijst</span><span><Check size={18} /> Resultaten zichtbaar in admin</span><span><Download size={18} /> Selectie apart downloadbaar</span></div>}
+      {form.favorites && <div className={styles.featureList}><span><Heart size={18} /> Eén persoonlijke favorietenlijst</span><span><Check size={18} /> Resultaten zichtbaar in admin</span><span><Check size={18} /> Selectie blijft beschikbaar als favorietenlijst</span></div>}
     </div>
   );
 }

@@ -2,9 +2,16 @@ import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { requireAdmin } from "@/lib/admin-services";
+import { createR2PresignedUrl, listR2Objects, r2IsConfigured } from "@/lib/fotografie/r2";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
+
+const MAX_UPLOAD_BYTES = 2 * 1024 * 1024;
+const MAX_PHOTOS_PER_GALLERY = 250;
+const PHOTOGRAPHY_SOFT_BUDGET = 800 * 1024 * 1024;
+const PROJECT_STORAGE_SAFETY_LIMIT = 800 * 1024 * 1024;
 
 type GalleryImageUpdate = { id: string; sortOrder: number; isCover: boolean };
 type DeletedImage = { id: string; storagePath: string };
@@ -145,6 +152,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const photo = data.get("photo");
     const sortOrder = Number(data.get("sortOrder") || 0);
     const isCover = String(data.get("isCover")) === "true";
+    const r2OriginalKey = String(data.get("r2OriginalKey") || "").trim() || null;
+    const r2OriginalName = String(data.get("r2OriginalName") || "").trim() || null;
+    const r2OriginalSizeBytes = Number(data.get("r2OriginalSizeBytes") || 0);
 
     if (!(photo instanceof File)) {
       return NextResponse.json({ error: "Selecteer een geldige JPG-foto." }, { status: 400 });
@@ -152,8 +162,37 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (!(photo.type === "image/jpeg" || /\.jpe?g$/i.test(photo.name))) {
       return NextResponse.json({ error: "Alleen JPG- en JPEG-bestanden zijn toegestaan." }, { status: 400 });
     }
+    if (photo.size > MAX_UPLOAD_BYTES) {
+      return NextResponse.json({ error: "Deze foto is groter dan 2 MB na optimalisatie en wordt niet opgeslagen." }, { status: 413 });
+    }
 
     const supabase = getSupabaseAdmin();
+    const { count: currentCount, error: countLimitError } = await supabase
+      .from("photo_gallery_images")
+      .select("id", { count: "exact", head: true })
+      .eq("gallery_id", id);
+    if (countLimitError) throw countLimitError;
+    if ((currentCount ?? 0) >= MAX_PHOTOS_PER_GALLERY) {
+      return NextResponse.json({ error: `Maximaal ${MAX_PHOTOS_PER_GALLERY} foto’s per galerij.` }, { status: 400 });
+    }
+
+    const totalUsage = await supabase.rpc("get_storage_usage_bytes");
+    if (totalUsage.error) {
+      return NextResponse.json({ error: "Totale Supabase-opslagbewaking is nog niet actief. Voer eerst 20260818_photography_r2_downloads.sql uit; de upload is niet gestart." }, { status: 503 });
+    }
+    if (Number(totalUsage.data || 0) + photo.size > PROJECT_STORAGE_SAFETY_LIMIT) {
+      return NextResponse.json({ error: "Supabase Storage zit op of boven de veiligheidsgrens van 800 MB. Deze foto is NIET geüpload. Ruim eerst Storage op." }, { status: 507 });
+    }
+
+    const usage = await supabase.from("photo_gallery_images").select("file_size_bytes");
+    if (usage.error) {
+      return NextResponse.json({ error: "Opslagbewaking is nog niet actief. Voer eerst 20260817_photography_storage_usage.sql uit; de upload is niet gestart." }, { status: 503 });
+    }
+    const usedBytes = (usage.data ?? []).reduce((sum, row) => sum + Number(row.file_size_bytes || 0), 0);
+    if (usedBytes + photo.size > PHOTOGRAPHY_SOFT_BUDGET) {
+      return NextResponse.json({ error: "Fotografie-opslag heeft het fotografiebudget van 500 MB bereikt. Verwijder eerst oude foto’s of verhoog bewust je opslagplan." }, { status: 507 });
+    }
+
     const meta = await galleryMeta(id);
     const safeName = photo.name.replace(/[^a-zA-Z0-9._-]/g, "-");
     storagePath = `${id}/${Date.now()}-${randomUUID().slice(0, 8)}-${safeName}`;
@@ -177,7 +216,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
 
     // De foto is pas succesvol geüpload wanneer ook de databaserij bestaat.
-    const { data: inserted, error: insertError } = await supabase
+    let { data: inserted, error: insertError } = await supabase
       .from("photo_gallery_images")
       .insert({
         gallery_id: id,
@@ -185,14 +224,35 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         file_name: photo.name,
         sort_order: sortOrder,
         is_cover: isCover,
+        file_size_bytes: photo.size,
+        r2_original_key: r2OriginalKey,
+        r2_original_name: r2OriginalName,
+        r2_original_size_bytes: r2OriginalSizeBytes || 0,
+        r2_original_updated_at: r2OriginalKey ? new Date().toISOString() : null,
       })
-      .select("id,file_name,storage_path,sort_order,is_cover")
+      .select("id,file_name,storage_path,sort_order,is_cover,r2_original_key,r2_original_name,r2_original_size_bytes")
       .single();
+
+    if (insertError && /file_size_bytes/i.test(insertError.message || "")) {
+      const fallback = await supabase
+        .from("photo_gallery_images")
+        .insert({
+          gallery_id: id,
+          storage_path: storagePath,
+          file_name: photo.name,
+          sort_order: sortOrder,
+          is_cover: isCover,
+        })
+        .select("id,file_name,storage_path,sort_order,is_cover,r2_original_key,r2_original_name,r2_original_size_bytes")
+        .single();
+      inserted = fallback.data;
+      insertError = fallback.error;
+    }
     if (insertError || !inserted) throw insertError ?? new Error("De foto kon niet aan de galerij worden gekoppeld.");
 
     const { data: verified, error: verifyError } = await supabase
       .from("photo_gallery_images")
-      .select("id,file_name,storage_path,sort_order,is_cover")
+      .select("id,file_name,storage_path,sort_order,is_cover,r2_original_key,r2_original_name,r2_original_size_bytes")
       .eq("gallery_id", id)
       .eq("id", inserted.id)
       .single();
@@ -215,6 +275,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         sort_order: verified.sort_order,
         is_cover: verified.is_cover,
         url: signed.signedUrl,
+        r2_original_key: verified.r2_original_key ?? null,
+        r2_original_name: verified.r2_original_name ?? null,
+        r2_original_size_bytes: Number(verified.r2_original_size_bytes || 0),
       },
     });
   } catch (error) {
@@ -228,6 +291,103 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
     return NextResponse.json({
       error: errorMessage(error) || "De nieuwe foto kon niet aan de galerij worden gekoppeld.",
+    }, { status: 500 });
+  }
+}
+
+
+export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.response;
+
+  const { id } = await params;
+  const supabase = getSupabaseAdmin();
+
+  try {
+    const { data: gallery, error: galleryError } = await supabase
+      .from("photo_galleries")
+      .select("id,slug,title")
+      .eq("id", id)
+      .single();
+
+    if (galleryError || !gallery) {
+      return NextResponse.json({ error: "Galerij niet gevonden." }, { status: 404 });
+    }
+
+    const { data: images, error: imagesError } = await supabase
+      .from("photo_gallery_images")
+      .select("id,storage_path,r2_original_key")
+      .eq("gallery_id", id);
+
+    if (imagesError) throw imagesError;
+
+    // 1. Verwijder alle lichte webfoto's uit Supabase Storage.
+    const storagePaths = (images ?? [])
+      .map((image) => image.storage_path)
+      .filter((value): value is string => Boolean(value));
+
+    if (storagePaths.length) {
+      const { error: storageError } = await supabase.storage
+        .from("photo-galleries")
+        .remove(storagePaths);
+
+      if (storageError) {
+        throw new Error(`Webfoto's konden niet uit Supabase Storage worden verwijderd: ${storageError.message}`);
+      }
+    }
+
+    // 2. Verwijder de volledige R2-map van deze galerij.
+    // Dit pakt zowel gekoppelde originelen als rechtstreeks in R2 geüploade
+    // bestanden mee die nog geen kleine webversie hadden.
+    if (r2IsConfigured()) {
+      const prefix = `galleries/${id}/`;
+      const objects = await listR2Objects(prefix);
+
+      for (const object of objects) {
+        const response = await fetch(
+          createR2PresignedUrl({
+            method: "DELETE",
+            key: object.key,
+            expiresSeconds: 300,
+          }),
+          { method: "DELETE" },
+        );
+
+        if (!response.ok && response.status !== 404) {
+          throw new Error(`R2-bestand kon niet worden verwijderd: ${object.key} (HTTP ${response.status})`);
+        }
+      }
+    }
+
+    // 3. Database-items opruimen. Favorieten/selecties mogen via FK-cascade
+    // verdwijnen; de galerijfoto's verwijderen we expliciet.
+    const { error: deleteImagesError } = await supabase
+      .from("photo_gallery_images")
+      .delete()
+      .eq("gallery_id", id);
+
+    if (deleteImagesError) throw deleteImagesError;
+
+    const { error: deleteGalleryError } = await supabase
+      .from("photo_galleries")
+      .delete()
+      .eq("id", id);
+
+    if (deleteGalleryError) throw deleteGalleryError;
+
+    revalidatePath("/admin/fotografie");
+    revalidatePath("/galerij");
+    revalidatePath(`/fotografie/galerij/${gallery.slug}`);
+
+    return NextResponse.json({
+      ok: true,
+      deletedGalleryId: id,
+      deletedWebPhotos: storagePaths.length,
+    });
+  } catch (error) {
+    console.error("Gallery delete error:", error);
+    return NextResponse.json({
+      error: errorMessage(error) || "De galerij kon niet worden verwijderd.",
     }, { status: 500 });
   }
 }

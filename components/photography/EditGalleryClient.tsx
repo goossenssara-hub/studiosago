@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import styles from "@/app/admin/fotografie/galerijen/[id]/edit-gallery.module.css";
+import { optimizePhotoForGallery } from "@/lib/fotografie/optimizeImage";
 
 type Gallery = {
   id: string;
@@ -23,6 +24,9 @@ type Gallery = {
   favorites_enabled: boolean | null;
   watermark: boolean | null;
   status: string | null;
+  download_zip_key?: string | null;
+  download_zip_name?: string | null;
+  download_zip_size_bytes?: number | null;
 };
 
 type ImageItem = {
@@ -34,6 +38,9 @@ type ImageItem = {
   storage_path: string;
   file?: File;
   isNew?: boolean;
+  r2_original_key?: string | null;
+  r2_original_name?: string | null;
+  r2_original_size_bytes?: number | null;
 };
 
 type Props = { gallery: Gallery; initialImages: ImageItem[] };
@@ -74,6 +81,14 @@ export default function EditGalleryClient({ gallery, initialImages }: Props) {
   const [deletedImages, setDeletedImages] = useState<ImageItem[]>([]);
   const [message, setMessage] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [r2SyncBusy, setR2SyncBusy] = useState(false);
+  const [r2Folder] = useState(`galleries/${gallery.id}/originals/`);
+  const [r2Originals, setR2Originals] = useState<Array<{
+    key: string;
+    name: string;
+    size: number;
+    linked: boolean;
+  }>>([]);
 
   const publicUrl = useMemo(() => {
     if (typeof window === "undefined" || !gallery.share_token) return "";
@@ -101,33 +116,111 @@ export default function EditGalleryClient({ gallery, initialImages }: Props) {
     setImages((current) => current.map((image) => ({ ...image, is_cover: image.id === imageId })));
   };
 
-  const addFiles = (files: FileList | File[]) => {
-    const accepted = Array.from(files).filter((file) => file.type === "image/jpeg" || /\.jpe?g$/i.test(file.name));
-    const rejectedCount = Array.from(files).length - accepted.length;
+  const fileStem = (value: string) =>
+    value
+      .toLowerCase()
+      .replace(/\.(jpe?g|webp)$/i, "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "");
+
+  const syncR2 = async () => {
+    setR2SyncBusy(true);
+    setMessage("Cloudflare R2 uitlezen en koppelingen controleren…");
+    try {
+      const response = await fetch(`/api/photography/r2-sync?galleryId=${encodeURIComponent(gallery.id)}`, {
+        cache: "no-store",
+      });
+      const result = await response.json() as {
+        error?: string;
+        originalCount?: number;
+        linkedCount?: number;
+        awaitingWebCount?: number;
+        originals?: Array<{ key: string; name: string; size: number; linked: boolean }>;
+      };
+      if (!response.ok) throw new Error(result.error || "R2 synchroniseren mislukt.");
+
+      const originals = result.originals ?? [];
+      setR2Originals(originals);
+
+      // Werk ook het lokale overzicht bij zodat de status meteen zichtbaar is.
+      const byStem = new Map(originals.map((item) => [fileStem(item.name), item]));
+      setImages((current) => current.map((image) => {
+        const original = byStem.get(fileStem(image.file_name));
+        return original
+          ? {
+              ...image,
+              r2_original_key: original.key,
+              r2_original_name: original.name,
+              r2_original_size_bytes: original.size,
+            }
+          : image;
+      }));
+
+      setMessage(
+        `${result.originalCount ?? 0} origineel/originelen gevonden in R2. ` +
+        `${result.linkedCount ?? 0} gekoppeld aan een webfoto. ` +
+        `${result.awaitingWebCount ?? 0} wachten nog op een kleine webversie.`,
+      );
+      router.refresh();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "R2 synchroniseren mislukt.");
+    } finally {
+      setR2SyncBusy(false);
+    }
+  };
+
+  const addFiles = async (files: FileList | File[]) => {
+    const selected = Array.from(files);
+    const accepted = selected.filter((file) => file.type === "image/jpeg" || /\.jpe?g$/i.test(file.name));
+    const rejectedCount = selected.length - accepted.length;
 
     if (!accepted.length) {
       setMessage("Selecteer JPG- of JPEG-bestanden.");
       return;
     }
 
+    setMessage("Foto’s optimaliseren vóór upload…");
+    const optimized: File[] = [];
+    const failures: string[] = [];
+
+    for (const file of accepted) {
+      try {
+        optimized.push((await optimizePhotoForGallery(file)).file);
+      } catch (error) {
+        failures.push(error instanceof Error ? error.message : `${file.name} kon niet worden verwerkt.`);
+      }
+    }
+
     setImages((current) => {
       const existingKeys = new Set(current.map((item) => `${item.file_name}-${item.file?.size ?? "stored"}`));
-      const additions = accepted
+      const additions = optimized
         .filter((file) => !existingKeys.has(`${file.name}-${file.size}`))
-        .map((file, offset) => ({
-          id: `new-${crypto.randomUUID()}`,
-          file_name: file.name,
-          sort_order: current.length + offset,
-          is_cover: current.length === 0 && offset === 0,
-          url: URL.createObjectURL(file),
-          storage_path: "",
-          file,
-          isNew: true,
-        } satisfies ImageItem));
+        .map((file, offset) => {
+          const original = r2Originals.find((item) => fileStem(item.name) === fileStem(file.name));
+          return {
+            id: `new-${crypto.randomUUID()}`,
+            file_name: file.name,
+            sort_order: current.length + offset,
+            is_cover: current.length === 0 && offset === 0,
+            url: URL.createObjectURL(file),
+            storage_path: "",
+            file,
+            isNew: true,
+            r2_original_key: original?.key ?? null,
+            r2_original_name: original?.name ?? null,
+            r2_original_size_bytes: original?.size ?? 0,
+          } satisfies ImageItem;
+        });
       return [...current, ...additions];
     });
 
-    setMessage(rejectedCount ? `${accepted.length} foto’s toegevoegd. ${rejectedCount} bestand(en) overgeslagen.` : `${accepted.length} foto’s toegevoegd. Klik op Wijzigingen opslaan om ze te uploaden.`);
+    const parts = [
+      optimized.length ? `${optimized.length} foto’s klaar voor upload.` : "",
+      rejectedCount ? `${rejectedCount} bestand(en) overgeslagen.` : "",
+      failures.length ? failures.join(" ") : "",
+    ].filter(Boolean);
+    setMessage(parts.join(" "));
   };
 
   const removeImage = (imageId: string) => {
@@ -169,6 +262,9 @@ export default function EditGalleryClient({ gallery, initialImages }: Props) {
         formData.set("photo", image.file);
         formData.set("sortOrder", String(900000 + index));
         formData.set("isCover", "false");
+        if (image.r2_original_key) formData.set("r2OriginalKey", image.r2_original_key);
+        if (image.r2_original_name) formData.set("r2OriginalName", image.r2_original_name);
+        if (image.r2_original_size_bytes) formData.set("r2OriginalSizeBytes", String(image.r2_original_size_bytes));
 
         const uploadResponse = await fetch(`/api/photography/galleries/${gallery.id}`, {
           method: "POST",
@@ -231,6 +327,7 @@ export default function EditGalleryClient({ gallery, initialImages }: Props) {
     }
   };
 
+
   return (
     <main className={styles.page}>
       <div className={styles.shell}>
@@ -279,7 +376,7 @@ export default function EditGalleryClient({ gallery, initialImages }: Props) {
 
             {activeTab === "fotos" && (
               <div>
-                <div className={styles.sectionIntro}><h3>Foto’s en volgorde</h3><p>Voeg extra JPG-foto’s toe, wijzig een cijfer om de volgorde aan te passen en kies de omslagfoto.</p></div>
+                <div className={styles.sectionIntro}><h3>Foto’s en volgorde</h3><p>Upload hier alleen kleine web-JPG’s. De zware originelen staan rechtstreeks in Cloudflare R2 en worden op bestandsnaam gekoppeld.</p></div>
 
                 <div
                   className={`${styles.uploadZone} ${dragActive ? styles.uploadZoneActive : ""}`}
@@ -289,13 +386,13 @@ export default function EditGalleryClient({ gallery, initialImages }: Props) {
                   onDrop={(event) => {
                     event.preventDefault();
                     setDragActive(false);
-                    addFiles(event.dataTransfer.files);
+                    void addFiles(event.dataTransfer.files);
                   }}
                 >
-                  <input ref={fileInputRef} type="file" accept="image/jpeg,.jpg,.jpeg" multiple hidden onChange={(event) => { if (event.target.files) addFiles(event.target.files); event.target.value = ""; }} />
+                  <input ref={fileInputRef} type="file" accept="image/jpeg,.jpg,.jpeg" multiple hidden onChange={(event) => { if (event.target.files) void addFiles(event.target.files); event.target.value = ""; }} />
                   <div className={styles.uploadIcon}>＋</div>
-                  <div><strong>Extra foto’s toevoegen</strong><span>Sleep JPG-bestanden hierheen of kies ze op je computer.</span></div>
-                  <button type="button" onClick={() => fileInputRef.current?.click()}>Foto’s kiezen</button>
+                  <div><strong>Kleine webfoto’s toevoegen</strong><span>Gebruik bij voorkeur JPG’s van ongeveer 1600–2200 px. De bestandsnaam moet overeenkomen met het R2-origineel.</span></div>
+                  <button type="button" onClick={() => fileInputRef.current?.click()}>Webfoto’s kiezen</button>
                 </div>
 
                 <div className={styles.photoGrid}>
@@ -304,6 +401,9 @@ export default function EditGalleryClient({ gallery, initialImages }: Props) {
                       <div className={styles.photoImageWrap}>
                         <img src={image.url} alt={image.file_name} />
                         {image.isNew && <span className={styles.newBadge}>Nieuw</span>}
+                        <span className={image.r2_original_key ? styles.r2LinkedBadge : styles.r2MissingBadge}>
+                          {image.r2_original_key ? "R2 gekoppeld" : "Geen R2-origineel"}
+                        </span>
                       </div>
                       <div className={styles.photoBar}>
                         <label>Positie<input type="number" min={1} max={images.length} value={index + 1} onChange={(e) => moveToPosition(image.id, Number(e.target.value))} /></label>
@@ -333,8 +433,49 @@ export default function EditGalleryClient({ gallery, initialImages }: Props) {
             )}
 
             {activeTab === "downloads" && (
-              <div className={styles.optionGrid}>
-                {[["none","Geen downloads"],["single","Losse foto’s"],["favorites","Alleen selectie als ZIP"],["all","Losse foto’s én ZIP-selecties"]].map(([value,label]) => <button key={value} type="button" className={form.downloads === value ? styles.choiceActive : styles.choice} onClick={() => updateForm("downloads", value)}>{label}</button>)}
+              <div className={styles.r2SyncPanel}>
+                <div className={styles.r2SyncHeader}>
+                  <div>
+                    <span>Cloudflare R2</span>
+                    <h3>Originelen synchroniseren</h3>
+                    <p>Upload de grote JPG’s rechtstreeks in R2. Deze site bewaart alleen de kleine webversies in Supabase.</p>
+                  </div>
+                  <button type="button" onClick={syncR2} disabled={r2SyncBusy} className={styles.r2SyncButton}>
+                    {r2SyncBusy ? "Synchroniseren…" : "Synchroniseer met R2"}
+                  </button>
+                </div>
+
+                <div className={styles.r2FolderCard}>
+                  <span>Upload je originelen in deze R2-map</span>
+                  <code>{r2Folder}</code>
+                  <button type="button" onClick={() => navigator.clipboard.writeText(r2Folder)}>Kopieer pad</button>
+                </div>
+
+                <div className={styles.r2Steps}>
+                  <div><strong>1</strong><span><b>R2</b> · Upload de grote afgewerkte JPG’s rechtstreeks naar bovenstaande map.</span></div>
+                  <div><strong>2</strong><span><b>Synchroniseren</b> · Klik daarna op “Synchroniseer met R2”.</span></div>
+                  <div><strong>3</strong><span><b>Website</b> · Upload onder “Foto’s & volgorde” alleen de kleine JPG-versies met dezelfde bestandsnamen.</span></div>
+                </div>
+
+                <div className={styles.r2Stats}>
+                  <div><strong>{r2Originals.length}</strong><span>originelen gevonden</span></div>
+                  <div><strong>{r2Originals.filter((item) => item.linked).length}</strong><span>reeds gekoppeld</span></div>
+                  <div><strong>{r2Originals.filter((item) => !item.linked).length}</strong><span>wachten op webfoto</span></div>
+                </div>
+
+                {r2Originals.length > 0 && (
+                  <div className={styles.r2List}>
+                    {r2Originals.slice(0, 100).map((item) => (
+                      <div key={item.key}>
+                        <span className={item.linked ? styles.r2DotLinked : styles.r2DotWaiting} />
+                        <strong>{item.name}</strong>
+                        <small>{(item.size / 1024 / 1024).toFixed(1)} MB</small>
+                        <em>{item.linked ? "Gekoppeld" : "Webversie ontbreekt"}</em>
+                      </div>
+                    ))}
+                    {r2Originals.length > 100 && <p>+ {r2Originals.length - 100} extra originelen</p>}
+                  </div>
+                )}
               </div>
             )}
 

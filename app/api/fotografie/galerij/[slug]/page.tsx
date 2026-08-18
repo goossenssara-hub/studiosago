@@ -31,7 +31,7 @@ export default async function GalleryPage({ params, searchParams }: GalleryPageP
 
   const { data: images, error: imageError } = await supabase
     .from("photo_gallery_images")
-    .select("id,storage_path,file_name,sort_order,is_cover")
+    .select("id,storage_path,file_name,sort_order,is_cover,r2_original_key")
     .eq("gallery_id", gallery.id)
     .order("sort_order", { ascending: true });
 
@@ -59,6 +59,7 @@ export default async function GalleryPage({ params, searchParams }: GalleryPageP
       isCover: image.is_cover,
       url,
       originalUrl: url,
+      highResAvailable: Boolean(image.r2_original_key),
     };
   });
 
@@ -77,8 +78,6 @@ export default async function GalleryPage({ params, searchParams }: GalleryPageP
         accentColor: gallery.accent_color || "#d97045",
         downloads: gallery.download_zip_key ? "all" : "none",
         favoritesEnabled: gallery.favorites_enabled !== false,
-        hasHighResZip: Boolean(gallery.download_zip_key),
-        highResZipBytes: Number(gallery.download_zip_size_bytes || 0),
       }}
       images={signedImages.filter((image) => image.url)}
     />

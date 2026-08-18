@@ -95,6 +95,11 @@ export default function EditGalleryClient({ gallery, initialImages }: Props) {
     return `${window.location.origin}/fotografie/galerij/${gallery.slug}?token=${gallery.share_token}`;
   }, [gallery.share_token, gallery.slug]);
 
+  const previewUrl = useMemo(() => {
+    if (!publicUrl) return "";
+    return `${publicUrl}&preview=1`;
+  }, [publicUrl]);
+
   const updateForm = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) => {
     setForm((current) => ({ ...current, [key]: value }));
     setMessage("");
@@ -356,7 +361,7 @@ export default function EditGalleryClient({ gallery, initialImages }: Props) {
               <p>Pas de galerij aan, voeg foto’s toe of wijzig de volgorde.</p>
             </div>
             <div className={styles.headerActions}>
-              {publicUrl && <a href={publicUrl} target="_blank" rel="noreferrer" className={styles.previewButton}>Bekijk galerij</a>}
+              {previewUrl && <a href={previewUrl} target="_blank" rel="noreferrer" className={styles.previewButton}>Bekijk galerij</a>}
               <button type="button" onClick={save} disabled={saving} className={styles.saveButton}>{saving ? (uploadProgress || "Opslaan…") : "Wijzigingen opslaan"}</button>
             </div>
           </header>

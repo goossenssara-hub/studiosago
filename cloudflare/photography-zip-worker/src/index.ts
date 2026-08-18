@@ -1,4 +1,4 @@
-import { ZipWriter } from "@zip.js/zip.js/lib/zip-core.js";
+import { ZipWriter, configure } from "@zip.js/zip.js";
 
 interface Env {
   PHOTOS: R2Bucket;
@@ -6,23 +6,36 @@ interface Env {
 }
 
 type TicketPayload = {
-  v: 1;
+  v: 2;
   g: string;
-  k: string[] | null;
+  k: string[];
   n: string;
   e: number;
 };
 
 const encoder = new TextEncoder();
 
+// In Cloudflare Workers vermijden we de native CompressionStream-route van zip.js.
+// De JPG's zijn al gecomprimeerd, dus de ZIP gebruikt sowieso level 0 (store).
+configure({
+  useWebWorkers: false,
+  useCompressionStream: false,
+});
+
 function bytesToBase64Url(bytes: Uint8Array) {
   let binary = "";
   for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+  return btoa(binary)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
 }
 
 function base64UrlToText(value: string) {
-  const padded = value.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((value.length + 3) % 4);
+  const padded =
+    value.replace(/-/g, "+").replace(/_/g, "/") +
+    "===".slice((value.length + 3) % 4);
+
   const binary = atob(padded);
   const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
   return new TextDecoder().decode(bytes);
@@ -36,7 +49,13 @@ async function hmac(value: string, secret: string) {
     false,
     ["sign"],
   );
-  const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(value));
+
+  const signature = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    encoder.encode(value),
+  );
+
   return bytesToBase64Url(new Uint8Array(signature));
 }
 
@@ -50,42 +69,32 @@ function timingSafeEqual(a: string, b: string) {
 }
 
 function safeZipName(value: string) {
-  return value.replace(/[\\/:*?"<>|\u0000-\u001f]/g, "-").replace(/\s+/g, " ").trim().slice(0, 120) || "SaGo-Photography.zip";
+  return (
+    value
+      .replace(/[\\/:*?"<>|\u0000-\u001f]/g, "-")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 120) || "SaGo-Photography.zip"
+  );
 }
 
-function originalNameFromKey(key: string) {
-  const file = key.split("/").pop() || "foto.jpg";
-
-  // Ondersteun zowel oude site-uploads:
-  // <uuid>-<8random>-<bestandsnaam>.jpg
-  // als rechtstreeks in R2 geüploade bestanden:
-  // IMG_1234.jpg
-  const oldPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-[0-9a-f]{8}-(.+)$/i;
-  const match = file.match(oldPattern);
-  return match?.[1] || file;
+function objectFileName(key: string) {
+  const name = key.split("/").pop() || "foto.jpg";
+  return name.replace(/[\\/:*?"<>|\u0000-\u001f]/g, "-");
 }
 
 function uniqueName(name: string, used: Map<string, number>) {
   const current = used.get(name) ?? 0;
   used.set(name, current + 1);
+
   if (current === 0) return name;
 
   const dot = name.lastIndexOf(".");
-  if (dot > 0) return `${name.slice(0, dot)}-${current + 1}${name.slice(dot)}`;
+  if (dot > 0) {
+    return `${name.slice(0, dot)}-${current + 1}${name.slice(dot)}`;
+  }
+
   return `${name}-${current + 1}`;
-}
-
-async function listObjects(bucket: R2Bucket, prefix: string) {
-  const objects: R2Object[] = [];
-  let cursor: string | undefined;
-
-  do {
-    const page = await bucket.list({ prefix, cursor, limit: 1000 });
-    objects.push(...page.objects);
-    cursor = page.truncated ? page.cursor : undefined;
-  } while (cursor);
-
-  return objects;
 }
 
 async function verifyTicket(ticket: string, env: Env): Promise<TicketPayload> {
@@ -101,73 +110,106 @@ async function verifyTicket(ticket: string, env: Env): Promise<TicketPayload> {
   }
 
   const payload = JSON.parse(base64UrlToText(encoded)) as TicketPayload;
-  if (payload.v !== 1 || !payload.g || !payload.e) throw new Error("Ongeldig ticket.");
-  if (payload.e < Math.floor(Date.now() / 1000)) throw new Error("Dit downloadticket is verlopen.");
-  if (payload.k && payload.k.length > 250) throw new Error("Te veel foto's in één selectie.");
+
+  if (
+    payload.v !== 2 ||
+    !payload.g ||
+    !Array.isArray(payload.k) ||
+    !payload.k.length ||
+    !payload.e
+  ) {
+    throw new Error("Ongeldig ticket.");
+  }
+
+  if (payload.e < Math.floor(Date.now() / 1000)) {
+    throw new Error("Dit downloadticket is verlopen.");
+  }
+
+  if (payload.k.length > 500) {
+    throw new Error("Te veel foto's in één ZIP-download.");
+  }
+
+  const expectedPrefix = `galleries/${payload.g}/originals/`;
+  if (payload.k.some((key) => !key.startsWith(expectedPrefix))) {
+    throw new Error("Ongeldige R2-objectkey in ticket.");
+  }
 
   return payload;
 }
 
 export default {
-  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  async fetch(
+    request: Request,
+    env: Env,
+    ctx: ExecutionContext,
+  ): Promise<Response> {
     const url = new URL(request.url);
+
     if (url.pathname !== "/download") {
       return new Response("SaGo Photography ZIP service", { status: 200 });
     }
 
     try {
       const ticket = url.searchParams.get("ticket");
+
       if (!ticket || !env.ZIP_SIGNING_SECRET) {
         return new Response("Download niet toegestaan.", { status: 403 });
       }
 
       const payload = await verifyTicket(ticket, env);
-      const prefix = `galleries/${payload.g}/originals/`;
-      let files: R2Object[];
 
-      if (payload.k) {
-        const requestedKeys = [...new Set(payload.k)].filter((key) => key.startsWith(prefix));
-        if (!requestedKeys.length) return new Response("Geen geldige foto's geselecteerd.", { status: 400 });
-
-        const heads = await Promise.all(requestedKeys.map((key) => env.PHOTOS.head(key)));
-        if (heads.some((item) => !item)) {
-          return new Response("Niet alle geselecteerde foto's zijn beschikbaar.", { status: 409 });
-        }
-        files = heads.filter((item): item is R2Object => Boolean(item));
-      } else {
-        files = await listObjects(env.PHOTOS, prefix);
-      }
-
-      if (!files.length) return new Response("Geen hoge-resolutiefoto's gevonden.", { status: 404 });
+      // Eerst controleren of alle objecten bestaan vóór we ZIP-bytes naar de klant sturen.
+      const metadata = await Promise.all(
+        payload.k.map(async (key) => {
+          const object = await env.PHOTOS.head(key);
+          if (!object) throw new Error(`R2-object ontbreekt: ${key}`);
+          return { key, uploaded: object.uploaded };
+        }),
+      );
 
       const { readable, writable } = new TransformStream();
       const zipWriter = new ZipWriter(writable, {
         zip64: true,
-        level: 0
+        level: 0,
       });
+
       const usedNames = new Map<string, number>();
 
       const producer = (async () => {
         try {
-          for (const file of files) {
+          for (const file of metadata) {
             const object = await env.PHOTOS.get(file.key);
-            if (!object?.body) throw new Error(`R2-object ontbreekt: ${file.key}`);
+            if (!object?.body) {
+              throw new Error(`R2-object kon niet worden gelezen: ${file.key}`);
+            }
 
-            const entryName = uniqueName(originalNameFromKey(file.key), usedNames);
+            const entryName = uniqueName(
+              objectFileName(file.key),
+              usedNames,
+            );
+
             await zipWriter.add(entryName, object.body, {
               level: 0,
               zip64: true,
-              lastModDate: file.uploaded
+              lastModDate: file.uploaded,
             });
           }
+
           await zipWriter.close();
         } catch (error) {
           console.error("ZIP stream error", error);
-          try { await zipWriter.close(); } catch {}
+          try {
+            await writable.abort(error);
+          } catch {}
+          throw error;
         }
       })();
 
-      ctx.waitUntil(producer);
+      ctx.waitUntil(
+        producer.catch((error) => {
+          console.error("ZIP producer failed", error);
+        }),
+      );
 
       return new Response(readable, {
         status: 200,
@@ -175,12 +217,15 @@ export default {
           "Content-Type": "application/zip",
           "Content-Disposition": `attachment; filename="${safeZipName(payload.n)}"`,
           "Cache-Control": "private, no-store",
-          "X-Content-Type-Options": "nosniff"
-        }
+          "X-Content-Type-Options": "nosniff",
+        },
       });
     } catch (error) {
       console.error("ZIP request error", error);
-      return new Response(error instanceof Error ? error.message : "Download mislukt.", { status: 403 });
+      return new Response(
+        error instanceof Error ? error.message : "Download mislukt.",
+        { status: 403 },
+      );
     }
-  }
+  },
 };

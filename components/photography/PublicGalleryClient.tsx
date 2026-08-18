@@ -123,27 +123,60 @@ export default function PublicGalleryClient({ slug, token, gallery, images }: Pr
 
   const startZipDownload = async (mode: "selection" | "all", imageIds: string[] = []) => {
     try {
-      setMessage(mode === "selection" ? "Jullie selectie wordt als ZIP voorbereid…" : "De volledige galerij wordt als ZIP voorbereid…");
+      const isPreview = typeof window !== "undefined"
+        && new URLSearchParams(window.location.search).get("preview") === "1";
+
+      // Een volledige galerij wordt NIET meer live in de Worker opgebouwd.
+      // We downloaden het vooraf gegenereerde ZIP-object rechtstreeks uit R2.
+      if (mode === "all") {
+        setMessage("Volledige galerij voorbereiden…");
+
+        const response = await fetch("/api/photography/full-gallery-download", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ slug, token, preview: isPreview }),
+        });
+
+        const result = await response.json() as { error?: string; url?: string };
+        if (!response.ok || !result.url) {
+          throw new Error(
+            result.error ||
+              "De volledige galerij is nog niet als ZIP klaargezet.",
+          );
+        }
+
+        setMessage("Download wordt gestart…");
+        window.location.href = result.url;
+        window.setTimeout(() => setMessage(""), 3000);
+        return;
+      }
+
+      // Alleen kleinere selecties gaan nog naar de ZIP-Worker.
+      setMessage("Je selectie wordt klaargemaakt…");
+
       const response = await fetch("/api/photography/zip-ticket", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug, token, mode, imageIds }),
+        body: JSON.stringify({ slug, token, mode, imageIds, preview: isPreview }),
       });
-      const result = (await response.json()) as { url?: string; error?: string; count?: number };
+
+      const result = await response.json() as { error?: string; url?: string };
       if (!response.ok || !result.url) {
-        throw new Error(result.error || "De ZIP kon niet worden voorbereid.");
+        throw new Error(result.error || "De ZIP-download kon niet worden voorbereid.");
       }
-      setMessage(`${result.count ?? imageIds.length} hoge-resolutiefoto${(result.count ?? imageIds.length) === 1 ? "" : "’s"} worden als ZIP gedownload…`);
+
+      setMessage("Download wordt gestart…");
       window.location.href = result.url;
+      window.setTimeout(() => setMessage(""), 3000);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "De ZIP-download kon niet worden gestart.");
+      setMessage(error instanceof Error ? error.message : "Download mislukt.");
     }
   };
 
   const downloadSelection = () => {
-    const selected = images.filter((image) => favorites.has(image.id) && image.highResAvailable);
+    const selected = images.filter((image) => favorites.has(image.id));
     if (!selected.length) {
-      setMessage("Selecteer eerst minstens één foto met een hoge-resolutiebestand.");
+      setMessage("Selecteer eerst minstens één foto.");
       return;
     }
     void startZipDownload("selection", selected.map((image) => image.id));
@@ -153,7 +186,9 @@ export default function PublicGalleryClient({ slug, token, gallery, images }: Pr
     void startZipDownload("all");
   };
 
-  const canDownloadAll = gallery.downloads === "all" && images.some((image) => image.highResAvailable);
+  const canDownloadAll =
+    (gallery.downloads === "all" || gallery.downloads === "individual_and_all") &&
+    images.length > 0;
 
   return (
     <main className={styles.page} style={{ "--accent": gallery.accentColor } as CSSProperties}>
